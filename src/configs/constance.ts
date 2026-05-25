@@ -30,6 +30,8 @@ export enum DIALOG_KEY {
 export enum QUERY_KEY {
   getMe = 'getMe',
   getListConversations = 'getListConversations',
+  findUsers = 'findUsers',
+  getMessages = 'getMessages',
 }
 
 export enum MICROSERVICE_EVENTS {

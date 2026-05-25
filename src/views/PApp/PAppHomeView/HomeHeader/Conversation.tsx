@@ -6,9 +6,8 @@ import { useConversationStore } from 'src/states/conversation.state';
 
 export default function Conversation() {
   const [open, setOpen] = useState(false);
-  const { currentConversationId, fn } = useConversationStore((state) => {
-    return { currentConversationId: state.currentConversationId, fn: state.fn };
-  });
+  const currentConversationId = useConversationStore((state) => state.currentConversationId);
+  const fn = useConversationStore((state) => state.fn);
   const { data } = useGetListConversations();
 
   const currentConversation = useMemo(() => {

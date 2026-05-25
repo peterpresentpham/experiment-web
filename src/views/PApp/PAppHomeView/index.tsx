@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { MICROSERVICE_EVENTS } from 'src/configs/constance';
 import useSocket from 'src/hooks/useSocket';
+import { useGetMessages } from 'src/queries/papp/message.query';
 import { useConversationStore } from 'src/states/conversation.state';
 import ChatInput from './ChatInput';
 import HomeHeader from './HomeHeader';
@@ -15,6 +16,19 @@ export default function PAppHomeView() {
   const [isJoined, setIsJoined] = useState(false);
   const pendingMessagesRef = useRef<string[]>([]);
   const joinRequestedRef = useRef(false);
+
+  const { data: messageData } = useGetMessages({ conversationId: currentConversationId });
+
+  useEffect(() => {
+    const socketMessages: Array<TSocketMessage> = (messageData?.data || []).map((message) => {
+      return {
+        conversationId: message.conversationId,
+        senderId: message.senderId,
+        message: message.content,
+      };
+    });
+    setMessages(socketMessages);
+  }, [messageData]);
 
   useEffect(() => {
     if (!socket) return;

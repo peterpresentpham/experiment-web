@@ -2,19 +2,17 @@ import { useMutation } from '@tanstack/react-query';
 import PAppClient from 'src/api/papp';
 import { TMutationOptionsDefaultError } from 'src/types/global';
 import {
-  TAccessTokenResponseType,
+  TAccessTokenResponse,
   TAuthSignupDto,
   TGoogleRecoverPasswordDto,
   TGoogleSigninDto,
-  TOnlyOkResponseType,
+  TOnlyOkResponse,
   TPasswordLoginDto,
   TRecoverTokenDto,
   TVerifyTokenDto,
 } from 'src/types/papp.type';
 
-export function useSignup(
-  options?: TMutationOptionsDefaultError<TOnlyOkResponseType, TAuthSignupDto>
-) {
+export function useSignup(options?: TMutationOptionsDefaultError<TOnlyOkResponse, TAuthSignupDto>) {
   return useMutation({
     ...options,
     mutationFn: (data: TAuthSignupDto) => PAppClient.auth.signup(data),
@@ -22,7 +20,7 @@ export function useSignup(
 }
 
 export function useVerifyEmail(
-  options?: TMutationOptionsDefaultError<TOnlyOkResponseType, TVerifyTokenDto>
+  options?: TMutationOptionsDefaultError<TOnlyOkResponse, TVerifyTokenDto>
 ) {
   return useMutation({
     ...options,
@@ -31,7 +29,7 @@ export function useVerifyEmail(
 }
 
 export function useGoogleLogin(
-  options?: TMutationOptionsDefaultError<TAccessTokenResponseType, TGoogleSigninDto>
+  options?: TMutationOptionsDefaultError<TAccessTokenResponse, TGoogleSigninDto>
 ) {
   return useMutation({
     ...options,
@@ -40,7 +38,7 @@ export function useGoogleLogin(
 }
 
 export function usePasswordLogin(
-  options?: TMutationOptionsDefaultError<TAccessTokenResponseType, TPasswordLoginDto>
+  options?: TMutationOptionsDefaultError<TAccessTokenResponse, TPasswordLoginDto>
 ) {
   return useMutation({
     ...options,
@@ -60,7 +58,7 @@ export function useRecoverPassword() {
   });
 }
 
-export function useRefresh(options?: TMutationOptionsDefaultError<TAccessTokenResponseType, void>) {
+export function useRefresh(options?: TMutationOptionsDefaultError<TAccessTokenResponse, void>) {
   return useMutation({
     ...options,
     mutationFn: () => PAppClient.auth.refresh(),

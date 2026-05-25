@@ -1,10 +1,10 @@
 import { pAppQuery } from 'src/services/api-query';
 import {
-  TAccessTokenResponseType,
+  TAccessTokenResponse,
   TAuthSignupDto,
   TGoogleRecoverPasswordDto,
   TGoogleSigninDto,
-  TOnlyOkResponseType,
+  TOnlyOkResponse,
   TPasswordLoginDto,
   TRecoverTokenDto,
   TVerifyTokenDto,
@@ -12,33 +12,31 @@ import {
 
 export default class Auth {
   static async signup(params: TAuthSignupDto) {
-    const response = await pAppQuery.post<TOnlyOkResponseType>('/auth/signup', params);
+    const response = await pAppQuery.post<TOnlyOkResponse>('/auth/signup', params);
     return response;
   }
 
   static async verifyEmail(params: TVerifyTokenDto) {
-    const response = await pAppQuery.post<TOnlyOkResponseType>('/auth/verify-email', params);
+    const response = await pAppQuery.post<TOnlyOkResponse>('/auth/verify-email', params);
     return response;
   }
 
   static async googleLogin(params: TGoogleSigninDto) {
-    const response = await pAppQuery.post<TAccessTokenResponseType>('/auth/signin/google', params, {
+    const response = await pAppQuery.post<TAccessTokenResponse>('/auth/signin/google', params, {
       withCredentials: true,
     });
     return response;
   }
 
   static async signinWithPassword(params: TPasswordLoginDto) {
-    const response = await pAppQuery.post<TAccessTokenResponseType>(
-      '/auth/signin/password',
-      params,
-      { withCredentials: true }
-    );
+    const response = await pAppQuery.post<TAccessTokenResponse>('/auth/signin/password', params, {
+      withCredentials: true,
+    });
     return response;
   }
 
   static async sendRecoverMailPassword(params: TGoogleRecoverPasswordDto) {
-    const response = await pAppQuery.post<TOnlyOkResponseType>(
+    const response = await pAppQuery.post<TOnlyOkResponse>(
       '/auth/forgot-password/send-recovery',
       params
     );
@@ -46,7 +44,7 @@ export default class Auth {
   }
 
   static async recoverPassword(params: TRecoverTokenDto) {
-    const response = await pAppQuery.post<TOnlyOkResponseType>(
+    const response = await pAppQuery.post<TOnlyOkResponse>(
       '/auth/forgot-password/recovery',
       params
     );
@@ -54,7 +52,7 @@ export default class Auth {
   }
 
   static async refresh() {
-    const response = await pAppQuery.post<TAccessTokenResponseType>(
+    const response = await pAppQuery.post<TAccessTokenResponse>(
       '/auth/refresh',
       {},
       { withCredentials: true }

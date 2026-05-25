@@ -1,4 +1,4 @@
-import { TPaginationResponseType } from './global';
+import { TPaginationResponse } from './global';
 
 export enum USER_ROLE {
   USER = 1,
@@ -21,6 +21,12 @@ export enum CONVERSATION_USER_ROLE {
   ADMIN = 2,
 }
 
+export enum MESSAGE_TYPE {
+  TEXT = 1,
+  IMAGE = 2,
+  FILE = 3,
+}
+
 export type TAuthSignupDto = {
   name: string;
   password: string;
@@ -36,7 +42,8 @@ export type TGoogleSigninDto = {
 };
 
 export type TPasswordLoginDto = {
-  email: string;
+  email?: string;
+  name?: string;
   password: string;
 };
 
@@ -49,27 +56,46 @@ export type TRecoverTokenDto = {
   newPassword: string;
 };
 
-export type TOnlyOkResponseType = {
+export type TOnlyOkResponse = {
   isOk: boolean;
 };
 
-export type TAccessTokenResponseType = {
+export type TAccessTokenResponse = {
   accessToken: string;
 };
 
-export type TUserType = {
+export type TUser = {
   id: number;
   name: string;
   email: string;
   role: USER_ROLE;
   status: USER_STATUS;
+  avatarUrl?: string;
+  lastSeenAt?: string;
+};
+
+export type TUserFindItem = {
+  id: number;
+  name: string;
+  email: string;
+};
+
+export type TFindUserDto = {
+  searchText: string;
+  page?: number;
+  limit?: number;
+};
+
+export type TFindUserResponse = {
+  data: Array<TUserFindItem>;
+  metadata: TPaginationResponse;
 };
 
 export type TCreatePrivateChatDto = {
   partnerId: number;
 };
 
-export type TConversationType = {
+export type TConversation = {
   id: number;
   name: string;
   type: number;
@@ -79,22 +105,22 @@ export type TConversationType = {
   deletedAt: string | null;
 };
 
-export type TConversationParticipantType = {
+export type TConversationParticipant = {
   id: number;
   role: number;
-  conversation: TConversationType;
+  conversation: TConversation;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
 };
 
-export type TParticipantItemType = {
+export type TParticipantItem = {
   id: number;
   name: string;
   email: string;
 };
 
-export type TConversationItemType = {
+export type TConversationItem = {
   conversationId: number;
   conversationName: string;
 
@@ -106,11 +132,31 @@ export type TConversationItemType = {
   role: CONVERSATION_USER_ROLE;
   groupType: CONVERSATION_TYPE;
 
-  yourParticipant: TParticipantItemType;
-  anotherParticipant: TParticipantItemType | null;
+  yourParticipant: TParticipantItem;
+  anotherParticipant: TParticipantItem | null;
 };
 
-export type TConversationResponseType = {
-  data: Array<TConversationItemType>;
-  metadata: TPaginationResponseType;
+export type TConversationResponse = {
+  data: Array<TConversationItem>;
+  metadata: TPaginationResponse;
+};
+
+export type TMessageItem = {
+  conversationId: number;
+  senderId: number;
+  senderName: string;
+  senderEmail: string;
+  content: string;
+  type: MESSAGE_TYPE;
+};
+
+export type TGetMessageDto = {
+  conversationId?: number;
+  page?: number;
+  limit?: number;
+};
+
+export type TMessageResponse = {
+  data: Array<TMessageItem>;
+  metadata: TPaginationResponse;
 };

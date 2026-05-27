@@ -5,7 +5,7 @@ import TitleBox from 'src/components/box/TitleBox';
 import { Button } from 'src/components/shadcn/button';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from 'src/components/shadcn/dialog';
 import { useGetMe, useUserSendVerifyEmail } from 'src/queries/papp/user.query';
-import { getAxiosError } from 'src/services';
+import { getAxiosError, getUserRole } from 'src/services';
 import { useAuthStore } from 'src/states/auth.state';
 import { USER_STATUS } from 'src/types/papp.type';
 
@@ -48,7 +48,7 @@ export default function AccountSetting() {
             <div className="flex flex-wrap items-center gap-10">
               <TitleBox title="Name" value={data?.name} />
               <TitleBox title="Email" value={data?.email} />
-              <TitleBox title="Role" value={data?.role} />
+              <TitleBox title="Role" value={getUserRole(data?.role)} />
             </div>
             {data?.status == USER_STATUS.EMAIL_INACTIVE && (
               <Button className="mt-2" onClick={onVerify}>

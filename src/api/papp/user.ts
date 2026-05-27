@@ -13,9 +13,7 @@ export default class User {
   }
 
   static async findUsers(params: TFindUserDto) {
-    const response = await pAppQuery.get<TFindUserResponse>('/user/find-user', {
-      params: { searchText: params.searchText, page: params.page, limit: params.limit },
-    });
+    const response = await pAppQuery.get<TFindUserResponse>('/user/find-user', { params });
     return response;
   }
 }

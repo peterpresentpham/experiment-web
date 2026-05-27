@@ -1,11 +1,11 @@
+'use client';
+
 import { ComponentProps } from 'react';
 import { cn } from 'src/lib/utils';
-
-export type TSocketMessage = {
-  conversationId: number;
-  senderId: number;
-  message: string;
-};
+import { useGetMe } from 'src/queries/papp/user.query';
+import { useConversationStore } from 'src/states/conversation.state';
+import { TSocketMessage } from 'src/types/papp.type';
+import MessageItem from './MessageItem';
 
 type TProps = ComponentProps<'div'> & {
   messages?: TSocketMessage[];
@@ -13,6 +13,8 @@ type TProps = ComponentProps<'div'> & {
 
 export default function MainMessage(props: TProps) {
   const { messages = [], ...rest } = props;
+  const { data } = useGetMe();
+  const conversationUsers = useConversationStore((state) => state.conversationUsers);
 
   return (
     <div {...rest} className={cn('flex flex-col gap-2 overflow-y-auto py-2', props.className)}>
@@ -21,9 +23,12 @@ export default function MainMessage(props: TProps) {
       ) : (
         messages.map((item, index) => {
           return (
-            <div key={`${item.conversationId}-${item.senderId}-${index}`} className="text-sm">
-              <span className="font-semibold">#{item.senderId}:</span> {item.message}
-            </div>
+            <MessageItem
+              key={`${item.conversationId}-${item.senderId}-${index}`}
+              senderType={data?.id == item.senderId ? 'me' : 'another'}
+              item={item}
+              user={conversationUsers[item.senderId]}
+            />
           );
         })
       )}

@@ -2,6 +2,7 @@
 import { Metadata } from 'next';
 import { APP_NAME } from 'src/configs/constance';
 import { TPositionType } from 'src/types/global';
+import { USER_ROLE } from 'src/types/papp.type';
 
 /**
  * Converts a hexadecimal string to a Uint8Array.
@@ -114,4 +115,15 @@ export function getAxiosError(error: any) {
   message = error?.message;
   if (typeof message == 'string') return message;
   return undefined;
+}
+
+export function getUserRole(role?: USER_ROLE) {
+  switch (role) {
+    case USER_ROLE.ADMIN:
+      return 'Admin';
+    case USER_ROLE.USER:
+      return 'User';
+    default:
+      return 'Unknown';
+  }
 }

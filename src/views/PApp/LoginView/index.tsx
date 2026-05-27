@@ -22,8 +22,10 @@ import { getAxiosError } from 'src/services';
 import { useAuthStore } from 'src/states/auth.state';
 import z from 'zod';
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const loginSchema = z.object({
-  email: z.email('Please enter a valid email address'),
+  name: z.string('Please enter a valid email of username'),
   password: z.string('Please enter password'),
 });
 
@@ -39,7 +41,7 @@ export default function LoginView({ redirect }: TProps) {
 
   const form = useForm<TFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { name: '', password: '' },
   });
 
   const mutation = usePasswordLogin({
@@ -56,7 +58,9 @@ export default function LoginView({ redirect }: TProps) {
   });
 
   async function onSubmit(values: TFormValues) {
-    mutation.mutate(values);
+    if (emailRegex.test(values.name)) {
+      mutation.mutate({ email: values.name, password: values.password });
+    } else mutation.mutate({ name: values.name, password: values.password });
   }
 
   return (
@@ -64,12 +68,12 @@ export default function LoginView({ redirect }: TProps) {
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
           control={form.control}
-          name="email"
+          name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email address</FormLabel>
+              <FormLabel>Email or Username</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="e.g.example@gmail.com" {...field} />
+                <Input type="text" placeholder="Email or Username" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

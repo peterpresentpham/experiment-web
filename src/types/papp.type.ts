@@ -1,4 +1,4 @@
-import { TPaginationResponse } from './global';
+import { TPagination, TPaginationResponse } from './global';
 
 export enum USER_ROLE {
   USER = 1,
@@ -64,26 +64,22 @@ export type TAccessTokenResponse = {
   accessToken: string;
 };
 
-export type TUser = {
-  id: number;
-  name: string;
-  email: string;
-  role: USER_ROLE;
-  status: USER_STATUS;
-  avatarUrl?: string;
-  lastSeenAt?: string;
-};
-
 export type TUserFindItem = {
   id: number;
   name: string;
   email: string;
 };
 
-export type TFindUserDto = {
-  searchText: string;
-  page?: number;
-  limit?: number;
+export type TUser = TUserFindItem & {
+  role: USER_ROLE;
+  status: USER_STATUS;
+  avatarUrl?: string;
+  lastSeenAt?: string;
+};
+
+export type TFindUserDto = TPagination & {
+  searchText?: string;
+  userIds?: Array<number>;
 };
 
 export type TFindUserResponse = {
@@ -150,13 +146,17 @@ export type TMessageItem = {
   type: MESSAGE_TYPE;
 };
 
-export type TGetMessageDto = {
+export type TGetMessageDto = TPagination & {
   conversationId?: number;
-  page?: number;
-  limit?: number;
 };
 
 export type TMessageResponse = {
   data: Array<TMessageItem>;
   metadata: TPaginationResponse;
+};
+
+export type TSocketMessage = {
+  conversationId: number;
+  senderId: number;
+  message: string;
 };

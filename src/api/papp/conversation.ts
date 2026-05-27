@@ -1,5 +1,6 @@
 import { pAppQuery } from 'src/services/api-query';
-import { TConversationResponse, TConversation, TCreatePrivateChatDto } from 'src/types/papp.type';
+import { TPagination } from 'src/types/global';
+import { TConversation, TConversationResponse, TCreatePrivateChatDto } from 'src/types/papp.type';
 
 export default class Conversation {
   static async createPrivateChat(params: TCreatePrivateChatDto) {
@@ -7,7 +8,7 @@ export default class Conversation {
     return response;
   }
 
-  static async getListConversations(params?: { page?: number; limit?: number }) {
+  static async getListConversations(params?: TPagination) {
     const response = await pAppQuery.get<TConversationResponse>('/conversation/conversations', {
       params,
     });

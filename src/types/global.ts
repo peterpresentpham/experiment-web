@@ -80,6 +80,11 @@ export type TBaseQueryInstance = {
   delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
 };
 
+export type TPagination = {
+  page?: number;
+  limit?: number;
+};
+
 export type TPaginationResponse = {
   totalItems: number;
   itemCount: number;

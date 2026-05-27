@@ -20,7 +20,7 @@ export function useUserSendVerifyEmail(options?: TMutationOptionsDefaultError<TO
 
 export function useFindUsers(params: TFindUserDto) {
   return useAuthQuery({
-    queryKey: [QUERY_KEY.findUsers, params.searchText, params.page, params.limit],
+    queryKey: [QUERY_KEY.findUsers, params],
     queryFn: () => PAppClient.user.findUsers(params),
   });
 }

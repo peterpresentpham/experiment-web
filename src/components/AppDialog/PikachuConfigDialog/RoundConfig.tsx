@@ -13,7 +13,7 @@ import {
 import { pikachuRoundTransformations, pikachuTransformConfig } from 'src/configs/pikachu.constance';
 import { cn } from 'src/lib/utils';
 import { removeAtIndex } from 'src/services';
-import { TPikachuTransformType } from 'src/types/pikachu.type';
+import { TPikachuTransform } from 'src/types/pikachu.type';
 import { usePikachuConfigContext } from './pikachuConfig.context';
 
 export default function RoundConfig() {
@@ -23,7 +23,7 @@ export default function RoundConfig() {
     fn: { setRounds },
   } = usePikachuConfigContext();
 
-  function onRemove(id: TPikachuTransformType) {
+  function onRemove(id: TPikachuTransform) {
     setRounds((preValue) => {
       const index = preValue.indexOf(id);
       return removeAtIndex(preValue, index);

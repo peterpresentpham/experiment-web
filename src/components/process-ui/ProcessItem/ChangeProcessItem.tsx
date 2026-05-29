@@ -11,7 +11,7 @@ import ProcessStatus from 'src/components/process-ui/ProcessStatus';
 import { Button } from 'src/components/shadcn/button';
 import { Form, FormField, FormItemContent } from 'src/components/shadcn/form';
 import { formatText } from 'src/services';
-import { TProcessType } from 'src/types/process.type';
+import { TProcess } from 'src/types/process.type';
 import z from 'zod';
 
 const processTimeSchema = z.object({
@@ -29,7 +29,7 @@ const schema = processTimeSchema.extend({
 type TFormValues = z.infer<typeof schema>;
 
 interface TProps {
-  data: TProcessType;
+  data: TProcess;
   events?: {
     onAddBlockTask?: () => void;
     onArrivalTimeChange?: (arrivalTime: number) => void;

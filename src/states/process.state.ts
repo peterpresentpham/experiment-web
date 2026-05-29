@@ -1,9 +1,9 @@
 import cloneDeep from 'lodash.clonedeep';
 import {
-  TProcessDataObjectType,
+  TProcessDataObject,
   ProcessStatusType,
-  TProcessStoreStatusType,
-  TProcessType,
+  TProcessStoreStatus,
+  TProcess,
   SchedulerModeType,
 } from 'src/types/process.type';
 import { create } from 'zustand';
@@ -12,18 +12,18 @@ import { immer } from 'zustand/middleware/immer';
 
 interface TProcessMetadataType {
   mode: SchedulerModeType;
-  status: TProcessStoreStatusType;
+  status: TProcessStoreStatus;
   interval: number;
   maxBlockTaskPerSlice: number;
   displayMode: 'chart' | 'column';
 }
 
 interface TProcessStateType extends TProcessMetadataType {
-  processes: TProcessDataObjectType;
+  processes: TProcessDataObject;
   fn: {
     setMetadata: (metadata?: Partial<TProcessMetadataType>) => void;
-    setProcesses: (processes: TProcessDataObjectType) => void;
-    updateProcess: (pid: string, data: Partial<Omit<TProcessType, 'pid'>>) => void;
+    setProcesses: (processes: TProcessDataObject) => void;
+    updateProcess: (pid: string, data: Partial<Omit<TProcess, 'pid'>>) => void;
     resetProcesses: () => void;
     clear: () => void;
   };
@@ -53,12 +53,12 @@ export const useProcessStore = create<
               if (metadata?.displayMode) state.displayMode = metadata.displayMode;
             });
           },
-          setProcesses: (processes: TProcessDataObjectType) => {
+          setProcesses: (processes: TProcessDataObject) => {
             set((state) => {
               state.processes = processes;
             });
           },
-          updateProcess: (pid: string, data: Partial<Omit<TProcessType, 'pid'>>) => {
+          updateProcess: (pid: string, data: Partial<Omit<TProcess, 'pid'>>) => {
             set((state) => {
               if (state.processes[pid]) {
                 if (data.beginAt == -1) data.beginAt = state.processes[pid].beginAt;

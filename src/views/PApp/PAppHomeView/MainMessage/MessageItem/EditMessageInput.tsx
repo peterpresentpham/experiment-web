@@ -1,13 +1,11 @@
-import { useState } from 'react';
 import { Textarea } from 'src/components/shadcn/textarea';
 
 interface TProps {
-  message: string;
+  editedMessage: string;
+  setEditedMessage: (value: string) => void;
 }
 
-export default function EditMessageInput({ message }: TProps) {
-  const [editedMessage, setEditedMessage] = useState(message);
-
+export default function EditMessageInput({ editedMessage, setEditedMessage }: TProps) {
   return (
     <Textarea value={editedMessage} onChange={(event) => setEditedMessage(event.target.value)} />
   );

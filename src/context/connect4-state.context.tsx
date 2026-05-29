@@ -3,7 +3,7 @@
 
 import { createContext, ReactNode, useCallback, useContext, useMemo } from 'react';
 import { useConnect4Store } from 'src/states/connect4.state';
-import { TTurnType } from 'src/types/caro.type';
+import { TTurn } from 'src/types/caro.type';
 
 export type TConnect4StateContextType = {
   playerText: string;
@@ -11,7 +11,7 @@ export type TConnect4StateContextType = {
   fn: {
     move: (location: number) => void;
     undo: () => void;
-    reset: (turn?: TTurnType | undefined) => void;
+    reset: (turn?: TTurn | undefined) => void;
   };
 };
 
@@ -71,7 +71,7 @@ export default function Connect4StateProvider({ children }: TProps) {
   }, [undo]);
 
   const handleReset = useCallback(
-    (turn?: TTurnType) => {
+    (turn?: TTurn) => {
       reset(turn);
     },
     [reset]

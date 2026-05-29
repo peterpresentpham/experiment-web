@@ -1,8 +1,8 @@
-import { TPikachuTransformType } from 'src/types/pikachu.type';
+import { TPikachuTransform } from 'src/types/pikachu.type';
 
 export const PIKACHU_PIECE_SIZE = 52;
 
-export const pikachuRoundTransformations: Array<TPikachuTransformType> = [
+export const pikachuRoundTransformations: Array<TPikachuTransform> = [
   'normal',
   'fallDown',
   'fallUp',
@@ -21,8 +21,8 @@ export const pikachuRoundTransformations: Array<TPikachuTransformType> = [
 ];
 
 export const pikachuTransformConfig: Record<
-  TPikachuTransformType,
-  { id: TPikachuTransformType; title: string }
+  TPikachuTransform,
+  { id: TPikachuTransform; title: string }
 > = {
   normal: { id: 'normal', title: 'Normal' },
   fallDown: { id: 'fallDown', title: 'Fall down' },

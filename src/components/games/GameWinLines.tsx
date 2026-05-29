@@ -1,9 +1,9 @@
 import { cn } from 'src/lib/utils';
-import { TCaroWinType, TTurnType } from 'src/types/caro.type';
+import { TCaroWin, TTurn } from 'src/types/caro.type';
 
 interface TProps {
-  turn?: TTurnType;
-  winTypes?: Partial<{ [type in TCaroWinType]: boolean }>;
+  turn?: TTurn;
+  winTypes?: Partial<{ [type in TCaroWin]: boolean }>;
 }
 
 export default function GameWinLines({ turn, winTypes }: TProps) {

@@ -5,12 +5,12 @@ import BaseInput from 'src/components/input/BaseInput';
 import { Button } from 'src/components/shadcn/button';
 import { useCaroConnectionContext } from 'src/context/caro-connection.context';
 import { useCaroStore } from 'src/states/caro.state';
-import { TMyGameType } from 'src/types/caro.type';
+import { TMyGame } from 'src/types/caro.type';
 import { useCaroConfigContext } from '../CaroConfigDialog/caroConfig.context';
 import useBoardGameConfigContext from './useBoardGameConfigContext';
 
 interface TProps {
-  game: TMyGameType;
+  game: TMyGame;
 }
 
 export default function GameTypeConfig({ game }: TProps) {

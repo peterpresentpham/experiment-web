@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { soundtrack } from 'src/services/soundtrack';
 import { useConfigStore } from 'src/states/config.state';
-import { SoundType } from 'src/types/global';
+import { TSound } from 'src/types/global';
 
 export default function useEnableSoundtrack() {
   const { backgroundSound } = useConfigStore();
@@ -25,13 +25,13 @@ export default function useEnableSoundtrack() {
 
     if (backgroundSound) {
       soundtrack.play({
-        type: SoundType.BACKGROUND,
+        type: TSound.BACKGROUND,
         loop: true,
         volume: 0.4,
         isEnabled: true,
       });
     } else {
-      soundtrack.stop(SoundType.BACKGROUND);
+      soundtrack.stop(TSound.BACKGROUND);
     }
   }, [backgroundSound, audioUnlocked]);
 }

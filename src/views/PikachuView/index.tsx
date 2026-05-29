@@ -9,7 +9,7 @@ import {
   usePikachuStateMachine,
 } from 'src/state-machine/pikachu.state-machine';
 import { usePikachuStore } from 'src/states/pikachu.state';
-import { PikachuMachineEvent, PikachuMachineStateType } from 'src/types/pikachu.type';
+import { PikachuMachineEvent, PikachuMachineState } from 'src/types/pikachu.type';
 import HeaderConfig from './HeaderConfig';
 import PikachuBoard from './PikachuBoard';
 
@@ -61,7 +61,7 @@ function PikachuViewLayout() {
   useEffect(() => {
     if (hasLoadedSaveRef.current) return;
     if (board.length === 0) return;
-    if (state.value !== PikachuMachineStateType.INITIAL) return;
+    if (state.value !== PikachuMachineState.INITIAL) return;
 
     hasLoadedSaveRef.current = true;
     send({ type: PikachuMachineEvent.LOAD_SAVE_GAME });
@@ -76,7 +76,7 @@ function PikachuViewLayout() {
         ref={boardContainerRef}
         className="flex min-h-0 w-full flex-1 items-center justify-center"
       >
-        {state.value != PikachuMachineStateType.INITIAL && <PikachuBoard size={size} />}
+        {state.value != PikachuMachineState.INITIAL && <PikachuBoard size={size} />}
       </div>
     </div>
   );

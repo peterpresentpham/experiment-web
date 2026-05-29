@@ -1,31 +1,31 @@
-import { TPositionType, TVectorType } from './global';
+import { TPosition, TVector } from './global';
 
-export type TPikachuImgType = 'internal' | 'external';
-export type TPikachuGameType = 'normal' | 'customBoard' | 'randomBoard' | 'blind';
+export type TPikachuImg = 'internal' | 'external';
+export type TPikachuGame = 'normal' | 'customBoard' | 'randomBoard' | 'blind';
 
-export type TBasePikachuType = {
+export type TBasePikachu = {
   numberOfRows: number;
   numberOfColumns: number;
   board: Array<Array<number>>;
 };
 
-export type TFindPathType = TBasePikachuType & {
-  sourcePiece: TPositionType;
-  targetPiece: TPositionType;
+export type TFindPath = TBasePikachu & {
+  sourcePiece: TPosition;
+  targetPiece: TPosition;
   numberOfLines: number;
 };
 
-export type TFindPathWithoutTargetType = TBasePikachuType & {
+export type TFindPathWithoutTarget = TBasePikachu & {
   numberOfLines: number;
 };
 
-export type TPikachuNewBoardType = {
+export type TPikachuNewBoard = {
   numberOfRows: number;
   numberOfColumns: number;
   numTypes: number;
 };
 
-export type TPikachuTransformType =
+export type TPikachuTransform =
   | 'normal'
   | 'fallDown'
   | 'fallUp'
@@ -42,21 +42,21 @@ export type TPikachuTransformType =
   | 'spreadOut'
   | 'collapseToCenter';
 
-export type TPerformFormatType = {
+export type TPerformFormat = {
   board: Array<Array<number>>;
-  vector: TVectorType;
-  space: [TPositionType, TPositionType];
+  vector: TVector;
+  space: [TPosition, TPosition];
 };
 
-export type TPerformTransformType = TPerformFormatType & {
-  moves: Array<TPositionType>;
+export type TPerformTransform = TPerformFormat & {
+  moves: Array<TPosition>;
 };
 
-export type TMoveParamsType = TBasePikachuType & {
-  moves: Array<TPositionType>;
+export type TMoveParams = TBasePikachu & {
+  moves: Array<TPosition>;
 };
 
-export enum PikachuMachineStateType {
+export enum PikachuMachineState {
   INITIAL = 'initial',
   PLAYING = 'playing',
   OUT_OF_MOVE = 'out-of-move',
@@ -74,27 +74,27 @@ export enum PikachuMachineEvent {
   WIN = 'win',
 }
 
-export type TPikachuCreateEventType = {
+export type TPikachuCreateEvent = {
   type: PikachuMachineEvent.CREATE;
   mode: 'newGame' | 'nextRound';
 };
-export type TPikachuMoveEventType = {
+export type TPikachuMoveEvent = {
   type: PikachuMachineEvent.MOVE;
-  position: TPositionType;
+  position: TPosition;
 };
-export type TPikachuEventType =
-  | TPikachuCreateEventType
+export type TPikachuEvent =
+  | TPikachuCreateEvent
   | { type: PikachuMachineEvent.CHANGE }
-  | TPikachuMoveEventType
+  | TPikachuMoveEvent
   | { type: PikachuMachineEvent.RESET_SELECTION }
   | { type: PikachuMachineEvent.SHOW_HINT }
   | { type: PikachuMachineEvent.OUT_OF_MOVE }
   | { type: PikachuMachineEvent.LOAD_SAVE_GAME }
   | { type: PikachuMachineEvent.WIN };
 
-export type TPikachuContextType = {
-  position?: TPositionType;
-  selectedPath: Array<TPositionType>;
+export type TPikachuContext = {
+  position?: TPosition;
+  selectedPath: Array<TPosition>;
   randomCounter: number;
   hintRunning: boolean;
 };

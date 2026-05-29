@@ -5,7 +5,7 @@ import { AnchorProvider, Program } from '@coral-xyz/anchor';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { TOptionalQueryType } from 'src/types/global';
+import { TOptionalQuery } from 'src/types/global';
 import { getSolanaRpc } from 'src/web3/services/utils';
 import { TContractActionParams } from 'src/web3/types';
 
@@ -50,7 +50,7 @@ export default function useSolanaReadContract() {
 
 type TQueryType = {
   contractParams: TContractActionParams;
-  queryParams?: TOptionalQueryType<unknown>;
+  queryParams?: TOptionalQuery<unknown>;
 };
 
 export function useQuerySolanaReadContract({ contractParams, queryParams }: TQueryType) {

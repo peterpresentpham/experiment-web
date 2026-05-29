@@ -1,23 +1,23 @@
 import { checkWin } from 'src/services/caro.utils';
 import {
-  TCaroGameType,
-  TCaroSizeBoardType,
-  TCaroWinModeType,
-  TPlayModeType,
-  TTurnType,
-  TWinStateType,
+  TCaroGame,
+  TCaroSizeBoard,
+  TCaroWinMode,
+  TPlayMode,
+  TTurn,
+  TWinState,
 } from 'src/types/caro.type';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
 type TCaroMetadataType = {
-  playMode: TPlayModeType;
-  gameType: TCaroGameType;
-  winMode: TCaroWinModeType;
+  playMode: TPlayMode;
+  gameType: TCaroGame;
+  winMode: TCaroWinMode;
   isOverride: boolean;
   status: 'playing' | 'win';
-  size: TCaroSizeBoardType;
+  size: TCaroSizeBoard;
   maxNumberOfBlindError: number;
   preWinner: number;
 };
@@ -26,15 +26,15 @@ type TCaroStateType = {
   metadata: TCaroMetadataType;
   numberOfBlindError: { 0: number; 1: number };
   isBlindForceOver: boolean;
-  turn: TTurnType;
-  steps: { [key: number]: TTurnType };
+  turn: TTurn;
+  steps: { [key: number]: TTurn };
   stepsOrder: Array<number>;
-  winState?: TWinStateType;
+  winState?: TWinState;
   fn: {
     move: (location: number) => void;
     undo: () => void;
-    reset: (turn?: TTurnType) => void;
-    countNumberOfBlindError: (turn: TTurnType) => void;
+    reset: (turn?: TTurn) => void;
+    countNumberOfBlindError: (turn: TTurn) => void;
     setMetadata: (metadata: Partial<Omit<TCaroMetadataType, 'status'>>) => void;
   };
 };
@@ -76,7 +76,7 @@ export const useCaroStore = create<
               if (_winState.winMode.length > 0) {
                 state.winState = _winState;
                 state.metadata.status = 'win';
-              } else state.turn = (1 - state.turn) as TTurnType;
+              } else state.turn = (1 - state.turn) as TTurn;
             });
           },
           undo: () => {
@@ -105,13 +105,13 @@ export const useCaroStore = create<
               state.isBlindForceOver = false;
             });
           },
-          countNumberOfBlindError: (turn: TTurnType) => {
+          countNumberOfBlindError: (turn: TTurn) => {
             set((state) => {
               const currentErrors = state.numberOfBlindError[turn];
               state.numberOfBlindError[turn] = currentErrors + 1;
               if (state.numberOfBlindError[turn] > state.metadata.maxNumberOfBlindError) {
                 state.isBlindForceOver = true;
-                state.turn = (1 - state.turn) as TTurnType;
+                state.turn = (1 - state.turn) as TTurn;
               }
             });
           },

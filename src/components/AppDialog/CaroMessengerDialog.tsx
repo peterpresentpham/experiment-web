@@ -5,13 +5,13 @@ import { useCaroConnectionContext } from 'src/context/caro-connection.context';
 import { cn } from 'src/lib/utils';
 import { createCaroMessage } from 'src/services/caro.utils';
 import { useGameMessengerChat } from 'src/states/messenger.state';
-import { TMyGameType } from 'src/types/caro.type';
+import { TMyGame } from 'src/types/caro.type';
 import AppTooltip from '../AppTooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '../shadcn/dialog';
 import { Textarea } from '../shadcn/textarea';
 
 interface TProps {
-  gameType: TMyGameType;
+  gameType: TMyGame;
 }
 
 export default function CaroMessengerDialog({ gameType }: TProps) {

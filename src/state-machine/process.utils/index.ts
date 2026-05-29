@@ -1,14 +1,14 @@
 import { useProcessStore } from 'src/states/process.state';
 import { PriorityQueue } from 'src/structure/PriorityQueue';
 import Queue from 'src/structure/Queue';
-import { TProcessType } from 'src/types/process.type';
+import { TProcess } from 'src/types/process.type';
 import { TInitializeProcessEventType, TProcessContextType } from './type.utils';
 
 export function initializeProcessesAction(
   event: TInitializeProcessEventType
 ): Partial<TProcessContextType> {
   const processes = Object.values(event.processes);
-  const newQueue = new PriorityQueue<TProcessType>((a, b) => {
+  const newQueue = new PriorityQueue<TProcess>((a, b) => {
     return a.arrivalTime - b.arrivalTime;
   });
   processes.forEach((p) => newQueue.push(p));
@@ -16,8 +16,8 @@ export function initializeProcessesAction(
   setMetadata({ status: 'running' });
   return {
     newQueue,
-    waitingQueue: new Queue<TProcessType>(),
-    readyQueue: new Queue<TProcessType>(),
+    waitingQueue: new Queue<TProcess>(),
+    readyQueue: new Queue<TProcess>(),
   };
 }
 

@@ -1,30 +1,30 @@
-export type TTurnType = 0 | 1;
-export type TRoleType = 'host' | 'guest';
-export type TConnectionType = 'init' | 'connecting' | 'connected';
-export type TPlayModeType = 'offline' | 'online' | 'machine';
-export type TCaroGameType = 'normal' | 'blind';
-export type TCaroWinModeType = 'blockOpponent' | 'non-blockOpponent';
-export type TCaroSizeBoardType = 3 | 10 | 15;
-export type TChatType = 'yourChat' | 'friendChat';
-export type TMyGameType = 'caro' | 'connect4';
-export type TMyAllGameType = TMyGameType | 'pikachu';
+export type TTurn = 0 | 1;
+export type TRole = 'host' | 'guest';
+export type TConnection = 'init' | 'connecting' | 'connected';
+export type TPlayMode = 'offline' | 'online' | 'machine';
+export type TCaroGame = 'normal' | 'blind';
+export type TCaroWinMode = 'blockOpponent' | 'non-blockOpponent';
+export type TCaroSizeBoard = 3 | 10 | 15;
+export type TChat = 'yourChat' | 'friendChat';
+export type TMyGame = 'caro' | 'connect4';
+export type TMyAllGame = TMyGame | 'pikachu';
 
-export type TCaroWinType = 'leftDiagonal' | 'rightDiagonal' | 'vertical' | 'horizontal';
+export type TCaroWin = 'leftDiagonal' | 'rightDiagonal' | 'vertical' | 'horizontal';
 
-export type TWinStateType = {
-  winMode: Array<TCaroWinType>;
+export type TWinState = {
+  winMode: Array<TCaroWin>;
   locations: {
-    [location: number]: Partial<{ [type in TCaroWinType]: boolean }>;
+    [location: number]: Partial<{ [type in TCaroWin]: boolean }>;
   };
 };
 
-export type TConnect4WinType = TCaroWinType;
+export type TConnect4Win = TCaroWin;
 
 export type TConnect4WinStateType = {
-  winMode: Array<TConnect4WinType>;
+  winMode: Array<TConnect4Win>;
   locations: {
-    [key: string]: Partial<{ [type in TConnect4WinType]: boolean }>;
+    [key: string]: Partial<{ [type in TConnect4Win]: boolean }>;
   };
 };
 
-export type TCaroMessageType = 'chat' | 'move' | 'newGame' | 'undo' | 'sync';
+export type TCaroMessage = 'chat' | 'move' | 'newGame' | 'undo' | 'sync';

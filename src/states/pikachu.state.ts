@@ -1,7 +1,7 @@
 import { pikachuRoundTransformations } from 'src/configs/pikachu.constance';
 import { getRandom } from 'src/services';
-import { TPositionType } from 'src/types/global';
-import { TPikachuGameType, TPikachuImgType, TPikachuTransformType } from 'src/types/pikachu.type';
+import { TPosition } from 'src/types/global';
+import { TPikachuGame, TPikachuImg, TPikachuTransform } from 'src/types/pikachu.type';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
@@ -11,21 +11,21 @@ type TPikachuMetadataType = {
   numberOfColumns: number;
   numberOfLines: number;
   round: number;
-  imgType: TPikachuImgType;
-  roundList: Array<TPikachuTransformType>;
+  imgType: TPikachuImg;
+  roundList: Array<TPikachuTransform>;
   randomRoundListIndex: number;
-  gameType: TPikachuGameType;
+  gameType: TPikachuGame;
 };
 
 type TPikachuStateType = {
   metadata: TPikachuMetadataType;
   board: Array<Array<number>>;
-  suggestion: Array<TPositionType>;
+  suggestion: Array<TPosition>;
   fn: {
-    createBoard: (mode: 'newGame' | 'nextRound', board: number[][], path: TPositionType[]) => void;
-    changeBoard: (board: number[][], path: TPositionType[]) => void;
+    createBoard: (mode: 'newGame' | 'nextRound', board: number[][], path: TPosition[]) => void;
+    changeBoard: (board: number[][], path: TPosition[]) => void;
     move: (board: Array<Array<number>>) => void;
-    movePath: (board: Array<Array<number>>, path: Array<TPositionType>) => void;
+    movePath: (board: Array<Array<number>>, path: Array<TPosition>) => void;
     moveChangeBoard: (board: Array<Array<number>>) => void;
     setMetadata: (metadata: Partial<TPikachuMetadataType>) => void;
   };
@@ -52,11 +52,7 @@ export const usePikachuStore = create<
         board: [],
         suggestion: [],
         fn: {
-          createBoard: (
-            mode: 'newGame' | 'nextRound',
-            board: number[][],
-            path: TPositionType[]
-          ) => {
+          createBoard: (mode: 'newGame' | 'nextRound', board: number[][], path: TPosition[]) => {
             set((state) => {
               const { roundList, round } = state.metadata;
               state.board = board;
@@ -68,7 +64,7 @@ export const usePikachuStore = create<
               }
             });
           },
-          changeBoard: (board: number[][], path: TPositionType[]) => {
+          changeBoard: (board: number[][], path: TPosition[]) => {
             set((state) => {
               state.board = board;
               state.suggestion = path;
@@ -79,7 +75,7 @@ export const usePikachuStore = create<
               state.board = board;
             });
           },
-          movePath: (board: Array<Array<number>>, path: Array<TPositionType>) => {
+          movePath: (board: Array<Array<number>>, path: Array<TPosition>) => {
             set((state) => {
               state.board = board;
               state.suggestion = path;

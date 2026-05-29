@@ -1,9 +1,9 @@
 import { useProcessStore } from 'src/states/process.state';
 import {
   ProcessMonitoringStatusType,
-  TProcessMonitorType,
+  TProcessMonitor,
   ProcessStatusType,
-  TProcessType,
+  TProcess,
 } from 'src/types/process.type';
 import { addMonitorData } from './monitor.utils';
 import { TProcessContextType } from './type.utils';
@@ -31,7 +31,7 @@ export function runProcessEntry(context: TProcessContextType): Partial<TProcessC
       });
       return { waitingQueue, currentProcess: undefined };
     } else {
-      const data: Partial<Omit<TProcessType, 'pid'>> = { state: ProcessStatusType.RUNNING };
+      const data: Partial<Omit<TProcess, 'pid'>> = { state: ProcessStatusType.RUNNING };
       const saveProcess = useProcessStore.getState().processes[currentProcess.pid];
       if (saveProcess.beginAt === -1) {
         data.beginAt = context.counter;
@@ -51,12 +51,12 @@ export function runProcessAction(context: TProcessContextType): Partial<TProcess
   const waitingQueue = context.waitingQueue;
   const readyQueue = context.readyQueue;
   const metricsData = context.metricsData;
-  const monitorData: Array<TProcessMonitorType> = [];
+  const monitorData: Array<TProcessMonitor> = [];
   if (waitingQueue && readyQueue) {
     const maxBlockTaskPerSlice = useProcessStore.getState().maxBlockTaskPerSlice;
     let counter = 0;
     const updateProcess = useProcessStore.getState().fn.updateProcess;
-    const _willRunWaitingQueue: Array<TProcessType> = [];
+    const _willRunWaitingQueue: Array<TProcess> = [];
     while (!waitingQueue.isEmpty() && ++counter <= maxBlockTaskPerSlice) {
       _willRunWaitingQueue.push(waitingQueue.dequeue()!);
     }

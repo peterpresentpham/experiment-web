@@ -1,20 +1,20 @@
 import {
-  TCaroGameType,
-  TCaroMessageType,
-  TCaroSizeBoardType,
-  TCaroWinModeType,
-  TCaroWinType,
-  TTurnType,
-  TWinStateType,
+  TCaroGame,
+  TCaroMessage,
+  TCaroSizeBoard,
+  TCaroWinMode,
+  TCaroWin,
+  TTurn,
+  TWinState,
 } from 'src/types/caro.type';
 
 type TBlockMode = 'opposite' | 'wall' | undefined;
 
 type TParamsType = {
-  steps: { [key: number]: TTurnType };
+  steps: { [key: number]: TTurn };
   currentStep: number;
-  currentPlayer: TTurnType;
-  size: TCaroSizeBoardType;
+  currentPlayer: TTurn;
+  size: TCaroSizeBoard;
 };
 
 type TSideReturnType = {
@@ -115,7 +115,7 @@ function checkRightHorizontal(params: TParamsType) {
 }
 
 const config: Record<
-  TCaroWinType,
+  TCaroWin,
   {
     side1Func: (params: TParamsType) => TSideReturnType;
     side2Func: (params: TParamsType) => TSideReturnType;
@@ -128,9 +128,9 @@ const config: Record<
 };
 
 function _analyticStep(
-  type: TCaroWinType,
+  type: TCaroWin,
   params: TParamsType,
-  winMode: TCaroWinModeType,
+  winMode: TCaroWinMode,
   sizeForWin: number
 ) {
   const side1 = config[type].side1Func(params);
@@ -158,20 +158,20 @@ function _analyticStep(
  * @param winConfigMode - Win mode configuration:
  *   - 'blockOpponent': Win is blocked if opponent pieces are on both ends
  *   - 'non-blockOpponent': Win is not blocked by opponent pieces
- * @returns TWinStateType object containing:
+ * @returns TWinState object containing:
  *   - winMode: Array of win types achieved (e.g., ['horizontal', 'vertical'])
  *   - locations: Map of winning cell locations to their win types
  */
-export function checkWin(params: TParamsType, winConfigMode: TCaroWinModeType): TWinStateType {
+export function checkWin(params: TParamsType, winConfigMode: TCaroWinMode): TWinState {
   const _sizeForWin = params.size > 3 ? 4 : 2;
   const leftDiagonal = _analyticStep('leftDiagonal', params, winConfigMode, _sizeForWin);
   const rightDiagonal = _analyticStep('rightDiagonal', params, winConfigMode, _sizeForWin);
   const vertical = _analyticStep('vertical', params, winConfigMode, _sizeForWin);
   const horizontal = _analyticStep('horizontal', params, winConfigMode, _sizeForWin);
   const { currentStep } = params;
-  const locations: TWinStateType['locations'] = {};
+  const locations: TWinState['locations'] = {};
 
-  const winMode: Array<TCaroWinType> = [];
+  const winMode: Array<TCaroWin> = [];
   if (leftDiagonal.isWin) {
     winMode.push('leftDiagonal');
     for (const _location of leftDiagonal.arr.concat(currentStep)) {
@@ -204,27 +204,27 @@ export function checkWin(params: TParamsType, winConfigMode: TCaroWinModeType): 
   return { locations, winMode };
 }
 
-export function createCaroMessage(type: TCaroMessageType, ...message: Array<string | number>) {
+export function createCaroMessage(type: TCaroMessage, ...message: Array<string | number>) {
   return `${type}_${message.join('_')}`;
 }
 
 export type TSyncReturnType = {
-  size: TCaroSizeBoardType;
-  gameType: TCaroGameType;
+  size: TCaroSizeBoard;
+  gameType: TCaroGame;
   isOverride: boolean;
 };
 
 export function decodeCaroMessage(message: string) {
   const [type, ...restMessage] = message.split('_');
-  const realType = type as TCaroMessageType;
+  const realType = type as TCaroMessage;
   if (realType == 'chat') return { type: realType, message: restMessage[0] };
   else if (realType == 'move') return { type: realType, message: parseInt(restMessage[0]) };
   else if (realType == 'sync')
     return {
       type: realType,
       message: {
-        size: restMessage[0] as unknown as TCaroSizeBoardType,
-        gameType: restMessage[1] as TCaroGameType,
+        size: restMessage[0] as unknown as TCaroSizeBoard,
+        gameType: restMessage[1] as TCaroGame,
         isOverride: restMessage[2] == '0' ? false : true,
       },
     };

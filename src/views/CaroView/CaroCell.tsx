@@ -4,14 +4,14 @@ import { AnimatePresence, motion } from 'motion/react';
 import { ComponentProps, memo, useMemo } from 'react';
 import GameWinLines from 'src/components/games/GameWinLines';
 import { cn } from 'src/lib/utils';
-import { TCaroGameType, TTurnType, TWinStateType } from 'src/types/caro.type';
+import { TCaroGame, TTurn, TWinState } from 'src/types/caro.type';
 
 interface TCaroCellProps extends ComponentProps<'div'> {
   location: number;
   size: number;
-  turn: TTurnType | undefined;
-  winTypes: TWinStateType['locations'][number] | undefined;
-  gameType: TCaroGameType;
+  turn: TTurn | undefined;
+  winTypes: TWinState['locations'][number] | undefined;
+  gameType: TCaroGame;
   isCurrent: boolean;
   isWin: boolean;
   isBlindForceOver: boolean;

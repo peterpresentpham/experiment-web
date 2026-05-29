@@ -3,21 +3,21 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import { DIALOG_KEY } from 'src/configs/constance';
 import { useDialogStore } from 'src/states/dialog.state';
-import { TMyAllGameType } from 'src/types/caro.type';
+import { TMyAllGame } from 'src/types/caro.type';
 import AppTooltip from '../AppTooltip';
 import { Button } from '../shadcn/button';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '../shadcn/dialog';
 
-const configs: { [key in TMyAllGameType]: { title: string; link: string } } = {
+const configs: { [key in TMyAllGame]: { title: string; link: string } } = {
   caro: { title: 'Caro', link: '/caro' },
   connect4: { title: 'Connect4', link: '/connect4' },
   pikachu: { title: 'Pikachu', link: '/pikachu' },
 };
 
-const _arr: Array<TMyAllGameType> = ['caro', 'connect4', 'pikachu'];
+const _arr: Array<TMyAllGame> = ['caro', 'connect4', 'pikachu'];
 
 interface TProps {
-  game: TMyAllGameType;
+  game: TMyAllGame;
 }
 
 export default function RoutingGameDialog({ game }: TProps) {

@@ -3,7 +3,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { TOptionalQueryType } from 'src/types/global';
+import { TOptionalQuery } from 'src/types/global';
 import { ChainId, TContractActionParams } from 'src/web3/types';
 import { createPublicClient, fallback, http, HttpTransport } from 'viem';
 import { base, bsc } from 'viem/chains';
@@ -49,7 +49,7 @@ export default function useEvmReadContract() {
 type TQueryType = {
   chainId: ChainId;
   contractParams: TContractActionParams;
-  queryParams?: TOptionalQueryType<unknown>;
+  queryParams?: TOptionalQuery<unknown>;
 };
 
 export function useQueryEvmReadContract({ chainId, contractParams, queryParams }: TQueryType) {

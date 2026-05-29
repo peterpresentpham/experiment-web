@@ -1,10 +1,10 @@
 import { useProcessStore } from 'src/states/process.state';
-import { TProcessMonitorType } from 'src/types/process.type';
+import { TProcessMonitor } from 'src/types/process.type';
 
 export function addMonitorData(
-  newData: Array<TProcessMonitorType>,
-  oldData: Array<TProcessMonitorType>
-): Array<TProcessMonitorType> {
+  newData: Array<TProcessMonitor>,
+  oldData: Array<TProcessMonitor>
+): Array<TProcessMonitor> {
   const maxBlockTaskPerSlice = useProcessStore.getState().maxBlockTaskPerSlice;
 
   const minIndex =

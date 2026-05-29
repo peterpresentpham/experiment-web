@@ -1,21 +1,21 @@
 import { useConfigStore } from 'src/states/config.state';
-import { TSoundConfigType, SoundType } from 'src/types/global';
+import { TSoundConfigType, TSound } from 'src/types/global';
 
-const sources: Record<SoundType, string> = {
-  [SoundType.CLICK]: '/sounds/click.mp3',
-  [SoundType.MOVE]: '/sounds/move.mp3',
-  [SoundType.SUCCESS]: '/sounds/success.mp3',
-  [SoundType.ERROR]: '/sounds/error.mp3',
-  [SoundType.BACKGROUND]: '/sounds/background.mp3',
+const sources: Record<TSound, string> = {
+  [TSound.CLICK]: '/sounds/click.mp3',
+  [TSound.MOVE]: '/sounds/move.mp3',
+  [TSound.SUCCESS]: '/sounds/success.mp3',
+  [TSound.ERROR]: '/sounds/error.mp3',
+  [TSound.BACKGROUND]: '/sounds/background.mp3',
 };
 
 class Soundtrack {
-  private cache: Record<SoundType, HTMLAudioElement | null> = {
-    [SoundType.CLICK]: null,
-    [SoundType.MOVE]: null,
-    [SoundType.SUCCESS]: null,
-    [SoundType.ERROR]: null,
-    [SoundType.BACKGROUND]: null,
+  private cache: Record<TSound, HTMLAudioElement | null> = {
+    [TSound.CLICK]: null,
+    [TSound.MOVE]: null,
+    [TSound.SUCCESS]: null,
+    [TSound.ERROR]: null,
+    [TSound.BACKGROUND]: null,
   };
 
   private createAudio(config: TSoundConfigType) {
@@ -33,7 +33,7 @@ class Soundtrack {
   }
 
   preload() {
-    Object.values(SoundType).forEach((type) => {
+    Object.values(TSound).forEach((type) => {
       const audio = new Audio(sources[type]);
       audio.preload = 'auto';
       audio.load();
@@ -61,7 +61,7 @@ class Soundtrack {
     this.cache[rest.type] = this._play(this.cache[rest.type], rest);
   }
 
-  stop(type: SoundType) {
+  stop(type: TSound) {
     const audio = this.cache[type];
     if (audio) {
       audio.pause();

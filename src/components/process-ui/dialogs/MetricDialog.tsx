@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Button } from 'src/components/shadcn/button';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from 'src/components/shadcn/dialog';
 import { useProcessStateMachine } from 'src/state-machine/process.state-machine';
-import { TProcessMeasureMetricsType } from 'src/types/process.type';
+import { TProcessMeasureMetrics } from 'src/types/process.type';
 
 export default function MetricDialog(props: DialogProps) {
   const { state } = useProcessStateMachine();
@@ -11,7 +11,7 @@ export default function MetricDialog(props: DialogProps) {
 
   const { globalMetric, processMetrics } = useMemo(() => {
     const rawMetric = state.context.metricsData;
-    const processMetrics: Array<TProcessMeasureMetricsType & { index?: number }> = Object.values(
+    const processMetrics: Array<TProcessMeasureMetrics & { index?: number }> = Object.values(
       rawMetric
     ).map((item) => {
       const turnaroundTime =
@@ -23,8 +23,8 @@ export default function MetricDialog(props: DialogProps) {
     });
 
     const averageMetric = (
-      key: keyof TProcessMeasureMetricsType
-    ): TProcessMeasureMetricsType[keyof TProcessMeasureMetricsType] => {
+      key: keyof TProcessMeasureMetrics
+    ): TProcessMeasureMetrics[keyof TProcessMeasureMetrics] => {
       let sum = 0;
       let count = 0;
       processMetrics.forEach((item) => {
@@ -37,7 +37,7 @@ export default function MetricDialog(props: DialogProps) {
       return count > 0 ? sum / count : undefined;
     };
 
-    const globalMetric: TProcessMeasureMetricsType = {
+    const globalMetric: TProcessMeasureMetrics = {
       turnaroundTime: averageMetric('turnaroundTime'),
       waitingTime: averageMetric('waitingTime'),
       responseTime: averageMetric('responseTime'),

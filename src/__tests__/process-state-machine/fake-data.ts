@@ -1,6 +1,6 @@
-import { TProcessDataObjectType, ProcessStatusType } from 'src/types/process.type';
+import { TProcessDataObject, ProcessStatusType } from 'src/types/process.type';
 
-export const initialProcesses: TProcessDataObjectType = {
+export const initialProcesses: TProcessDataObject = {
   '52227ece-ad70-4d20-b196-026479e33770': {
     pid: '52227ece-ad70-4d20-b196-026479e33770',
     arrivalTime: 0,

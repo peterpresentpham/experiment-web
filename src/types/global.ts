@@ -3,11 +3,11 @@ import { AxiosRequestConfig } from 'axios';
 import { LucideProps } from 'lucide-react';
 import { ComponentProps, RefAttributes } from 'react';
 
-export type TThemeType = 'light' | 'dark';
-export type TPositionType = [number, number]; // expect [row, column]
-export type TVectorType = TPositionType; // expect [x, y]
+export type TTheme = 'light' | 'dark';
+export type TPosition = [number, number]; // expect [row, column]
+export type TVector = TPosition; // expect [x, y]
 
-export enum SoundType {
+export enum TSound {
   CLICK = 'click',
   MOVE = 'move',
   SUCCESS = 'success',
@@ -16,7 +16,7 @@ export enum SoundType {
 }
 
 export type TSoundConfigType = {
-  type: SoundType;
+  type: TSound;
   loop?: boolean;
   volume?: number;
   isEnabled?: boolean;
@@ -40,16 +40,16 @@ export interface TAnimationComponentDivProps<
   iconProps?: T;
 }
 
-export type TOptionalQueryType<T = unknown> = Omit<UseQueryOptions<T>, 'queryKey' | 'queryFn'>;
+export type TOptionalQuery<T = unknown> = Omit<UseQueryOptions<T>, 'queryKey' | 'queryFn'>;
 
-export type TJsonType =
+export type TJson =
   | string
   | number
   | Array<string>
   | Array<number>
-  | { [index: string | number]: TJsonType };
+  | { [index: string | number]: TJson };
 
-export type TPageMetadataType = Partial<{
+export type TPageMetadata = Partial<{
   title: string;
   description: string;
   url: string;

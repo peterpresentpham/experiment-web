@@ -1,10 +1,8 @@
 import PikachuService from 'src/services/pikachu';
 import { usePikachuStore } from 'src/states/pikachu.state';
-import { TPikachuContextType, TPikachuCreateEventType } from 'src/types/pikachu.type';
+import { TPikachuContext, TPikachuCreateEvent } from 'src/types/pikachu.type';
 
-export function createPikachuAction({
-  mode,
-}: TPikachuCreateEventType): Partial<TPikachuContextType> {
+export function createPikachuAction({ mode }: TPikachuCreateEvent): Partial<TPikachuContext> {
   const { metadata, fn } = usePikachuStore.getState();
   const { numberOfRows, numberOfColumns, numberOfLines, imgType } = metadata;
   const { board, path } = PikachuService.createNewBoard({

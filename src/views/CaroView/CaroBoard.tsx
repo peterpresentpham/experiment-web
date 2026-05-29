@@ -14,7 +14,7 @@ import { useCaroStateContext } from 'src/context/caro-state.context';
 import { cn } from 'src/lib/utils';
 import { soundtrack } from 'src/services/soundtrack';
 import { useCaroStore } from 'src/states/caro.state';
-import { SoundType } from 'src/types/global';
+import { TSound } from 'src/types/global';
 import CaroCell from './CaroCell';
 import HeaderConfig from './HeaderConfig';
 
@@ -66,18 +66,18 @@ export default function CaroBoard(props: ComponentProps<'div'>) {
 
       if (gameType == 'blind' && steps[location] != undefined) {
         countNumberOfBlindError(turn);
-        soundtrack.play({ type: SoundType.ERROR });
+        soundtrack.play({ type: TSound.ERROR });
       }
 
       if (isOverride) {
         if (!isWin && !shouldDisableBoard && steps[location] != turn) {
-          soundtrack.play({ type: SoundType.CLICK });
+          soundtrack.play({ type: TSound.CLICK });
           move(location);
-        } else soundtrack.play({ type: SoundType.ERROR });
+        } else soundtrack.play({ type: TSound.ERROR });
       } else if (steps[location] == undefined && !isWin && !shouldDisableBoard) {
-        soundtrack.play({ type: SoundType.CLICK });
+        soundtrack.play({ type: TSound.CLICK });
         move(location);
-      } else soundtrack.play({ type: SoundType.ERROR });
+      } else soundtrack.play({ type: TSound.ERROR });
     },
     [
       countNumberOfBlindError,

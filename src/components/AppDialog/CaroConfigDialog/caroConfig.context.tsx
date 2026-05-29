@@ -11,27 +11,22 @@ import {
   useState,
 } from 'react';
 import { useCaroStore } from 'src/states/caro.state';
-import {
-  TCaroGameType,
-  TCaroSizeBoardType,
-  TCaroWinModeType,
-  TPlayModeType,
-} from 'src/types/caro.type';
+import { TCaroGame, TCaroSizeBoard, TCaroWinMode, TPlayMode } from 'src/types/caro.type';
 
 type TCaroConfigContextType = {
-  size: TCaroSizeBoardType;
-  playMode: TPlayModeType;
-  gameType: TCaroGameType;
-  winMode: TCaroWinModeType;
+  size: TCaroSizeBoard;
+  playMode: TPlayMode;
+  gameType: TCaroGame;
+  winMode: TCaroWinMode;
   isOverride: boolean;
   maxError: number;
   fn: {
-    setSize: Dispatch<SetStateAction<TCaroSizeBoardType>>;
-    setPlayMode: Dispatch<SetStateAction<TPlayModeType>>;
-    setGameType: Dispatch<SetStateAction<TCaroGameType>>;
+    setSize: Dispatch<SetStateAction<TCaroSizeBoard>>;
+    setPlayMode: Dispatch<SetStateAction<TPlayMode>>;
+    setGameType: Dispatch<SetStateAction<TCaroGame>>;
     setIsOverride: Dispatch<SetStateAction<boolean>>;
     setMaxError: Dispatch<SetStateAction<number>>;
-    setWinMode: Dispatch<SetStateAction<TCaroWinModeType>>;
+    setWinMode: Dispatch<SetStateAction<TCaroWinMode>>;
   };
 };
 

@@ -4,15 +4,15 @@ import { getRandom, isPositionEqual, sleep } from 'src/services';
 import PikachuService from 'src/services/pikachu';
 import { soundtrack } from 'src/services/soundtrack';
 import { usePikachuStore } from 'src/states/pikachu.state';
-import { SoundType } from 'src/types/global';
+import { TSound } from 'src/types/global';
 import {
-  TPikachuContextType,
-  TPikachuEventType,
   PikachuMachineEvent,
-  TPikachuMoveEventType,
+  TPikachuContext,
+  TPikachuEvent,
+  TPikachuMoveEvent,
 } from 'src/types/pikachu.type';
 
-export function changeBoardAction(): Partial<TPikachuContextType> {
+export function changeBoardAction(): Partial<TPikachuContext> {
   const state = usePikachuStore.getState();
   const { numberOfRows, numberOfColumns, numberOfLines, imgType } = state.metadata;
   const { board, path } = PikachuService.changeBoard({
@@ -27,10 +27,10 @@ export function changeBoardAction(): Partial<TPikachuContextType> {
 }
 
 export function move(
-  context: TPikachuContextType,
-  { position }: TPikachuMoveEventType,
-  send: (event: TPikachuEventType) => void
-): Partial<TPikachuContextType> {
+  context: TPikachuContext,
+  { position }: TPikachuMoveEvent,
+  send: (event: TPikachuEvent) => void
+): Partial<TPikachuContext> {
   const { board, metadata } = usePikachuStore.getState();
   const {
     numberOfRows,
@@ -43,10 +43,10 @@ export function move(
   } = metadata;
   if (board[position[0]][position[1]] == 0) return {};
   if (context.position == undefined) {
-    soundtrack.play({ type: SoundType.CLICK });
+    soundtrack.play({ type: TSound.CLICK });
     return { position };
   } else if (isPositionEqual(context.position, position)) {
-    soundtrack.play({ type: SoundType.CLICK });
+    soundtrack.play({ type: TSound.CLICK });
     return { position: undefined };
   } else {
     const cloneBoard = cloneDeep(board);
@@ -93,7 +93,7 @@ export function move(
         numberOfColumns,
         numberOfLines,
       });
-      soundtrack.play({ type: SoundType.MOVE });
+      soundtrack.play({ type: TSound.MOVE });
       if (possiblePath)
         sleep(150).then(() => {
           fn.movePath(cloneBoard, possiblePath);
@@ -117,7 +117,7 @@ export function move(
       }
       return { randomCounter, selectedPath: path };
     } else {
-      soundtrack.play({ type: SoundType.ERROR });
+      soundtrack.play({ type: TSound.ERROR });
       return { position: undefined, selectedPath: [] };
     }
   }

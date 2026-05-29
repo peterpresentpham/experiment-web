@@ -7,7 +7,7 @@ import { ComponentProps } from 'react';
 import { cn } from 'src/lib/utils';
 import { soundtrack } from 'src/services/soundtrack';
 import { useConfigStore } from 'src/states/config.state';
-import { SoundType } from 'src/types/global';
+import { TSound } from 'src/types/global';
 import ClockLoader from '../ClockLoader';
 
 const buttonVariants = cva(
@@ -40,7 +40,7 @@ const buttonVariants = cva(
 
 type TProps = ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
-    sound?: SoundType;
+    sound?: TSound;
     isSound?: boolean;
     asChild?: boolean;
     isLoading?: boolean;
@@ -53,7 +53,7 @@ function Button(params: TProps) {
     className,
     variant,
     size,
-    sound = SoundType.CLICK,
+    sound = TSound.CLICK,
     isSound = useConfigStore.getState().isSound,
     asChild = false,
     isLoading = false,

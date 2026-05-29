@@ -4,11 +4,11 @@ import { ComponentProps } from 'react';
 import { cn } from 'src/lib/utils';
 import { useGetMe } from 'src/queries/papp/user.query';
 import { useConversationStore } from 'src/states/conversation.state';
-import { TSocketMessage } from 'src/types/papp.type';
+import { TSocketReceiveMessage } from 'src/types/papp.type';
 import MessageItem from './MessageItem';
 
 type TProps = ComponentProps<'div'> & {
-  messages?: TSocketMessage[];
+  messages?: TSocketReceiveMessage[];
 };
 
 export default function MainMessage(props: TProps) {
@@ -21,10 +21,10 @@ export default function MainMessage(props: TProps) {
       {messages.length === 0 ? (
         <p className="text-muted-foreground text-sm">No messages yet.</p>
       ) : (
-        messages.map((item, index) => {
+        messages.map((item) => {
           return (
             <MessageItem
-              key={`${item.conversationId}-${item.senderId}-${index}`}
+              key={`${item.conversationId}-${item.senderId}-${item.id}`}
               senderType={data?.id == item.senderId ? 'me' : 'another'}
               item={item}
               user={conversationUsers[item.senderId]}

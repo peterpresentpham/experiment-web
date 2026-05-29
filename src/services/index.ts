@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Metadata } from 'next';
 import { APP_NAME } from 'src/configs/constance';
-import { TPositionType } from 'src/types/global';
+import { TPosition } from 'src/types/global';
 import { USER_ROLE } from 'src/types/papp.type';
 
 /**
@@ -63,7 +63,7 @@ export function generateAppMetadata(title: string): Metadata {
  * @param position2 - Second position [row, column]
  * @returns True if both positions have the same coordinates
  */
-export function isPositionEqual(position1: TPositionType, position2: TPositionType): boolean {
+export function isPositionEqual(position1: TPosition, position2: TPosition): boolean {
   return position1[0] === position2[0] && position1[1] === position2[1];
 }
 
@@ -73,10 +73,7 @@ export function isPositionEqual(position1: TPositionType, position2: TPositionTy
  * @param positions - Array of positions to search in
  * @returns True if the position is found in the array
  */
-export function isPositionIncludes(
-  position: TPositionType,
-  positions: Array<TPositionType>
-): boolean {
+export function isPositionIncludes(position: TPosition, positions: Array<TPosition>): boolean {
   return positions.some((p) => p[0] === position[0] && p[1] === position[1]);
 }
 

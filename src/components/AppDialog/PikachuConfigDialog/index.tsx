@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTrigger } from 'src/componen
 import { DIALOG_KEY } from 'src/configs/constance';
 import { useDialogStore } from 'src/states/dialog.state';
 import { usePikachuStore } from 'src/states/pikachu.state';
-import { TPikachuTransformType } from 'src/types/pikachu.type';
+import { TPikachuTransform } from 'src/types/pikachu.type';
 import BoardSizeConfig from './BoardSizeConfig';
 import GameTypeConfig from './GameTypeConfig';
 import ImgTypeConfig from './ImgTypeConfig';
@@ -113,12 +113,12 @@ function PikachuConfigDialogDndLayout() {
 
     if (over.id == 'pikachu-config-droppable') {
       setRounds((rounds) => {
-        return [active.id as TPikachuTransformType, ...rounds];
+        return [active.id as TPikachuTransform, ...rounds];
       });
     } else {
       setRounds((rounds) => {
-        const oldIndex = rounds.indexOf(active.id as TPikachuTransformType);
-        const newIndex = rounds.indexOf(over.id as TPikachuTransformType);
+        const oldIndex = rounds.indexOf(active.id as TPikachuTransform);
+        const newIndex = rounds.indexOf(over.id as TPikachuTransform);
 
         return arrayMove(rounds, oldIndex, newIndex);
       });

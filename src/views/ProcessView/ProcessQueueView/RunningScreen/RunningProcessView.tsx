@@ -1,10 +1,10 @@
 import { Activity } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import ViewProcessItem from 'src/components/process-ui/ProcessItem/ViewProcessItem';
-import { TProcessType } from 'src/types/process.type';
+import { TProcess } from 'src/types/process.type';
 
 interface TProps {
-  runningProcess: TProcessType | undefined;
+  runningProcess: TProcess | undefined;
 }
 
 export default function RunningProcessView({ runningProcess }: TProps) {

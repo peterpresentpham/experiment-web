@@ -2,7 +2,7 @@ import { Volume2, VolumeOff } from 'lucide-react';
 import IconButton from 'src/components/buttons/IconButton';
 import { Button } from 'src/components/shadcn/button';
 import { useConfigStore } from 'src/states/config.state';
-import { SoundType } from 'src/types/global';
+import { TSound } from 'src/types/global';
 
 export default function SoundtrackConfig() {
   const { isSound, backgroundSound, fn } = useConfigStore();
@@ -26,16 +26,16 @@ export default function SoundtrackConfig() {
         </div>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        <Button variant="outline" sound={SoundType.CLICK} isSound={true}>
+        <Button variant="outline" sound={TSound.CLICK} isSound={true}>
           Click
         </Button>
-        <Button sound={SoundType.SUCCESS} isSound={true}>
+        <Button sound={TSound.SUCCESS} isSound={true}>
           Success
         </Button>
-        <Button sound={SoundType.MOVE} isSound={true} variant="destructive">
+        <Button sound={TSound.MOVE} isSound={true} variant="destructive">
           Move
         </Button>
-        <Button sound={SoundType.ERROR} isSound={true}>
+        <Button sound={TSound.ERROR} isSound={true}>
           Error
         </Button>
       </div>

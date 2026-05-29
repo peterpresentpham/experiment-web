@@ -1,5 +1,5 @@
 import { useProcessStore } from 'src/states/process.state';
-import { ProcessStatusType, TProcessType } from 'src/types/process.type';
+import { ProcessStatusType, TProcess } from 'src/types/process.type';
 import { TProcessContextType } from './type.utils';
 
 export function scheduleProcessGuard(context: TProcessContextType): boolean {
@@ -15,7 +15,7 @@ export function scheduleProcessesEntry(context: TProcessContextType): Partial<TP
     while (!newQueue.isEmpty() && (newQueue.peek()?.arrivalTime || 0) <= context.counter) {
       const _process = newQueue.pop();
       if (_process) {
-        const readyProcess: TProcessType = { ..._process, state: ProcessStatusType.READY };
+        const readyProcess: TProcess = { ..._process, state: ProcessStatusType.READY };
         const newPriority = readyQueue.enqueue(readyProcess);
         metricsData[readyProcess.pid] = {
           index: readyProcess.index,

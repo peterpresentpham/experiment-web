@@ -2,7 +2,7 @@
 'use client';
 
 import { createContext, ReactNode, useCallback, useContext, useMemo } from 'react';
-import { TTurnType } from 'src/types/caro.type';
+import { TTurn } from 'src/types/caro.type';
 import { createCaroMessage } from 'src/services/caro.utils';
 import { useCaroStore } from 'src/states/caro.state';
 import { useCaroConnectionContext } from './caro-connection.context';
@@ -15,7 +15,7 @@ export type TCaroStateContextType = {
   fn: {
     move: (location: number) => void;
     undo: () => void;
-    reset: (turn?: TTurnType | undefined) => void;
+    reset: (turn?: TTurn | undefined) => void;
   };
 };
 
@@ -104,7 +104,7 @@ export default function CaroStateProvider({ children }: TProps) {
   }, [peer, undo]);
 
   const handleReset = useCallback(
-    (turn?: TTurnType) => {
+    (turn?: TTurn) => {
       reset(turn);
       if (peer) peer.send(createCaroMessage('newGame'));
     },

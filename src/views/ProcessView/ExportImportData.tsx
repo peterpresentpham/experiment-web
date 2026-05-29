@@ -9,7 +9,7 @@ import { Input } from 'src/components/shadcn/input';
 import { Label } from 'src/components/shadcn/label';
 import { exampleProcessData } from 'src/configs/example-process';
 import { useProcessStore } from 'src/states/process.state';
-import { TProcessDataObjectType, ProcessStatusType } from 'src/types/process.type';
+import { TProcessDataObject, ProcessStatusType } from 'src/types/process.type';
 
 interface TProps {
   components?: {
@@ -54,7 +54,7 @@ export default function ExportImportData({ components, isShowExport = true }: TP
       try {
         const json = JSON.parse(event.target?.result as string);
 
-        const result: TProcessDataObjectType = {};
+        const result: TProcessDataObject = {};
 
         if (Array.isArray(json)) {
           json.forEach((item: Record<string, any>, index: number) => {

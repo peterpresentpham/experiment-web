@@ -6,12 +6,12 @@ import ProcessStatus from 'src/components/process-ui/ProcessStatus';
 import { Badge } from 'src/components/shadcn/badge';
 import { cn } from 'src/lib/utils';
 import { formatText } from 'src/services';
-import { ProcessStatusType, TProcessType } from 'src/types/process.type';
+import { ProcessStatusType, TProcess } from 'src/types/process.type';
 import BlockTaskList from './BlockTaskList';
 import { Clock, Timer } from 'lucide-react';
 
 interface TProps {
-  data: TProcessType;
+  data: TProcess;
   metadata?: {
     onlyShowCurrentBlockTask?: boolean;
   };

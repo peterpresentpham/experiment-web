@@ -17,8 +17,8 @@ import { useConnect4StateContext } from 'src/context/connect4-state.context';
 import { cn } from 'src/lib/utils';
 import { soundtrack } from 'src/services/soundtrack';
 import { useConnect4Store } from 'src/states/connect4.state';
-import { TConnect4WinStateType, TTurnType } from 'src/types/caro.type';
-import { SoundType } from 'src/types/global';
+import { TConnect4WinStateType, TTurn } from 'src/types/caro.type';
+import { TSound } from 'src/types/global';
 import HeaderConfig from './HeaderConfig';
 
 type TProps = ComponentProps<'div'>;
@@ -68,12 +68,12 @@ export default function Connect4Board(props: TProps) {
 
       if (steps?.[column] && steps[column].length >= numberOfRows) {
         toast.warning('Invalid move');
-        soundtrack.play({ type: SoundType.ERROR });
+        soundtrack.play({ type: TSound.ERROR });
         if (gameType == 'blind') countNumberOfBlindError(turn);
       } else if (!isWin) {
         move(column);
-        soundtrack.play({ type: SoundType.MOVE });
-      } else soundtrack.play({ type: SoundType.ERROR });
+        soundtrack.play({ type: TSound.MOVE });
+      } else soundtrack.play({ type: TSound.ERROR });
     },
     [countNumberOfBlindError, gameType, isBlindForceOver, move, numberOfRows, steps, turn, winState]
   );
@@ -153,7 +153,7 @@ type TConnect4CellProps = {
   size: number;
   itemSize: number;
   numberOfRows: number;
-  turn: TTurnType | undefined;
+  turn: TTurn | undefined;
   winTypes: TConnect4WinStateType['locations'][string] | undefined;
   isShouldShowMove: boolean;
 };

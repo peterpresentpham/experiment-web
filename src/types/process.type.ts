@@ -20,7 +20,7 @@ export enum ProcessMonitoringStatusType {
   RUNNING_BLOCKING_TASK = 'running-blocking-task',
 }
 
-export interface TProcessMonitorType {
+export interface TProcessMonitor {
   pid: string;
   index?: number;
   start: number;
@@ -28,16 +28,16 @@ export interface TProcessMonitorType {
   state: ProcessMonitoringStatusType;
 }
 
-export type TProcessTimeType = {
+export type TProcessTime = {
   arrivalTime: number; // Time when the process arrives (enters the ready queue)
   executionTime: number; // Total CPU time required to finish the process
   runtime: number; // CPU time already spent running
 };
 
-export type TProcessType = TProcessTimeType & {
+export type TProcess = TProcessTime & {
   index?: number;
   pid: string;
-  blockTasks?: Array<TProcessTimeType>; // simulate the waiting state (example: I/O)
+  blockTasks?: Array<TProcessTime>; // simulate the waiting state (example: I/O)
   currentBlockTaskIndex: number;
   state: ProcessStatusType;
   readyPriority: number;
@@ -46,11 +46,11 @@ export type TProcessType = TProcessTimeType & {
   endAt: number;
 };
 
-export type TProcessDataObjectType = {
-  [id: string]: TProcessType;
+export type TProcessDataObject = {
+  [id: string]: TProcess;
 };
 
-export type TProcessStoreStatusType = 'initial' | 'ready' | 'running' | 'pause' | 'ended';
+export type TProcessStoreStatus = 'initial' | 'ready' | 'running' | 'pause' | 'ended';
 
 export enum SchedulerModeType {
   FIFO = 'fifo',
@@ -66,7 +66,7 @@ export enum ProcessMachineEvent {
   CLEAR = 'clear',
 }
 
-export type TProcessMetricsType = {
+export type TProcessMetrics = {
   index?: number;
   arrivalTime: number;
   burstTime: number; // the total process run
@@ -74,7 +74,7 @@ export type TProcessMetricsType = {
   completionTime?: number; // the time process fullfil
 };
 
-export type TProcessMeasureMetricsType = {
+export type TProcessMeasureMetrics = {
   turnaroundTime?: number; // = completionTime - arrivalTime
   waitingTime?: number; // = turnaroundTime - burstTime
   responseTime?: number; // = startTime - arrivalTime

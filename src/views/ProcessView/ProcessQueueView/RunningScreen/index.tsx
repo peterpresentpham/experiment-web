@@ -2,12 +2,12 @@ import { Cpu } from 'lucide-react';
 import AppTooltip from 'src/components/AppTooltip';
 import { useProcessStateMachine } from 'src/state-machine/process.state-machine';
 import { useProcessStore } from 'src/states/process.state';
-import { ProcessMachineEvent, TProcessType } from 'src/types/process.type';
+import { ProcessMachineEvent, TProcess } from 'src/types/process.type';
 import ExportImportData from '../../ExportImportData';
 import RunningProcessView from './RunningProcessView';
 
 interface TProps {
-  runningProcess: TProcessType | undefined;
+  runningProcess: TProcess | undefined;
 }
 
 export default function RunningScreen({ runningProcess }: TProps) {

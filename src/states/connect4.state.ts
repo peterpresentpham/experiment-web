@@ -1,10 +1,5 @@
 import { checkWin } from 'src/services/connect4.utils';
-import {
-  TCaroGameType,
-  TConnect4WinStateType,
-  TPlayModeType,
-  TTurnType,
-} from 'src/types/caro.type';
+import { TCaroGame, TConnect4WinStateType, TPlayMode, TTurn } from 'src/types/caro.type';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
@@ -12,8 +7,8 @@ import { immer } from 'zustand/middleware/immer';
 type TConnect4MetadataType = {
   numberOfRows: number;
   numberOfColumns: number;
-  playMode: TPlayModeType;
-  gameType: TCaroGameType;
+  playMode: TPlayMode;
+  gameType: TCaroGame;
   status: 'playing' | 'win';
   maxNumberOfBlindError: number;
 };
@@ -22,15 +17,15 @@ type TConnect4Type = {
   metadata: TConnect4MetadataType;
   numberOfBlindError: { 0: number; 1: number };
   isBlindForceOver: boolean;
-  turn: TTurnType;
-  steps: { [column: number]: Array<TTurnType> };
+  turn: TTurn;
+  steps: { [column: number]: Array<TTurn> };
   stepsOrder: Array<number>;
   winState?: TConnect4WinStateType;
   fn: {
     move: (column: number) => void;
     undo: () => void;
-    reset: (turn?: TTurnType) => void;
-    countNumberOfBlindError: (turn: TTurnType) => void;
+    reset: (turn?: TTurn) => void;
+    countNumberOfBlindError: (turn: TTurn) => void;
     setMetadata: (metadata: Partial<TConnect4MetadataType>) => void;
   };
 };
@@ -72,7 +67,7 @@ export const useConnect4Store = create<
               if (_winState.winMode.length > 0) {
                 state.winState = _winState;
                 state.metadata.status = 'win';
-              } else state.turn = (1 - state.turn) as TTurnType;
+              } else state.turn = (1 - state.turn) as TTurn;
             });
           },
           undo: () => {
@@ -98,13 +93,13 @@ export const useConnect4Store = create<
               state.winState = undefined;
             });
           },
-          countNumberOfBlindError: (turn: TTurnType) => {
+          countNumberOfBlindError: (turn: TTurn) => {
             set((state) => {
               const currentErrors = state.numberOfBlindError[turn];
               state.numberOfBlindError[turn] = currentErrors + 1;
               if (state.numberOfBlindError[turn] > state.metadata.maxNumberOfBlindError) {
                 state.isBlindForceOver = true;
-                state.turn = (1 - state.turn) as TTurnType;
+                state.turn = (1 - state.turn) as TTurn;
               }
             });
           },

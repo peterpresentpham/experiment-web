@@ -1,15 +1,15 @@
 import Queue from 'src/structure/Queue';
-import { TPositionType } from 'src/types/global';
-import { TFindPathType, TFindPathWithoutTargetType } from 'src/types/pikachu.type';
+import { TPosition } from 'src/types/global';
+import { TFindPath, TFindPathWithoutTarget } from 'src/types/pikachu.type';
 import { isPositionEqual } from '..';
 
 export function reconstructPath(
   parent: (number[] | null)[][][],
-  end: TPositionType,
+  end: TPosition,
   endDir: number,
-  start: TPositionType
-): TPositionType[] {
-  const path: TPositionType[] = [];
+  start: TPosition
+): TPosition[] {
+  const path: TPosition[] = [];
   let [x, y] = end;
   let d = endDir;
 
@@ -35,7 +35,7 @@ const directions = [
   [0, 1],
 ];
 
-export function findPath(params: TFindPathType): Array<TPositionType> | undefined {
+export function findPath(params: TFindPath): Array<TPosition> | undefined {
   const { numberOfRows, numberOfColumns, board, sourcePiece, targetPiece, numberOfLines } = params;
   const [ax, ay] = sourcePiece;
   const [bx, by] = targetPiece;
@@ -89,8 +89,8 @@ export function findPath(params: TFindPathType): Array<TPositionType> | undefine
 }
 
 function _findPathWithoutTarget(
-  params: Omit<TFindPathType, 'targetPiece'>
-): Array<TPositionType> | undefined {
+  params: Omit<TFindPath, 'targetPiece'>
+): Array<TPosition> | undefined {
   const { numberOfRows, numberOfColumns, board, sourcePiece, numberOfLines } = params;
   const [ax, ay] = sourcePiece;
   const parent: (number[] | null)[][][] = Array.from({ length: numberOfRows + 2 }, () =>
@@ -141,7 +141,7 @@ function _findPathWithoutTarget(
   return undefined;
 }
 
-export function findPathWithoutTarget(params: TFindPathWithoutTargetType) {
+export function findPathWithoutTarget(params: TFindPathWithoutTarget) {
   const { numberOfRows, numberOfColumns, board, numberOfLines } = params;
   let counter = 0;
   for (let i = 1; i <= numberOfRows; i++) {

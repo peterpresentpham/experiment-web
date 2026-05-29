@@ -1,10 +1,10 @@
 import { motion } from 'motion/react';
 import ViewProcessItem from 'src/components/process-ui/ProcessItem/ViewProcessItem';
-import { TProcessType } from 'src/types/process.type';
+import { TProcess } from 'src/types/process.type';
 import BaseQueue from './BaseQueue';
 
 interface TProps {
-  incomingProcesses: TProcessType[];
+  incomingProcesses: TProcess[];
 }
 
 export default function IncomingQueue({ incomingProcesses }: TProps) {

@@ -7,7 +7,7 @@ import { DIALOG_KEY } from 'src/configs/constance';
 import { useCaroConnectionContext } from 'src/context/caro-connection.context';
 import { useCaroStore } from 'src/states/caro.state';
 import { useDialogStore } from 'src/states/dialog.state';
-import { TRoleType } from 'src/types/caro.type';
+import { TRole } from 'src/types/caro.type';
 import GuestConnection from './GuestConnection';
 import HostConnection from './HostConnection';
 
@@ -16,7 +16,7 @@ export default function CaroConnectionDialog() {
   const {
     metadata: { playMode },
   } = useCaroStore();
-  const [role, setRole] = useState<TRoleType>('host');
+  const [role, setRole] = useState<TRole>('host');
   const { peer, connectionType } = useCaroConnectionContext();
 
   return playMode == 'online' ? (

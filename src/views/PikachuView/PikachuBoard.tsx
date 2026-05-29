@@ -6,8 +6,8 @@ import { PIKACHU_URL } from 'src/configs/pikachu.constance';
 import { cn } from 'src/lib/utils';
 import { usePikachuStateMachine } from 'src/state-machine/pikachu.state-machine';
 import { usePikachuStore } from 'src/states/pikachu.state';
-import { TPositionType } from 'src/types/global';
-import { PikachuMachineEvent, PikachuMachineStateType } from 'src/types/pikachu.type';
+import { TPosition } from 'src/types/global';
+import { PikachuMachineEvent, PikachuMachineState } from 'src/types/pikachu.type';
 import PathDraw from './PathDraw';
 import SuggestionDraw from './SuggestionDraw';
 
@@ -24,7 +24,7 @@ export default function PikachuBoard({ size }: TProps) {
     metadata: { numberOfRows, numberOfColumns, imgType },
   } = usePikachuStore();
 
-  function onPieceClick(position: TPositionType) {
+  function onPieceClick(position: TPosition) {
     send({ type: PikachuMachineEvent.MOVE, position });
   }
 
@@ -37,7 +37,7 @@ export default function PikachuBoard({ size }: TProps) {
       className="relative flex h-fit w-fit flex-col items-center gap-y-px"
       style={{ padding: `${size}px` }}
     >
-      {state.value == PikachuMachineStateType.OUT_OF_MOVE && (
+      {state.value == PikachuMachineState.OUT_OF_MOVE && (
         <div className="absolute inset-0 bg-black/50" />
       )}
       {Array.from({ length: numberOfRows }).map((_, _row) => {

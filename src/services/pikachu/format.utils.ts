@@ -1,14 +1,10 @@
-import { TPositionType, TVectorType } from 'src/types/global';
-import {
-  TBasePikachuType,
-  TPerformFormatType,
-  TPikachuTransformType,
-} from 'src/types/pikachu.type';
+import { TPosition, TVector } from 'src/types/global';
+import { TBasePikachu, TPerformFormat, TPikachuTransform } from 'src/types/pikachu.type';
 import { isInSpace, moveAnUnit } from './transform.utils';
 
-function performFormat(params: TPerformFormatType) {
+function performFormat(params: TPerformFormat) {
   const { board, vector, space } = params;
-  const result: Array<TPositionType> = [];
+  const result: Array<TPosition> = [];
   for (let i = space[0][0]; i <= space[1][0]; i++) {
     for (let j = space[0][1]; j <= space[1][1]; j++) {
       if (board[i][j] == 0) result.push([i, j]);
@@ -35,7 +31,7 @@ function performFormat(params: TPerformFormatType) {
   }
 }
 
-function _straight(params: TBasePikachuType, vector: TVectorType) {
+function _straight(params: TBasePikachu, vector: TVector) {
   const { board, numberOfRows, numberOfColumns } = params;
   performFormat({
     board,
@@ -47,7 +43,7 @@ function _straight(params: TBasePikachuType, vector: TVectorType) {
   });
 }
 
-function splitHorizontally(params: TBasePikachuType) {
+function splitHorizontally(params: TBasePikachu) {
   const { board, numberOfRows, numberOfColumns } = params;
   const rowCenter = Math.floor(numberOfRows / 2);
   performFormat({
@@ -68,7 +64,7 @@ function splitHorizontally(params: TBasePikachuType) {
   });
 }
 
-function mergeHorizontally(params: TBasePikachuType) {
+function mergeHorizontally(params: TBasePikachu) {
   const { board, numberOfRows, numberOfColumns } = params;
   const rowCenter = Math.floor(numberOfRows / 2);
   performFormat({
@@ -89,7 +85,7 @@ function mergeHorizontally(params: TBasePikachuType) {
   });
 }
 
-function splitVertically(params: TBasePikachuType) {
+function splitVertically(params: TBasePikachu) {
   const { board, numberOfRows, numberOfColumns } = params;
   const columnCenter = Math.floor(numberOfColumns / 2);
   performFormat({
@@ -110,7 +106,7 @@ function splitVertically(params: TBasePikachuType) {
   });
 }
 
-function mergeVertically(params: TBasePikachuType) {
+function mergeVertically(params: TBasePikachu) {
   const { board, numberOfRows, numberOfColumns } = params;
   const columnCenter = Math.floor(numberOfColumns / 2);
   performFormat({
@@ -131,7 +127,7 @@ function mergeVertically(params: TBasePikachuType) {
   });
 }
 
-function spreadOut(params: TBasePikachuType) {
+function spreadOut(params: TBasePikachu) {
   const { board, numberOfRows, numberOfColumns } = params;
   const rowCenter = Math.floor(numberOfRows / 2);
   const columnCenter = Math.floor(numberOfColumns / 2);
@@ -169,7 +165,7 @@ function spreadOut(params: TBasePikachuType) {
   });
 }
 
-function collapseToCenter(params: TBasePikachuType) {
+function collapseToCenter(params: TBasePikachu) {
   const { board, numberOfRows, numberOfColumns } = params;
   const rowCenter = Math.floor(numberOfRows / 2);
   const columnCenter = Math.floor(numberOfColumns / 2);
@@ -207,7 +203,7 @@ function collapseToCenter(params: TBasePikachuType) {
   });
 }
 
-const configs: Record<TPikachuTransformType, (params: TBasePikachuType) => void> = {
+const configs: Record<TPikachuTransform, (params: TBasePikachu) => void> = {
   normal: () => {},
   fallDown: (params) => _straight(params, [-1, 0]),
   fallUp: (params) => _straight(params, [1, 0]),
@@ -225,6 +221,6 @@ const configs: Record<TPikachuTransformType, (params: TBasePikachuType) => void>
   collapseToCenter,
 };
 
-export function pikachuBoardFormat(params: TBasePikachuType, type: TPikachuTransformType) {
+export function pikachuBoardFormat(params: TBasePikachu, type: TPikachuTransform) {
   configs[type](params);
 }

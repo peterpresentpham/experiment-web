@@ -11,15 +11,15 @@ import {
   useState,
 } from 'react';
 import { useConnect4Store } from 'src/states/connect4.state';
-import { TCaroGameType, TPlayModeType } from 'src/types/caro.type';
+import { TCaroGame, TPlayMode } from 'src/types/caro.type';
 
 type TConnect4ConfigContextType = {
-  playMode: TPlayModeType;
-  gameType: TCaroGameType;
+  playMode: TPlayMode;
+  gameType: TCaroGame;
   maxError: number;
   fn: {
-    setPlayMode: Dispatch<SetStateAction<TPlayModeType>>;
-    setGameType: Dispatch<SetStateAction<TCaroGameType>>;
+    setPlayMode: Dispatch<SetStateAction<TPlayMode>>;
+    setGameType: Dispatch<SetStateAction<TCaroGame>>;
     setMaxError: Dispatch<SetStateAction<number>>;
   };
 };

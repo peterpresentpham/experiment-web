@@ -1,11 +1,11 @@
 import { Bluetooth, Settings } from 'lucide-react';
 import { Button } from 'src/components/shadcn/button';
 import useBoardGameConnectionContext from 'src/hooks/useBoardGameConnection';
-import { TMyGameType, TPlayModeType } from 'src/types/caro.type';
+import { TMyGame, TPlayMode } from 'src/types/caro.type';
 import useBoardGameConfigContext from './useBoardGameConfigContext';
 
 interface TProps {
-  game: TMyGameType;
+  game: TMyGame;
 }
 
 export default function PlayModeConfig({ game }: TProps) {
@@ -15,7 +15,7 @@ export default function PlayModeConfig({ game }: TProps) {
   } = useBoardGameConfigContext(game);
   const { peer } = useBoardGameConnectionContext(game);
 
-  function onChangePlayMode(playMode: TPlayModeType) {
+  function onChangePlayMode(playMode: TPlayMode) {
     setPlayMode(playMode);
     if (playMode != 'online' && peer) peer.destroy();
   }

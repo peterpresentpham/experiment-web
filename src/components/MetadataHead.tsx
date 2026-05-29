@@ -1,8 +1,8 @@
 import Script from 'next/script';
 import { APP_NAME, siteMetadata } from 'src/configs/constance';
-import { TPageMetadataType } from 'src/types/global';
+import { TPageMetadata } from 'src/types/global';
 
-export function MetadataHead(props: Pick<TPageMetadataType, 'title' | 'description'>) {
+export function MetadataHead(props: Pick<TPageMetadata, 'title' | 'description'>) {
   const { title, description, url, siteName, icon, image, twitterHandle, keywords } = siteMetadata;
 
   const realTitle = props.title ? `${APP_NAME} | ${props.title}` : title;

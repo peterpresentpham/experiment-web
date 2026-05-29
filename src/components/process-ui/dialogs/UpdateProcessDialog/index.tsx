@@ -4,10 +4,10 @@ import { Button } from 'src/components/shadcn/button';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from 'src/components/shadcn/dialog';
 import { useProcessStore } from 'src/states/process.state';
 import {
-  TProcessDataObjectType,
+  TProcessDataObject,
   ProcessStatusType,
-  TProcessTimeType,
-  TProcessType,
+  TProcessTime,
+  TProcess,
 } from 'src/types/process.type';
 import MainProcessList from './MainProcessList';
 import UpdateFooter from './UpdateFooter';
@@ -18,7 +18,7 @@ export default function UpdateProcessDialog(props: DialogProps) {
     processes,
     fn: { setProcesses, setMetadata },
   } = useProcessStore();
-  const [data, setData] = useState<TProcessDataObjectType>({});
+  const [data, setData] = useState<TProcessDataObject>({});
 
   useEffect(() => {
     if (props.open) setData(processes);
@@ -27,7 +27,7 @@ export default function UpdateProcessDialog(props: DialogProps) {
   function onCreateProcess() {
     setData((state) => {
       const pid = crypto.randomUUID();
-      const newProcess: TProcessType = {
+      const newProcess: TProcess = {
         pid,
         arrivalTime: 0,
         executionTime: 10,
@@ -44,11 +44,11 @@ export default function UpdateProcessDialog(props: DialogProps) {
   }
 
   function onSave() {
-    const cleanData: TProcessDataObjectType = {};
+    const cleanData: TProcessDataObject = {};
     Object.values(data)
       .sort((a, b) => a.arrivalTime - b.arrivalTime)
       .forEach((process, index) => {
-        const cleanBlockTasks: Array<TProcessTimeType> = [];
+        const cleanBlockTasks: Array<TProcessTime> = [];
         (process.blockTasks || []).forEach((task) => {
           const isIntersects = cleanBlockTasks.some((t) => {
             const start1 = task.arrivalTime;

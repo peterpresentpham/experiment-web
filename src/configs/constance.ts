@@ -1,8 +1,8 @@
 import { Be_Vietnam_Pro } from 'next/font/google';
 import IconImg from 'public/favicon.ico';
 import ThumbImg from 'public/thumbnail.webp';
-import { TMyAllGameType } from 'src/types/caro.type';
-import { ENV_TYPE, TPageMetadataType } from 'src/types/global';
+import { TMyAllGame } from 'src/types/caro.type';
+import { ENV_TYPE, TPageMetadata } from 'src/types/global';
 import { SchedulerModeType } from 'src/types/process.type';
 
 export const APP_NAME = 'Experiment App';
@@ -34,13 +34,7 @@ export enum QUERY_KEY {
   getMessages = 'getMessages',
 }
 
-export enum MICROSERVICE_EVENTS {
-  join_conversation = 'join_conversation',
-  send_message = 'send_message',
-  receive_message = 'receive_message',
-}
-
-export const gameConfigs: { [game in TMyAllGameType]: { title: string } } = {
+export const gameConfigs: { [game in TMyAllGame]: { title: string } } = {
   caro: { title: 'Caro' },
   connect4: { title: 'Connect4' },
   pikachu: { title: 'Pikachu' },
@@ -60,7 +54,7 @@ export const ProcessSchedulerConfigs: Record<
   },
 };
 
-export const siteMetadata: TPageMetadataType = {
+export const siteMetadata: TPageMetadata = {
   title: APP_NAME,
   description: 'I will deploy some app to domain.',
   url: 'https://experiment.peter-present.xyz/',

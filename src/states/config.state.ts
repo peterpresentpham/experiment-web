@@ -1,10 +1,10 @@
-import { TThemeType } from 'src/types/global';
+import { TTheme } from 'src/types/global';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
 interface TConfigStateType {
-  theme: TThemeType;
+  theme: TTheme;
   isSound: boolean;
   backgroundSound: boolean;
   fn: { setTheme: () => void; setIsSound: () => void; setBackgroundSound: () => void };

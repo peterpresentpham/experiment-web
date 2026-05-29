@@ -2,17 +2,17 @@
 
 import { createActorContext } from '@xstate/react';
 import {
-  TPikachuContextType,
-  TPikachuEventType,
   PikachuMachineEvent,
-  PikachuMachineStateType,
+  PikachuMachineState,
+  TPikachuContext,
+  TPikachuEvent,
 } from 'src/types/pikachu.type';
 import { assign, setup } from 'xstate';
 import { changeBoardAction, move } from './pikachu.utils/board.utils';
 import { createPikachuAction } from './pikachu.utils/create.utils';
 
 const pikachuMachine = setup({
-  types: { events: {} as TPikachuEventType, context: {} as TPikachuContextType },
+  types: { events: {} as TPikachuEvent, context: {} as TPikachuContext },
   actions: {
     scheduleResetSelection: ({ context, self }) => {
       if (context.selectedPath.length === 0) return;
@@ -24,7 +24,7 @@ const pikachuMachine = setup({
   },
 }).createMachine({
   id: 'process-machine',
-  initial: PikachuMachineStateType.INITIAL,
+  initial: PikachuMachineState.INITIAL,
   context: {
     position: undefined,
     selectedPath: [],
@@ -32,23 +32,23 @@ const pikachuMachine = setup({
     hintRunning: false,
   },
   states: {
-    [PikachuMachineStateType.INITIAL]: {
+    [PikachuMachineState.INITIAL]: {
       on: {
         [PikachuMachineEvent.CREATE]: {
-          target: PikachuMachineStateType.PLAYING,
+          target: PikachuMachineState.PLAYING,
           actions: assign(({ event }) => {
             return createPikachuAction(event);
           }),
         },
         [PikachuMachineEvent.LOAD_SAVE_GAME]: {
-          target: PikachuMachineStateType.PLAYING,
+          target: PikachuMachineState.PLAYING,
         },
       },
     },
-    [PikachuMachineStateType.PLAYING]: {
+    [PikachuMachineState.PLAYING]: {
       on: {
         [PikachuMachineEvent.CREATE]: {
-          target: PikachuMachineStateType.PLAYING,
+          target: PikachuMachineState.PLAYING,
           actions: assign(({ event }) => {
             return createPikachuAction(event);
           }),
@@ -72,7 +72,7 @@ const pikachuMachine = setup({
           }),
         },
         [PikachuMachineEvent.OUT_OF_MOVE]: {
-          target: PikachuMachineStateType.OUT_OF_MOVE,
+          target: PikachuMachineState.OUT_OF_MOVE,
         },
         [PikachuMachineEvent.SHOW_HINT]: {
           actions: assign(({ context }) => {
@@ -80,21 +80,21 @@ const pikachuMachine = setup({
           }),
         },
         [PikachuMachineEvent.WIN]: {
-          target: PikachuMachineStateType.INITIAL,
+          target: PikachuMachineState.INITIAL,
         },
       },
     },
-    [PikachuMachineStateType.OUT_OF_MOVE]: {
+    [PikachuMachineState.OUT_OF_MOVE]: {
       on: {
         [PikachuMachineEvent.CHANGE]: {
-          target: PikachuMachineStateType.PLAYING,
+          target: PikachuMachineState.PLAYING,
           actions: assign(() => {
             return changeBoardAction();
           }),
         },
       },
     },
-    [PikachuMachineStateType.ENDED]: {},
+    [PikachuMachineState.ENDED]: {},
   },
 });
 

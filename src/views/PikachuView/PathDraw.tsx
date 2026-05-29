@@ -1,6 +1,6 @@
-import { TPositionType } from 'src/types/global';
+import { TPosition } from 'src/types/global';
 
-function getMetadata(fromPosition: TPositionType, toPosition: TPositionType, size: number) {
+function getMetadata(fromPosition: TPosition, toPosition: TPosition, size: number) {
   const xDistance = fromPosition[1] - toPosition[1];
   const yDistance = fromPosition[0] - toPosition[0];
   const mode = xDistance != 0 ? 'width' : 'height';
@@ -25,7 +25,7 @@ function getMetadata(fromPosition: TPositionType, toPosition: TPositionType, siz
 
 type TProps = {
   size: number;
-  selectedPath: Array<TPositionType>;
+  selectedPath: Array<TPosition>;
 };
 
 export default function PathDraw({ size, selectedPath }: TProps) {

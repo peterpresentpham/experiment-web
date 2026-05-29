@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { TOptionalQueryType } from 'src/types/global';
+import { TOptionalQuery } from 'src/types/global';
 import { useWeb3WalletContext } from 'src/web3/context/web3-wallet.context';
 import BalanceService, { TBalanceOptionType } from 'src/web3/services/BalanceService';
 import { useWeb3Store } from 'src/web3/states/web3.state';
 
 type TParamsType = Partial<{
-  query: TOptionalQueryType<string | number | undefined>;
+  query: TOptionalQuery<string | number | undefined>;
   params: TBalanceOptionType;
 }>;
 

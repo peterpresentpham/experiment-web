@@ -1,27 +1,27 @@
 import { PriorityQueue } from 'src/structure/PriorityQueue';
 import Queue from 'src/structure/Queue';
 import {
-  TProcessDataObjectType,
+  TProcessDataObject,
   ProcessMachineEvent,
-  TProcessMetricsType,
-  TProcessMonitorType,
-  TProcessType,
+  TProcessMetrics,
+  TProcessMonitor,
+  TProcess,
 } from 'src/types/process.type';
 
 export interface TProcessContextType {
   interval: number;
   counter: number;
-  newQueue: PriorityQueue<TProcessType> | undefined; // incoming processes
-  waitingQueue: Queue<TProcessType> | undefined;
-  readyQueue: Queue<TProcessType> | undefined;
-  currentProcess: TProcessType | undefined;
-  monitorData: Array<TProcessMonitorType>;
-  metricsData: Record<string, TProcessMetricsType>;
+  newQueue: PriorityQueue<TProcess> | undefined; // incoming processes
+  waitingQueue: Queue<TProcess> | undefined;
+  readyQueue: Queue<TProcess> | undefined;
+  currentProcess: TProcess | undefined;
+  monitorData: Array<TProcessMonitor>;
+  metricsData: Record<string, TProcessMetrics>;
 }
 
 export type TInitializeProcessEventType = {
   type: ProcessMachineEvent.INITIALIZE;
-  processes: TProcessDataObjectType;
+  processes: TProcessDataObject;
 };
 
 export type TSetMetadataEventType = {

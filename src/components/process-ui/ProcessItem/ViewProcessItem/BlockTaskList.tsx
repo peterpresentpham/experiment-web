@@ -1,9 +1,9 @@
 import { Timer } from 'lucide-react';
-import { TProcessTimeType } from 'src/types/process.type';
+import { TProcessTime } from 'src/types/process.type';
 
 interface TBlockTaskItemProps {
   index?: number;
-  item: TProcessTimeType;
+  item: TProcessTime;
 }
 
 function BlockTaskItem({ index, item }: TBlockTaskItemProps) {
@@ -33,7 +33,7 @@ function BlockTaskItem({ index, item }: TBlockTaskItemProps) {
 
 interface TProps {
   onlyShowCurrentBlockTask?: boolean;
-  data: Array<TProcessTimeType>;
+  data: Array<TProcessTime>;
   currentBlockTaskIndex: number;
 }
 

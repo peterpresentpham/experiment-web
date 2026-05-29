@@ -1,10 +1,10 @@
 import { AnimatePresence, motion } from 'motion/react';
 import ViewProcessItem from 'src/components/process-ui/ProcessItem/ViewProcessItem';
-import { ProcessStatusType, TProcessType } from 'src/types/process.type';
+import { ProcessStatusType, TProcess } from 'src/types/process.type';
 import BaseQueue from './BaseQueue';
 
 interface TProps {
-  processList: TProcessType[];
+  processList: TProcess[];
 }
 
 export default function WaitingQueue({ processList }: TProps) {

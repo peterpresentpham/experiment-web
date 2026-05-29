@@ -1,15 +1,11 @@
-import { TPositionType, TVectorType } from 'src/types/global';
-import {
-  TMoveParamsType,
-  TPerformTransformType,
-  TPikachuTransformType,
-} from 'src/types/pikachu.type';
+import { TPosition, TVector } from 'src/types/global';
+import { TMoveParams, TPerformTransform, TPikachuTransform } from 'src/types/pikachu.type';
 
-export function moveAnUnit(move: TPositionType, vector: TVectorType): TPositionType {
+export function moveAnUnit(move: TPosition, vector: TVector): TPosition {
   return [move[0] + vector[0], move[1] + vector[1]];
 }
 
-export function isInSpace(move: TPositionType, space: [TPositionType, TPositionType]) {
+export function isInSpace(move: TPosition, space: [TPosition, TPosition]) {
   return (
     space[0][0] <= move[0] &&
     space[0][1] <= move[1] &&
@@ -18,7 +14,7 @@ export function isInSpace(move: TPositionType, space: [TPositionType, TPositionT
   );
 }
 
-function performTransform(params: TPerformTransformType) {
+function performTransform(params: TPerformTransform) {
   const { board, moves, vector, space } = params;
   const inSpaceMoves = moves.filter((move) => isInSpace(move, space));
   for (const move of inSpaceMoves) {
@@ -45,23 +41,23 @@ function performTransform(params: TPerformTransformType) {
   }
 }
 
-function normal(params: TMoveParamsType) {
+function normal(params: TMoveParams) {
   const { board, moves } = params;
   for (const move of moves) {
     board[move[0]][move[1]] = 0;
   }
 }
 
-function _straight(params: TMoveParamsType, vector: TVectorType) {
+function _straight(params: TMoveParams, vector: TVector) {
   const { board, moves, numberOfRows, numberOfColumns } = params;
-  const space: [TPositionType, TPositionType] = [
+  const space: [TPosition, TPosition] = [
     [1, 1],
     [numberOfRows, numberOfColumns],
   ];
   performTransform({ board, moves, vector, space });
 }
 
-function splitHorizontally(params: TMoveParamsType) {
+function splitHorizontally(params: TMoveParams) {
   const { board, moves, numberOfRows, numberOfColumns } = params;
   const rowCenter = Math.floor(numberOfRows / 2);
   performTransform({
@@ -84,7 +80,7 @@ function splitHorizontally(params: TMoveParamsType) {
   });
 }
 
-function mergeHorizontally(params: TMoveParamsType) {
+function mergeHorizontally(params: TMoveParams) {
   const { board, moves, numberOfRows, numberOfColumns } = params;
   const rowCenter = Math.floor(numberOfRows / 2);
   performTransform({
@@ -107,7 +103,7 @@ function mergeHorizontally(params: TMoveParamsType) {
   });
 }
 
-function splitVertically(params: TMoveParamsType) {
+function splitVertically(params: TMoveParams) {
   const { board, moves, numberOfRows, numberOfColumns } = params;
   const columnCenter = Math.floor(numberOfColumns / 2);
   performTransform({
@@ -130,7 +126,7 @@ function splitVertically(params: TMoveParamsType) {
   });
 }
 
-function mergeVertically(params: TMoveParamsType) {
+function mergeVertically(params: TMoveParams) {
   const { board, moves, numberOfRows, numberOfColumns } = params;
   const columnCenter = Math.floor(numberOfColumns / 2);
   performTransform({
@@ -153,7 +149,7 @@ function mergeVertically(params: TMoveParamsType) {
   });
 }
 
-function spreadOut(params: TMoveParamsType) {
+function spreadOut(params: TMoveParams) {
   const { board, moves, numberOfRows, numberOfColumns } = params;
   const rowCenter = Math.floor(numberOfRows / 2);
   const columnCenter = Math.floor(numberOfColumns / 2);
@@ -195,7 +191,7 @@ function spreadOut(params: TMoveParamsType) {
   });
 }
 
-function collapseToCenter(params: TMoveParamsType) {
+function collapseToCenter(params: TMoveParams) {
   const { board, moves, numberOfRows, numberOfColumns } = params;
   const rowCenter = Math.floor(numberOfRows / 2);
   const columnCenter = Math.floor(numberOfColumns / 2);
@@ -237,7 +233,7 @@ function collapseToCenter(params: TMoveParamsType) {
   });
 }
 
-const configs: Record<TPikachuTransformType, (params: TMoveParamsType) => void> = {
+const configs: Record<TPikachuTransform, (params: TMoveParams) => void> = {
   normal,
   fallDown: (params) => _straight(params, [-1, 0]),
   fallUp: (params) => _straight(params, [1, 0]),
@@ -255,6 +251,6 @@ const configs: Record<TPikachuTransformType, (params: TMoveParamsType) => void> 
   collapseToCenter,
 };
 
-export function pikachuBoardTransform(params: TMoveParamsType, type: TPikachuTransformType) {
+export function pikachuBoardTransform(params: TMoveParams, type: TPikachuTransform) {
   configs[type](params);
 }

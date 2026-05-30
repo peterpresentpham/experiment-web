@@ -145,3 +145,7 @@ export function useProcessStateMachine() {
 
   return { state, send: actorRef.send };
 }
+
+export function useProcessMonitorData() {
+  return ProcessMachineContext.useSelector((s) => s.context.monitorData);
+}

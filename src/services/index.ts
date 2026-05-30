@@ -53,8 +53,12 @@ export function formatText(s: string, frac = 3): string {
   return s.length > frac * 2 + 5 ? `${s.substring(0, frac)}...${s.slice(-frac)}` : s;
 }
 
-export function generateAppMetadata(title: string): Metadata {
-  return { title: `${APP_NAME} | ${title}`, openGraph: { title: `${APP_NAME} | ${title}` } };
+export function generateAppMetadata(title: string, description?: string): Metadata {
+  return {
+    title: `${APP_NAME} | ${title}`,
+    description: description || undefined,
+    openGraph: { title: `${APP_NAME} | ${title}` },
+  };
 }
 
 /**

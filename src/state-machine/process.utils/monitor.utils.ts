@@ -7,22 +7,24 @@ export function addMonitorData(
 ): Array<TProcessMonitor> {
   const maxBlockTaskPerSlice = useProcessStore.getState().maxBlockTaskPerSlice;
 
-  const minIndex =
-    oldData.length >= maxBlockTaskPerSlice ? oldData.length - maxBlockTaskPerSlice : 0;
+  // Create a new copy to avoid mutation, ensuring React detects changes
+  const result = [...oldData];
+
+  const minIndex = result.length >= maxBlockTaskPerSlice ? result.length - maxBlockTaskPerSlice : 0;
 
   for (const newProcess of newData) {
-    const foundIndex = oldData.slice(minIndex).findLastIndex((item) => item.pid === newProcess.pid);
+    const foundIndex = result.slice(minIndex).findLastIndex((item) => item.pid === newProcess.pid);
 
     if (foundIndex !== -1) {
       const realIndex = foundIndex + minIndex;
-      const oldProcess = oldData[realIndex];
+      const oldProcess = result[realIndex];
 
       if (oldProcess.state === newProcess.state && oldProcess.end === newProcess.start) {
-        oldData[realIndex].end = newProcess.end;
+        result[realIndex] = { ...oldProcess, end: newProcess.end };
         continue;
       }
     }
-    oldData.push(newProcess);
+    result.push(newProcess);
   }
-  return oldData;
+  return result;
 }

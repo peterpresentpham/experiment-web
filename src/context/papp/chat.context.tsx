@@ -12,7 +12,7 @@ import {
 } from 'react';
 import { Socket } from 'socket.io-client';
 import useSocket from 'src/hooks/useSocket';
-import { useGetMessages } from 'src/queries/papp/message.query';
+import { useGetMessagesInfinite } from 'src/queries/papp/message.query';
 import { useFindUsers, useGetMe } from 'src/queries/papp/user.query';
 import { useConversationStore } from 'src/states/conversation.state';
 import {
@@ -20,8 +20,8 @@ import {
   MESSAGE_TYPE,
   MICROSERVICE_EVENTS,
   ServerToClientEvents,
-  TSocketNotifyEditedMessage,
   TSocketJoinedConversation,
+  TSocketNotifyEditedMessage,
   TSocketReceiveMessage,
   TSocketTypingMessage,
 } from 'src/types/papp.type';
@@ -30,11 +30,14 @@ type TChatContext = {
   socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
   messages: TSocketReceiveMessage[];
   typingUserIds: Array<number>;
+  hasMoreMessages: boolean;
+  isLoadingMoreMessages: boolean;
   fn: {
     sendMessage: (message: string) => void;
     typingMessage: () => void;
     stopMessage: () => void;
     editMessage: (messageId: number, content: string) => void;
+    loadMoreMessages: () => void;
   };
 };
 
@@ -42,11 +45,14 @@ const contextDefault: TChatContext = {
   socket: null,
   messages: [],
   typingUserIds: [],
+  hasMoreMessages: false,
+  isLoadingMoreMessages: false,
   fn: {
     sendMessage: () => {},
     typingMessage: () => {},
     stopMessage: () => {},
     editMessage: () => {},
+    loadMoreMessages: () => {},
   },
 };
 
@@ -63,20 +69,27 @@ export default function ChatProvider({ children }: Props) {
 
   const [typingUserIds, setTypingUserIds] = useState<Array<number>>([]);
   const [liveMessages, setLiveMessages] = useState<TSocketReceiveMessage[]>([]);
+  const [editedMessages, setEditedMessages] = useState<Record<number, { content: string }>>({});
   const [isJoined, setIsJoined] = useState(false);
   const pendingMessagesRef = useRef<string[]>([]);
   const joinRequestedRef = useRef(false);
 
-  const { data: messageData } = useGetMessages({ conversationId: currentConversationId });
+  const {
+    data: messagePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetMessagesInfinite({ conversationId: currentConversationId });
   const { data: userData } = useGetMe();
 
   const { userIds } = useMemo(() => {
-    if (currentConversationId && messageData?.data) {
-      const userIds = new Set(messageData.data.map((item) => item.senderId));
-      return { userIds: [...userIds] };
-    }
-    return { userIds: [] };
-  }, [currentConversationId, messageData?.data]);
+    if (!currentConversationId || !messagePages?.pages) return { userIds: [] };
+    const ids = new Set<number>();
+    (messagePages.pages as Array<{ data?: Array<{ senderId: number }> }>).forEach((page) => {
+      page?.data?.forEach((item) => ids.add(item.senderId));
+    });
+    return { userIds: [...ids] };
+  }, [currentConversationId, messagePages]);
 
   const { data: conversationUsers } = useFindUsers({ userIds });
 
@@ -85,28 +98,36 @@ export default function ChatProvider({ children }: Props) {
   }, [addConversationUsers, conversationUsers?.data]);
 
   const messages = useMemo<TSocketReceiveMessage[]>(() => {
-    const restMessages: TSocketReceiveMessage[] = (messageData?.data || [])
-      .slice()
-      .reverse()
-      .map((msg) => ({
-        id: msg.id,
-        conversationId: msg.conversationId,
-        senderId: msg.senderId,
-        message: msg.content,
-        content: msg.content,
-        type: msg.type,
-        replyToId: msg.replyToId,
-      }));
+    const allRest: TSocketReceiveMessage[] = [];
+    const pages = (messagePages?.pages as Array<{ data?: Array<TSocketReceiveMessage> }>) ?? [];
+    for (let i = pages.length - 1; i >= 0; i--) {
+      const page = pages[i];
+      if (page?.data) {
+        for (let j = page.data.length - 1; j >= 0; j--) {
+          const msg = page.data[j];
+          const edit = editedMessages[msg.id];
+          allRest.push({
+            id: msg.id,
+            conversationId: msg.conversationId,
+            senderId: msg.senderId,
+            content: edit?.content ?? msg.content,
+            type: edit ? MESSAGE_TYPE.EDIT_TEXT : msg.type,
+            replyToId: msg.replyToId,
+          });
+        }
+      }
+    }
 
-    if (liveMessages.length === 0) return restMessages;
+    if (liveMessages.length === 0) return allRest;
 
     const liveIds = new Set(liveMessages.map((m) => m.id));
-    const uniqueRest = restMessages.filter((m) => !liveIds.has(m.id));
+    const uniqueRest = allRest.filter((m) => !liveIds.has(m.id));
     return [...uniqueRest, ...liveMessages];
-  }, [messageData?.data, liveMessages]);
+  }, [messagePages, liveMessages, editedMessages]);
 
   useEffect(() => {
     setLiveMessages([]);
+    setEditedMessages({});
     setIsJoined(false);
     pendingMessagesRef.current = [];
     joinRequestedRef.current = false;
@@ -195,13 +216,25 @@ export default function ChatProvider({ children }: Props) {
     const editedMessage = (payload: TSocketNotifyEditedMessage) => {
       if (payload.conversationId !== currentConversationId) return;
 
+      // Always update editedMessages so the change applies to REST messages
+      setEditedMessages((prev) => ({
+        ...prev,
+        [payload.id]: { content: payload.editedContent },
+      }));
+
+      // If the message is already in liveMessages, update it in place
       setLiveMessages((prev) => {
-        const data = prev.map((msg) =>
-          msg.id === payload.id
-            ? { ...msg, content: payload.editedContent, type: MESSAGE_TYPE.EDIT_TEXT }
-            : msg
-        );
-        return [...data];
+        const existingIndex = prev.findIndex((msg) => msg.id === payload.id);
+        if (existingIndex >= 0) {
+          const updated = [...prev];
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            content: payload.editedContent,
+            type: MESSAGE_TYPE.EDIT_TEXT,
+          };
+          return updated;
+        }
+        return prev;
       });
     };
 
@@ -247,6 +280,12 @@ export default function ChatProvider({ children }: Props) {
     [currentConversationId, isJoined, socket]
   );
 
+  const loadMoreMessages = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   const typingMessage = useCallback(() => {
     if (!socket || !currentConversationId || !isJoined || userData?.id == undefined) return;
     socket.emit(MICROSERVICE_EVENTS.typing_message, {
@@ -280,9 +319,22 @@ export default function ChatProvider({ children }: Props) {
       socket,
       messages,
       typingUserIds,
-      fn: { sendMessage, typingMessage, stopMessage, editMessage },
+      hasMoreMessages: hasNextPage ?? false,
+      isLoadingMoreMessages: isFetchingNextPage,
+      fn: { sendMessage, typingMessage, stopMessage, editMessage, loadMoreMessages },
     }),
-    [messages, typingUserIds, sendMessage, typingMessage, socket, stopMessage, editMessage]
+    [
+      messages,
+      typingUserIds,
+      hasNextPage,
+      isFetchingNextPage,
+      sendMessage,
+      typingMessage,
+      socket,
+      stopMessage,
+      editMessage,
+      loadMoreMessages,
+    ]
   );
 
   return <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>;

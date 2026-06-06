@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo } from 'react';
 import { useChatContext } from 'src/context/papp/chat.context';
-import { useGetMessages } from 'src/queries/papp/message.query';
 import { useFindUsers } from 'src/queries/papp/user.query';
 import { useConversationStore } from 'src/states/conversation.state';
 import ChatInput from './ChatInput';
@@ -14,15 +13,12 @@ export default function PAppHomeView() {
   const addConversationUsers = useConversationStore((state) => state.fn.addConversationUsers);
 
   const { messages, typingUserIds, fn } = useChatContext();
-  const { data: messageData } = useGetMessages({ conversationId: currentConversationId });
 
   const { userIds } = useMemo(() => {
-    if (currentConversationId && messageData?.data) {
-      const ids = new Set(messageData.data.map((item) => item.senderId));
-      return { userIds: [...ids] };
-    }
-    return { userIds: [] };
-  }, [currentConversationId, messageData?.data]);
+    if (!currentConversationId) return { userIds: [] };
+    const ids = new Set(messages.map((item) => item.senderId));
+    return { userIds: [...ids] };
+  }, [currentConversationId, messages]);
 
   const { data: conversationUsers } = useFindUsers({ userIds });
   useEffect(() => {

@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import {
   MutationFunctionContext,
   QueryKey,
+  useInfiniteQuery,
+  UseInfiniteQueryOptions,
   useMutation,
   UseMutationOptions,
   useQuery,
@@ -22,6 +25,20 @@ export default function useAuthQuery<
     queryKey: [...(props.queryKey as QueryKey), accessToken, isReady],
     enabled: (props.enabled ?? true) && isReady && Boolean(accessToken),
   });
+}
+
+export function useAuthInfiniteQuery<
+  TQueryFnData = unknown,
+  TError = unknown,
+  TData = TQueryFnData,
+>(props: UseInfiniteQueryOptions<TQueryFnData, TError, TData, QueryKey>) {
+  const { isReady, accessToken } = useAuthStore();
+
+  return useInfiniteQuery({
+    ...props,
+    queryKey: [...(props.queryKey as QueryKey), accessToken, isReady],
+    enabled: (props.enabled ?? true) && isReady && Boolean(accessToken),
+  } as any);
 }
 
 export function useAuthMutation<

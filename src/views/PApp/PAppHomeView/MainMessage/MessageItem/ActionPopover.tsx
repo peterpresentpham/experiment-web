@@ -3,14 +3,22 @@ import { Dispatch, SetStateAction, useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from 'src/components/shadcn/popover';
 
 interface TProps {
+  senderType: 'me' | 'another';
   setIsEdit: Dispatch<SetStateAction<boolean>>;
 }
 
-export default function ActionPopover({ setIsEdit }: TProps) {
+const actionItemClass =
+  'cursor-pointer rounded-md px-2 py-1.5 text-sm transition-colors hover:bg-accent';
+
+export default function ActionPopover({ senderType, setIsEdit }: TProps) {
   const [open, setOpen] = useState(false);
 
   function onEdit() {
     setIsEdit(true);
+    setOpen(false);
+  }
+
+  function onReply() {
     setOpen(false);
   }
 
@@ -24,19 +32,36 @@ export default function ActionPopover({ setIsEdit }: TProps) {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger>
-        <EllipsisVertical size={20} className="cursor-pointer" />
+      <PopoverTrigger asChild>
+        <button
+          className="flex size-7 items-center justify-center rounded-full transition-colors hover:bg-black/10 dark:hover:bg-white/10"
+          aria-label="Message actions"
+        >
+          <EllipsisVertical size={16} />
+        </button>
       </PopoverTrigger>
-      <PopoverContent className="w-25">
-        <div className="cursor-pointer text-sm" onClick={onEdit}>
-          Edit
+      <PopoverContent className="w-32 p-1.5" align="end" side="top">
+        {senderType == 'me' && (
+          <div className={actionItemClass} onClick={onEdit} role="button" tabIndex={0}>
+            Edit
+          </div>
+        )}
+        <div className={actionItemClass} onClick={onReply} role="button" tabIndex={0}>
+          Reply
         </div>
-        <div className="mt-1 cursor-pointer text-sm" onClick={onForward}>
+        <div className={actionItemClass} onClick={onForward} role="button" tabIndex={0}>
           Forward
         </div>
-        <div className="mt-1 cursor-pointer text-sm" onClick={onDelete}>
-          Delete
-        </div>
+        {senderType == 'me' && (
+          <div
+            className={`${actionItemClass} text-destructive hover:bg-destructive/10`}
+            onClick={onDelete}
+            role="button"
+            tabIndex={0}
+          >
+            Delete
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );

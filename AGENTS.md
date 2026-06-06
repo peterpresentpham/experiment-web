@@ -1,115 +1,434 @@
-# Next.js Framework Compliance
+# AGENTS.md
 
-This project runs on **Next.js 16.2.x** with the **App Router** and stores routes under `src/app/`.
-All framework-specific code must follow the current Next.js 16 behavior for layouts, metadata, route handlers, and server/client boundaries. Do not introduce Pages Router patterns or outdated conventions from older Next.js versions.
+## Framework and Environment
 
-# Project Scope
+This project uses:
 
-This repository is an **experimental web playground** that currently contains several independent modules:
+- Next.js 16.x (App Router)
+- React 19
+- TypeScript (`strict: true`)
+- Tailwind CSS v4
+- Zustand
+- React Context
+- XState
+- TanStack Query
+- Axios
+- Vitest
+- Testing Library
 
-- board games such as **Caro**, **Connect4**, and **Pikachu**
-- a **process/state-machine simulator**
-- a **PApp** flow with auth, conversation, and user APIs
-- **web3 wallet** integration and balance/contract utilities
-- small utility pages such as **encrypt**
+All code must follow current Next.js App Router conventions.
 
-When adding or changing features, preserve that modular structure. Avoid forcing unrelated domains into a single shared abstraction.
+Do not introduce:
 
-# Tech Stack
+- Pages Router patterns
+- legacy data fetching APIs
+- outdated Next.js conventions
 
-- **Framework:** Next.js 16 (App Router)
-- **Library:** React 19
-- **Language:** TypeScript with `strict: true`
-- **Styling:** Tailwind CSS v4
-- **State:** Zustand, React Context, XState
-- **Data Fetching:** TanStack Query, Axios
-- **Testing:** Vitest, Testing Library
+Routes must live under:
 
-# Architecture Rules
+```txt
+src/app/
+```
 
-### 1. Routing and View Composition
+---
 
-- Keep route files in `src/app/` thin.
-- Route files should primarily compose metadata, guards, providers, and page-level views.
-- Put page UI in `src/views/`.
-- Prefer route groups such as `src/app/(dashboard)/...` and `src/app/papp/...` for domain separation.
+# Priority Order
 
-### 2. Domain Placement
+When rules conflict, follow this order:
 
-- Put reusable UI in `src/components/`.
-- Put page-level compositions in `src/views/`.
-- Put stateful client logic shared across features in `src/hooks/`, `src/context/`, or `src/states/` depending on the existing pattern in that area.
-- Put pure business logic and transformations in `src/services/`, `src/structure/`, and `src/state-machine/`.
-- Put API wrappers in `src/api/` and query-layer orchestration in `src/queries/`.
-- Put web3-specific code under `src/web3/`.
+1. Existing project architecture
+2. Existing feature/module conventions
+3. Rules in this document
+4. Personal preference
 
-### 3. Keep Logic Out of Render Paths
+Prefer consistency over theoretical improvements.
 
-- Board rules, state-machine transitions, queue logic, encryption helpers, and data transforms should stay outside React components whenever possible.
-- Components should orchestrate and render; calculation-heavy logic belongs in service/state-machine/structure modules.
-- If logic must be shared between UI and tests, prefer extracting it into a pure TypeScript module.
+---
 
-# TypeScript Conventions
+# Project Structure
 
-### 1. Shared Types
+The repository contains multiple independent domains:
 
-- Shared types must live in `src/types/` or in a clearly scoped domain type file such as `src/web3/types.ts` when already established by the module.
-- Reuse existing shared types before creating new ones.
-- When adding new shared type files, prefer naming by domain, for example `src/types/process.type.ts`.
+- Caro
+- Connect4
+- Pikachu
+- Process/State Machine Simulator
+- PApp
+- Web3 Wallet
+- Utility Tools
 
-### 2. Naming
+Do not merge unrelated domains into shared abstractions.
 
-- For new code, prefer the existing project convention where shared types and interfaces use a `T` prefix, for example `TProcessItem` or `TConversation`.
-- Local component props should be declared as `TProps`.
-- Do not rename existing stable types purely for style consistency unless the task requires touching that area broadly.
+Only extract shared code when real reuse exists.
 
-# Component Standards
+---
 
-- Keep components focused on one responsibility.
-- Prefer one primary exported component per `.tsx` file.
-- If a component grows too large or mixes layout with business logic, split subparts into nearby components or hooks.
-- Follow the existing import alias convention such as `src/...` instead of deep relative paths.
-- Respect explicit client boundaries. Add `'use client'` only where browser APIs, hooks, or interactive behavior require it.
+# Directory Responsibilities
 
-# Styling Standards
+## Routing
 
-- Use Tailwind utilities first.
-- Prefer standard spacing, sizing, color, and typography scales over arbitrary values.
-- Use arbitrary values only when the design genuinely requires them.
-- Reuse existing UI primitives in `src/components/shadcn/` and shared layout components before introducing new variants.
+```txt
+src/app/
+```
 
-# State and Data Rules
+Responsibilities:
 
-- Match the local architecture of the feature you are editing.
-- In areas already using Zustand, extend the store instead of introducing a second state pattern without a clear reason.
-- In areas already using XState, keep transition logic in the state-machine layer rather than moving it into components.
-- For remote data, prefer the existing `src/api/` plus `src/queries/` flow instead of fetching directly inside views.
+- routes
+- layouts
+- metadata
+- providers
+- guards
 
-# Testing and Validation
+Keep route files thin.
 
-- Add or update Vitest coverage when changing behavior in pure logic modules such as `src/services/`, `src/structure/`, or `src/state-machine/`.
-- Prefer Testing Library for component behavior that matters to users.
-- Before finishing a task, run the narrowest relevant check first:
-  - `npm run test -- <pattern>` when a focused test exists
-  - `npm run eslint`
-  - `npm run build` for broad integration confidence when needed
+---
 
-# Existing Structure Reference
+## Views
 
-1. `src/app/`: App Router entries, layouts, and route handlers
-2. `src/views/`: page-level compositions
-3. `src/components/`: reusable UI building blocks
-4. `src/services/`: pure helpers and domain logic
-5. `src/state-machine/`: XState machines and process helpers
-6. `src/states/` and `src/context/`: client state containers and providers
-7. `src/api/` and `src/queries/`: HTTP and query orchestration
-8. `src/types/`: shared app/domain types
-9. `src/web3/`: wallet, chain, balance, and contract integrations
-10. `src/__tests__/`: Vitest coverage
+```txt
+src/views/
+```
 
-# Change Discipline
+Responsibilities:
 
-- Prefer minimal, local changes that fit the current module.
-- Do not rewrite one feature to a new architectural style unless the task explicitly calls for refactoring.
-- Preserve backward-compatible behavior for existing routes and game flows unless the requested change is intentionally behavioral.
-- If a new abstraction only serves one screen, keep it local until reuse is real.
+- page composition
+- page-level UI
+
+Move large UI trees here instead of route files.
+
+---
+
+## Components
+
+```txt
+src/components/
+```
+
+Responsibilities:
+
+- reusable UI
+- reusable visual primitives
+
+Avoid business logic.
+
+---
+
+## Services
+
+```txt
+src/services/
+```
+
+Responsibilities:
+
+- pure business logic
+- calculations
+- transformations
+- helpers
+
+Prefer pure functions.
+
+---
+
+## State Machine
+
+```txt
+src/state-machine/
+```
+
+Responsibilities:
+
+- XState machines
+- transition logic
+- process simulation logic
+
+Do not move machine logic into React components.
+
+---
+
+## State
+
+```txt
+src/states/
+src/context/
+src/hooks/
+```
+
+Responsibilities:
+
+- client state
+- providers
+- reusable hooks
+
+Follow the existing pattern used by the feature.
+
+---
+
+## API Layer
+
+```txt
+src/api/
+src/queries/
+```
+
+Responsibilities:
+
+- HTTP communication
+- query orchestration
+- caching logic
+
+Avoid direct API calls from components.
+
+---
+
+## Web3
+
+```txt
+src/web3/
+```
+
+Responsibilities:
+
+- wallet integrations
+- balances
+- contracts
+- chain utilities
+
+Keep blockchain-specific code isolated.
+
+---
+
+# Component Rules
+
+Components should:
+
+- have a single responsibility
+- stay focused
+- be easy to test
+
+Prefer:
+
+```txt
+1 file
+1 primary component
+```
+
+If a component becomes too large:
+
+- extract hooks
+- extract subcomponents
+- extract business logic
+
+---
+
+# React Rules
+
+Use Client Components only when required.
+
+Add:
+
+```ts
+'use client';
+```
+
+only when using:
+
+- browser APIs
+- React hooks
+- interactivity
+
+Default to Server Components.
+
+---
+
+# Business Logic Rules
+
+Keep logic outside render paths whenever possible.
+
+Examples:
+
+- board game rules
+- state transitions
+- queue logic
+- encryption
+- data transformations
+
+These belong in:
+
+```txt
+services/
+state-machine/
+structure/
+```
+
+not inside JSX.
+
+---
+
+# TypeScript Rules
+
+## Shared Types
+
+Shared types belong in:
+
+```txt
+src/types/
+```
+
+or a clearly scoped domain type file.
+
+Reuse existing types before creating new ones.
+
+---
+
+## Naming
+
+Prefer existing project conventions.
+
+Examples:
+
+```ts
+TConversation;
+TProcessItem;
+```
+
+Component props:
+
+```ts
+type TProps = {};
+```
+
+Do not rename stable types purely for style reasons.
+
+---
+
+# Import Rules
+
+Prefer path aliases:
+
+```ts
+import { X } from 'src/...';
+```
+
+Avoid deep relative imports:
+
+```ts
+../../../
+```
+
+when an alias already exists.
+
+---
+
+# Styling Rules
+
+Use Tailwind first.
+
+Prefer:
+
+- design system utilities
+- shared UI primitives
+- existing shadcn components
+
+Avoid arbitrary values unless necessary.
+
+---
+
+# State Management Rules
+
+Match the architecture already used by the feature.
+
+Examples:
+
+- Zustand area → extend Zustand
+- XState area → extend XState
+- Query area → use TanStack Query
+
+Do not introduce a second pattern without a strong reason.
+
+---
+
+# Comment Standards
+
+All comments must be written in English.
+
+Never introduce:
+
+- Vietnamese comments
+- mixed-language comments
+
+Comments should explain:
+
+- intent
+- constraints
+- business rules
+- non-obvious decisions
+
+Avoid comments that merely repeat the code.
+
+---
+
+# Refactoring Rules
+
+Prefer minimal, local changes.
+
+Do not:
+
+- rewrite entire modules
+- introduce large abstractions
+- change architecture without requirement
+
+Refactor only when it clearly improves:
+
+- maintainability
+- reuse
+- readability
+
+while preserving behavior.
+
+---
+
+# Testing Rules
+
+When changing business logic:
+
+- update tests
+- add tests when missing
+
+Prefer:
+
+- Vitest for logic
+- Testing Library for UI behavior
+
+---
+
+# Validation Checklist
+
+Before completing work:
+
+1. Run the narrowest relevant test.
+2. Run linting if affected.
+3. Run build validation when changes are broad.
+
+Typical commands:
+
+```bash
+bun run test -- <pattern>
+bun run eslint
+bun run build
+```
+
+---
+
+# Golden Rule
+
+Make the smallest change that:
+
+- solves the problem
+- matches the existing architecture
+- preserves current behavior
+- remains easy to maintain
+
+# Mandatory Rule
+
+- All source code comments, documentation comments (JSDoc/TSDoc), TODOs, FIXMEs, and notes must be written in English.

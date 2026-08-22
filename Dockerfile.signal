@@ -1,0 +1,38 @@
+# syntax=docker.io/docker/dockerfile:1
+# Standalone image for the Socket.IO game-signaling server only
+# (src/server/signaling.mjs). Does not build or run the Next.js frontend —
+# see Dockerfile for that.
+
+FROM node:20-alpine AS base
+
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile --production; \
+  elif [ -f package-lock.json ]; then npm ci --omit=dev; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile --prod; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
+
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nodeapp
+
+COPY --from=deps --chown=nodeapp:nodejs /app/node_modules ./node_modules
+COPY --chown=nodeapp:nodejs signaling-server.mjs ./signaling-server.mjs
+COPY --chown=nodeapp:nodejs src/server ./src/server
+
+USER nodeapp
+
+EXPOSE 4001
+
+ENV SIGNAL_PORT=4001
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "signaling-server.mjs"]

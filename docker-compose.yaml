@@ -1,5 +1,17 @@
 services:
   web:
-    build: .
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_GAME_SIGNAL_URL: http://localhost:4005
     ports:
       - '4004:3000'
+    depends_on:
+      - signal
+
+  signal:
+    build:
+      context: .
+      dockerfile: Dockerfile.signal
+    ports:
+      - '4005:4001'

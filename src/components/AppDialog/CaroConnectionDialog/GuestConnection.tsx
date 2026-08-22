@@ -2,39 +2,45 @@ import { Fragment, useState } from 'react';
 import BaseInput from 'src/components/input/BaseInput';
 import { Button } from 'src/components/shadcn/button';
 import { useCaroConnectionContext } from 'src/context/caro-connection.context';
-import SignalTitleBox from './SignalTitleBox';
 
 export default function GuestConnection() {
   const {
     peer,
-    yourSignal,
-    friendSignal,
-    fn: { initConnection, setFriendSignal },
+    roomCode,
+    connectionType,
+    fn: { initConnection, joinRoom },
   } = useCaroConnectionContext();
-  const [signal, setSignal] = useState('');
+  const [code, setCode] = useState('');
+
+  if (peer) {
+    return (
+      <p className="mt-2 text-sm">
+        Room code: <span className="font-mono">{roomCode}</span>
+      </p>
+    );
+  }
+
+  if (connectionType != 'init') {
+    return (
+      <BaseInput
+        placeholder="Room code"
+        name="guest-room-code"
+        value={code}
+        onChange={(event) => setCode(event.target.value.toUpperCase())}
+        icon={{
+          end: (
+            <Button onClick={() => joinRoom(code)} disabled={!code}>
+              Join
+            </Button>
+          ),
+        }}
+      />
+    );
+  }
 
   return (
     <Fragment>
-      {peer ? (
-        <Fragment>
-          {friendSignal ? (
-            <Fragment>
-              <SignalTitleBox title="Your signal" signal={yourSignal} />
-              <SignalTitleBox title="Friend signal" signal={friendSignal} />
-            </Fragment>
-          ) : (
-            <BaseInput
-              placeholder="Friend signal"
-              name="guest-friend-signal"
-              value={signal}
-              onChange={(event) => setSignal(event.target.value)}
-              icon={{ end: <Button onClick={() => setFriendSignal(signal)}>Confirm</Button> }}
-            />
-          )}
-        </Fragment>
-      ) : (
-        <Button onClick={() => initConnection('guest')}>Connect</Button>
-      )}
+      <Button onClick={() => initConnection('guest')}>Connect</Button>
     </Fragment>
   );
 }

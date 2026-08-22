@@ -12,6 +12,10 @@ export const MAX_CONNECT4_BOARD_SIZE = 80;
 export const ENCRYPT_KEY = process.env.NEXT_PUBLIC_ENCRYPT_KEY || '';
 export const IV_HEX = process.env.NEXT_PUBLIC_IV_HEX || '00112233445566778899aabbccddeeff';
 export const PAPP_BACKEND_URL = process.env.NEXT_PUBLIC_PAPP_BACKEND_URL || '';
+// The game-signaling server (src/server/signaling.mjs) always runs as its own
+// process (`yarn signal`), separate from the Next.js app — this must point to it.
+// See README "Caro / Connect4 real-time server".
+export const GAME_SIGNAL_URL = process.env.NEXT_PUBLIC_GAME_SIGNAL_URL || '';
 export const ENV = (process.env.NEXT_PUBLIC_ENV || 'production') as ENV_TYPE;
 
 export enum DIALOG_KEY {

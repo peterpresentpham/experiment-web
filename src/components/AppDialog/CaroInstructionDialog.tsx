@@ -55,12 +55,7 @@ export default function CaroInstructionDialog() {
             }
             <Bluetooth className="inline" size={14} />
             {
-              '). One of you will be the host, and the other will be the guest. The host create the connection and share the signal (your signal) to the guest, the guest create the connection and parse host signal (friend signal) to find host device. After that, system will create guest signal, guest have to share the signal to the host to complete the connection. After the connection is established, you can start playing and chatting with each other.'
-            }
-          </p>
-          <p className="text-chart-3 text-justify text-sm">
-            {
-              'Warning: because I cannot afford to maintain a server to create a completely automatic flow, the peer-to-peer, with a little inconvenience, is fit for me. You can share your signal with your friend via any chat app like messenger,...'
+              '). One of you will be the host, and the other will be the guest. The host creates the connection and gets a short room code; the guest enters that room code to join. The app automatically exchanges the connection info in the background, so you only need to share the short room code with your friend (via any chat app). After the connection is established, you can start playing and chatting with each other.'
             }
           </p>
           <p className="mt-2 text-lg">4. Online play mode</p>

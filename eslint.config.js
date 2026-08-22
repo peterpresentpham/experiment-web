@@ -9,7 +9,15 @@ import tseslint from 'typescript-eslint';
 
 export default [
   {
-    ignores: ['dist', '.next', 'coverage', 'public/**', 'next-env.d.ts'],
+    ignores: [
+      'dist',
+      '.next',
+      'coverage',
+      'public/**',
+      'next-env.d.ts',
+      'signaling-server.mjs',
+      '**/signaling.mjs',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

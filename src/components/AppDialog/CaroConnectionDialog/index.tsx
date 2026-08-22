@@ -18,6 +18,7 @@ export default function CaroConnectionDialog() {
   } = useCaroStore();
   const [role, setRole] = useState<TRole>('host');
   const { peer, connectionType } = useCaroConnectionContext();
+  const isBusy = connectionType != 'init';
 
   return playMode == 'online' ? (
     <Dialog
@@ -36,14 +37,14 @@ export default function CaroConnectionDialog() {
             <Button
               onClick={() => setRole('host')}
               variant={role == 'host' ? 'default' : 'secondary'}
-              disabled={Boolean(peer)}
+              disabled={isBusy}
             >
               Host
             </Button>
             <Button
               onClick={() => setRole('guest')}
               variant={role == 'guest' ? 'default' : 'secondary'}
-              disabled={Boolean(peer)}
+              disabled={isBusy}
             >
               Guest
             </Button>

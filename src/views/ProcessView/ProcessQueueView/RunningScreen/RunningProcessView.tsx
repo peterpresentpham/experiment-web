@@ -24,8 +24,7 @@ export default function RunningProcessView({ runningProcess }: TProps) {
               data={runningProcess}
               metadata={{ onlyShowCurrentBlockTask: true }}
               props={{
-                className:
-                  'border-none bg-transparent dark:bg-transparent shadow-none hover:shadow-none p-0',
+                className: 'border-none bg-transparent shadow-none hover:shadow-none p-0',
               }}
             />
           </motion.div>
@@ -33,16 +32,16 @@ export default function RunningProcessView({ runningProcess }: TProps) {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex flex-col items-center gap-2 text-zinc-400"
+            className="text-muted-foreground flex flex-col items-center gap-2"
           >
             <Activity size={32} className="opacity-20" />
-            <span className="text-xs font-medium tracking-widest uppercase opacity-50">
+            <span className="text-xs font-medium tracking-wide uppercase opacity-50">
               Core Idle
             </span>
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[16px_16px] opacity-40 dark:bg-[radial-gradient(#1f2937_1px,transparent_1px)]" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(var(--border)_1px,transparent_1px)] bg-size-[16px_16px]" />
     </div>
   );
 }

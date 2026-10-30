@@ -3,7 +3,7 @@ import { TPosition } from 'src/types/global';
 import { TFindPath, TFindPathWithoutTarget } from 'src/types/pikachu.type';
 import { isPositionEqual } from '..';
 
-export function reconstructPath(
+function reconstructPath(
   parent: (number[] | null)[][][],
   end: TPosition,
   endDir: number,

@@ -1,11 +1,12 @@
+import AppTooltip from 'src/components/AppTooltip';
 import { Info } from 'lucide-react';
+import IconDialogTrigger from 'src/components/AppDialog/components/IconDialogTrigger';
 import { useState } from 'react';
 import { DIALOG_KEY } from 'src/configs/constance';
 import { PIKACHU_PIECE_SIZE, PIKACHU_URL } from 'src/configs/pikachu.constance';
 import { useDialogStore } from 'src/states/dialog.state';
 import AppPagination from '../AppPagination';
-import AppTooltip from '../AppTooltip';
-import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '../shadcn/dialog';
+import { Dialog, DialogContent, DialogHeader } from '../shadcn/dialog';
 
 export default function PikachuInstructionDialog() {
   const { dialog, setDialog } = useDialogStore();
@@ -16,11 +17,7 @@ export default function PikachuInstructionDialog() {
       open={dialog[DIALOG_KEY.pikachuInstructionDialog]}
       onOpenChange={(open) => setDialog(DIALOG_KEY.pikachuInstructionDialog, open)}
     >
-      <DialogTrigger className="cursor-pointer">
-        <AppTooltip contentProps={{ side: 'bottom' }} tooltipContent="Instructions">
-          <Info size={16} />
-        </AppTooltip>
-      </DialogTrigger>
+      <IconDialogTrigger label="Instructions" icon={Info} />
       <DialogContent className="sm:max-w-4xl!">
         <DialogHeader>Pikachu instruction</DialogHeader>
         <div className="scroll-hidden h-fit max-h-[75vh] overflow-auto">

@@ -7,7 +7,7 @@ import { useCaroStore } from 'src/states/caro.state';
 import { TTurn } from 'src/types/caro.type';
 import { useCaroConnectionContext } from './caro-connection.context';
 
-export type TCaroStateContextType = {
+type TCaroStateContextType = {
   playerText: string;
   isWin: boolean;
   isOver: boolean;
@@ -38,14 +38,13 @@ interface TProps {
 }
 
 export default function CaroStateProvider({ children }: TProps) {
-  const {
-    turn,
-    winState,
-    isBlindForceOver,
-    stepsOrder,
-    metadata: { playMode, size },
-    fn: { move, undo, reset },
-  } = useCaroStore();
+  const turn = useCaroStore((state) => state.turn);
+  const winState = useCaroStore((state) => state.winState);
+  const isBlindForceOver = useCaroStore((state) => state.isBlindForceOver);
+  const stepCount = useCaroStore((state) => state.stepsOrder.length);
+  const playMode = useCaroStore((state) => state.metadata.playMode);
+  const size = useCaroStore((state) => state.metadata.size);
+  const { move, undo, reset } = useCaroStore.getState().fn;
   const { peer, role, connectionType } = useCaroConnectionContext();
 
   const isOverWin = Boolean(winState) || isBlindForceOver;
@@ -75,11 +74,11 @@ export default function CaroStateProvider({ children }: TProps) {
     const isWin = _isWin && isOverWin;
     if (isWin) return { playerText: `${playerName}${playerTitle}`, isWin, isOver: isWin };
     else {
-      if (stepsOrder.length == size * size)
+      if (stepCount == size * size)
         return { playerText: "It's a draw", isWin: false, isOver: true };
       else return { playerText: `${playerName}${playerTitle}`, isWin: false, isOver: false };
     }
-  }, [isOverWin, playMode, connectionType, role, turn, stepsOrder.length, size]);
+  }, [isOverWin, playMode, connectionType, role, turn, stepCount, size]);
 
   const { shouldDisableBoard } = useMemo(() => {
     if (connectionType == 'connected' && playMode == 'online') {
@@ -111,19 +110,18 @@ export default function CaroStateProvider({ children }: TProps) {
     [peer, reset]
   );
 
-  return (
-    <CaroStateContext.Provider
-      value={{
-        playerText,
-        isWin,
-        isOver,
-        shouldDisableBoard: shouldDisableBoard || isWin || isOver,
-        fn: { move: handleMove, undo: handleUndo, reset: handleReset },
-      }}
-    >
-      {children}
-    </CaroStateContext.Provider>
+  const value = useMemo<TCaroStateContextType>(
+    () => ({
+      playerText,
+      isWin,
+      isOver,
+      shouldDisableBoard: shouldDisableBoard || isWin || isOver,
+      fn: { move: handleMove, undo: handleUndo, reset: handleReset },
+    }),
+    [playerText, isWin, isOver, shouldDisableBoard, handleMove, handleUndo, handleReset]
   );
+
+  return <CaroStateContext.Provider value={value}>{children}</CaroStateContext.Provider>;
 }
 
 export function useCaroStateContext() {

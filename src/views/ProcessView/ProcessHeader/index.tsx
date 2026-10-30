@@ -42,41 +42,40 @@ export default function ProcessHeader() {
   }
 
   return (
-    <div className="bg-background/80 relative z-10 flex items-center justify-between gap-1 backdrop-blur-xl">
+    <div className="relative z-10 flex flex-wrap items-center justify-between gap-2">
       <div className="flex items-center gap-1">
         <UpdateProcessDialog open={updateProcessOpen} onOpenChange={setUpdateProcessOpen} />
         <Button
           onClick={onRun}
           variant={status == 'ended' ? 'outline' : 'secondary'}
           size="sm"
-          className="rounded-none bg-green-500/10 text-green-600 hover:bg-green-500/20 hover:text-green-700 dark:bg-green-500/20 dark:text-green-400 dark:hover:bg-green-500/30"
-          contentprops={{ className: 'flex items-center gap-1' }}
+          className="bg-success/10 text-success hover:bg-success/20 hover:text-success"
         >
           {status == 'initial' || status == 'ready' ? <Play size={5} /> : <></>}
-          <span className="text-[11px] font-bold tracking-tight uppercase">{text}</span>
+          <span className="text-xs font-semibold tracking-tight uppercase">{text}</span>
         </Button>
         <Button
           onClick={onChangeDisplayMode}
           variant="ghost"
-          className="hover:border-border hover:bg-muted h-8 rounded-none border-x border-transparent"
+          className="hover:border-border hover:bg-muted h-8 border-x border-transparent"
           size="sm"
         >
           {displayMode == 'chart' ? (
             <div className="flex items-center gap-1.5">
               <LayoutGrid size={12} className="text-muted-foreground" />
-              <span className="text-[10px] font-bold tracking-tight uppercase">Column View</span>
+              <span className="text-xs font-bold tracking-tight uppercase">Column View</span>
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
               <BarChart2 size={12} className="text-muted-foreground" />
-              <span className="text-[10px] font-bold tracking-tight uppercase">Chart View</span>
+              <span className="text-xs font-bold tracking-tight uppercase">Chart View</span>
             </div>
           )}
         </Button>
         <MetricDialog />
       </div>
       <SettingSpot />
-      <TimeSliceCounter className="absolute top-1/2 left-1/2 -translate-1/2" />
+      <TimeSliceCounter />
     </div>
   );
 }

@@ -20,23 +20,19 @@ export default function RunningScreen({ runningProcess }: TProps) {
 
   return (
     <div className="flex h-55 w-full gap-1 overflow-hidden">
-      <div className="relative flex flex-1 flex-col overflow-hidden border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/50">
-        <div className="flex items-center justify-between border-b border-zinc-100 bg-zinc-50/50 px-3 py-2 dark:border-zinc-800/50 dark:bg-zinc-900/80">
+      <div className="bg-card relative flex flex-1 flex-col overflow-hidden rounded-lg border">
+        <div className="border-border bg-muted/50 flex items-center justify-between border-b px-3 py-2">
           <div className="flex h-4 items-center gap-2">
-            <Cpu size={16} className="text-blue-500" />
-            <h2 className="text-[12px] font-bold tracking-tight uppercase">
-              Processor Core | {mode}
-            </h2>
+            <Cpu size={16} className="text-primary" />
+            <h2 className="text-xs font-bold tracking-tight uppercase">Processor Core | {mode}</h2>
           </div>
           {runningProcess && (
             <div className="flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 bg-green-500"></span>
+                <span className="bg-success/60 absolute inline-flex h-full w-full animate-ping rounded-full"></span>
+                <span className="bg-success relative inline-flex h-2 w-2 rounded-full"></span>
               </span>
-              <span className="text-[10px] font-medium text-green-600 dark:text-green-400">
-                ACTIVE
-              </span>
+              <span className="text-success text-xs font-medium">ACTIVE</span>
             </div>
           )}
         </div>

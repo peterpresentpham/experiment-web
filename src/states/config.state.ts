@@ -1,13 +1,11 @@
-import { TTheme } from 'src/types/global';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
 interface TConfigStateType {
-  theme: TTheme;
   isSound: boolean;
   backgroundSound: boolean;
-  fn: { setTheme: () => void; setIsSound: () => void; setBackgroundSound: () => void };
+  fn: { setIsSound: () => void; setBackgroundSound: () => void };
 }
 
 export const useConfigStore = create<
@@ -17,15 +15,9 @@ export const useConfigStore = create<
   persist(
     immer((set) => {
       return {
-        theme: 'dark',
         isSound: true,
         backgroundSound: true,
         fn: {
-          setTheme: () => {
-            set((state) => {
-              state.theme = state.theme == 'dark' ? 'light' : 'dark';
-            });
-          },
           setIsSound: () => {
             set((state) => {
               state.isSound = !state.isSound;

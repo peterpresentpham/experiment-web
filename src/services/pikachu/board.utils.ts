@@ -19,7 +19,7 @@ export function _refineNumTypes(halfCells: number, numTypes: number) {
   } else return __refineNumTypes(halfCells, numTypes, 0.5);
 }
 
-export function _createRawBoard(totalCells: number, numTypes: number, percent?: number) {
+function _createRawBoard(totalCells: number, numTypes: number, percent?: number) {
   if (totalCells % 2 !== 0)
     throw new Error('Total number of cells must be even for matching pairs.');
 
@@ -43,7 +43,7 @@ export function _createRawBoard(totalCells: number, numTypes: number, percent?: 
   return pairedTiles;
 }
 
-export function createBoard(rows: number, cols: number, numTypes: number): Array<Array<number>> {
+function createBoard(rows: number, cols: number, numTypes: number): Array<Array<number>> {
   const pairedTiles = _createRawBoard(rows * cols, numTypes);
 
   const board: Array<Array<number>> = [];

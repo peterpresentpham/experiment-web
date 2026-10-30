@@ -49,15 +49,13 @@ export default function MetricDialog(props: DialogProps) {
   return (
     <Dialog {...props} open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="hover:border-border h-8 rounded-none border-x border-transparent">
-          Metrics
-        </Button>
+        <Button className="hover:border-border h-8 border-x border-transparent">Metrics</Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl rounded-none opacity-80">
+      <DialogContent className="max-w-2xl opacity-80">
         <DialogHeader>Metric Dialog</DialogHeader>
         <div className="flex min-w-[320px] flex-1 flex-col gap-2 px-3 py-2 text-xs">
-          <div className="flex flex-wrap items-center gap-3 text-zinc-700 dark:text-zinc-200">
-            <div className="rounded-none bg-zinc-100 px-2 py-1 dark:bg-zinc-900">
+          <div className="text-foreground flex flex-wrap items-center gap-3">
+            <div className="bg-muted px-2 py-1">
               Avg Turnaround:{' '}
               <span className="font-semibold">
                 {globalMetric.turnaroundTime !== undefined
@@ -65,13 +63,13 @@ export default function MetricDialog(props: DialogProps) {
                   : '—'}
               </span>
             </div>
-            <div className="rounded-none bg-zinc-100 px-2 py-1 dark:bg-zinc-900">
+            <div className="bg-muted px-2 py-1">
               Avg Waiting:{' '}
               <span className="font-semibold">
                 {globalMetric.waitingTime !== undefined ? globalMetric.waitingTime.toFixed(2) : '—'}
               </span>
             </div>
-            <div className="rounded-none bg-zinc-100 px-2 py-1 dark:bg-zinc-900">
+            <div className="bg-muted px-2 py-1">
               Avg Response:{' '}
               <span className="font-semibold">
                 {globalMetric.responseTime !== undefined
@@ -84,7 +82,7 @@ export default function MetricDialog(props: DialogProps) {
           <div className="overflow-auto">
             <table className="w-full table-auto border-collapse text-left">
               <thead>
-                <tr className="border-b border-zinc-200 text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                <tr className="border-border text-muted-foreground border-b">
                   <th className="py-1 pr-2">#</th>
                   <th className="py-1 pr-2">Turnaround</th>
                   <th className="py-1 pr-2">Waiting</th>
@@ -94,13 +92,13 @@ export default function MetricDialog(props: DialogProps) {
               <tbody>
                 {processMetrics.length === 0 ? (
                   <tr>
-                    <td className="py-2 text-zinc-400" colSpan={4}>
+                    <td className="text-muted-foreground py-2" colSpan={4}>
                       No metrics yet
                     </td>
                   </tr>
                 ) : (
                   processMetrics.map((metric, idx) => (
-                    <tr key={idx} className="border-b border-zinc-100 dark:border-zinc-900">
+                    <tr key={idx} className="border-border border-b">
                       <td className="py-1 pr-2">
                         {metric.index !== undefined ? metric.index : idx + 1}
                       </td>

@@ -24,7 +24,7 @@ export type TInitializeProcessEventType = {
   processes: TProcessDataObject;
 };
 
-export type TSetMetadataEventType = {
+type TSetMetadataEventType = {
   type: ProcessMachineEvent.SET_METADATA;
   interval?: number;
 };

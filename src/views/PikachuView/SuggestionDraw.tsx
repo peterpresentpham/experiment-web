@@ -5,7 +5,7 @@ type TProps = {
 };
 
 export default function SuggestionDraw({ size }: TProps) {
-  const { suggestion } = usePikachuStore();
+  const suggestion = usePikachuStore((state) => state.suggestion);
   const firstPiece = suggestion[0];
   const secondPiece = suggestion[suggestion.length - 1];
 
@@ -13,7 +13,7 @@ export default function SuggestionDraw({ size }: TProps) {
     <div className="pointer-events-none">
       <div
         style={{ width: size, height: size, left: firstPiece[1] * size, top: firstPiece[0] * size }}
-        className="animate-pulse-soft absolute rounded-lg border border-amber-400/70 shadow-[0_0_16px_rgba(251,191,36,0.35)] dark:border-amber-300/80 dark:shadow-[0_0_18px_rgba(251,191,36,0.7)]"
+        className="animate-pulse-soft border-primary absolute rounded-lg border shadow-md"
       />
       <div
         style={{
@@ -22,7 +22,7 @@ export default function SuggestionDraw({ size }: TProps) {
           left: secondPiece[1] * size,
           top: secondPiece[0] * size,
         }}
-        className="animate-pulse-soft absolute rounded-lg border border-amber-400/70 shadow-[0_0_16px_rgba(251,191,36,0.35)] dark:border-amber-300/80 dark:shadow-[0_0_18px_rgba(251,191,36,0.7)]"
+        className="animate-pulse-soft border-primary absolute rounded-lg border shadow-md"
       />
     </div>
   );

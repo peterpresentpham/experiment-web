@@ -1,16 +1,19 @@
 import { ComponentProps } from 'react';
 import { cn } from 'src/lib/utils';
 
-export default function IconButton(props: ComponentProps<'div'>) {
+type TProps = Omit<ComponentProps<'button'>, 'aria-label'> & {
+  'aria-label': string;
+};
+
+export default function IconButton({ className, type = 'button', ...props }: TProps) {
   return (
-    <div
+    <button
+      type={type}
       {...props}
       className={cn(
-        'inline-flex aspect-square cursor-pointer items-center justify-center rounded-[50%] p-1.5 hover:bg-[#0000000f] dark:hover:bg-[#ffffff0f]',
-        props.className
+        'text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex aspect-square cursor-pointer items-center justify-center rounded-full p-1.5 transition-colors outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50',
+        className
       )}
-    >
-      {props.children}
-    </div>
+    />
   );
 }

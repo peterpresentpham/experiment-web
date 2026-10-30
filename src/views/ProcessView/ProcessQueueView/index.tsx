@@ -18,11 +18,11 @@ export default function ProcessQueueView() {
     .sort((a, b) => a.arrivalTime - b.arrivalTime);
 
   return (
-    <div className="flex h-[calc(100vh-100px)] min-h-0 flex-col gap-1 pt-1">
+    <div className="flex min-h-0 flex-col gap-2 pt-2 lg:h-[calc(100dvh-var(--header-height)-5rem)]">
       <RunningScreen runningProcess={runningProcess} />
       <div
         className={cn(
-          'mb-px grid min-h-0 flex-1 grid-cols-1',
+          'grid min-h-0 flex-1 grid-cols-1 gap-2',
           incomingProcesses.length > 0 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'
         )}
       >

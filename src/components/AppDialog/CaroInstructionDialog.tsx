@@ -1,9 +1,9 @@
 /* eslint-disable quotes */
 import { Bluetooth, Circle, Settings } from 'lucide-react';
+import IconDialogTrigger from 'src/components/AppDialog/components/IconDialogTrigger';
 import { DIALOG_KEY } from 'src/configs/constance';
 import { useDialogStore } from 'src/states/dialog.state';
-import AppTooltip from '../AppTooltip';
-import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '../shadcn/dialog';
+import { Dialog, DialogContent, DialogHeader } from '../shadcn/dialog';
 
 export default function CaroInstructionDialog() {
   const { dialog, setDialog } = useDialogStore();
@@ -18,11 +18,7 @@ export default function CaroInstructionDialog() {
       open={dialog[DIALOG_KEY.caroInstructionDialog]}
       onOpenChange={(open) => setDialog(DIALOG_KEY.caroInstructionDialog, open)}
     >
-      <DialogTrigger className="cursor-pointer">
-        <AppTooltip contentProps={{ side: 'bottom' }} tooltipContent="Instructions">
-          <Circle size={16} />
-        </AppTooltip>
-      </DialogTrigger>
+      <IconDialogTrigger label="Instructions" icon={Circle} />
       <DialogContent className="sm:max-w-4xl!">
         <DialogHeader>Caro instruction</DialogHeader>
         <div className="scroll-hidden h-fit max-h-[75vh] overflow-auto">
@@ -42,11 +38,11 @@ export default function CaroInstructionDialog() {
           </div>
           <p className="mt-2 text-lg">3. Play mode</p>
           <p className="text-justify text-sm">
-            {'This game has three modes:'} <span className="text-green-400">offline</span>
+            {'This game has three modes:'} <span className="text-primary font-medium">offline</span>
             {', '}
-            <span className="text-green-400">online</span>
+            <span className="text-primary font-medium">online</span>
             {', and '}
-            <span className="text-green-400">machine</span>
+            <span className="text-primary font-medium">machine</span>
             {'. You and your friend can play in one device on offline play mode.'}
           </p>
           <p className="text-justify text-sm">
@@ -66,8 +62,9 @@ export default function CaroInstructionDialog() {
           </p>
           <p className="mt-2 text-lg">5. Game type</p>
           <p className="text-justify text-sm">
-            {'This game support two game types:'} <span className="text-green-400">normal</span>{' '}
-            {'and'} <span className="text-green-400">blind</span>.
+            {'This game support two game types:'}{' '}
+            <span className="text-primary font-medium">normal</span> {'and'}{' '}
+            <span className="text-primary font-medium">blind</span>.
           </p>
           <p className="text-justify text-sm">
             {

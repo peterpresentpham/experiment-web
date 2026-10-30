@@ -47,8 +47,8 @@ export default function SettingDialog(props: DialogProps) {
       <DialogTrigger asChild>
         <Settings size={14} className="cursor-pointer" />
       </DialogTrigger>
-      <DialogContent className="max-w-2xl rounded-none p-4">
-        <DialogHeader className="max-w-2xl rounded-none p-4">Process Setting</DialogHeader>
+      <DialogContent className="max-w-2xl p-4">
+        <DialogHeader className="max-w-2xl p-4">Process Setting</DialogHeader>
         <p className="text-lg font-semibold">Scheduler Mode</p>
         <div className="flex flex-wrap items-center gap-1">
           {Object.values(ProcessSchedulerConfigs).map((item) => {
@@ -57,7 +57,7 @@ export default function SettingDialog(props: DialogProps) {
                 key={item.id}
                 variant={localMode == item.id ? 'default' : 'outline'}
                 onClick={() => setLocalMode(item.id)}
-                className="rounded-none"
+                className=""
                 disabled={item.coming}
               >
                 {item.name}
@@ -73,7 +73,7 @@ export default function SettingDialog(props: DialogProps) {
           type="number"
           min={1}
           max={5}
-          className="rounded-none"
+          className=""
           onChange={(event) => {
             const value = parseInt(event.target.value);
             if (isNaN(value)) return;
@@ -82,11 +82,11 @@ export default function SettingDialog(props: DialogProps) {
           }}
         />
         <p className="border-t pt-2 text-lg font-semibold">Display mode</p>
-        <Button onClick={onChangeDisplayMode} className="w-fit rounded-none" size="sm">
+        <Button onClick={onChangeDisplayMode} className="w-fit" size="sm">
           {displayMode}
         </Button>
         <DialogFooter className="mt-4 border-t pt-2">
-          <Button onClick={onSave} className="rounded-none">
+          <Button onClick={onSave} className="">
             Save
           </Button>
         </DialogFooter>

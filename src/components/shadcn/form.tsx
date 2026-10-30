@@ -85,7 +85,7 @@ function FormLabel({ className, ...props }: ComponentProps<typeof LabelPrimitive
     <Label
       data-slot="form-label"
       data-error={!!error}
-      className={cn('data-[error=true]:text-error', className)}
+      className={cn('data-[error=true]:text-destructive', className)}
       htmlFor={formItemId}
       {...props}
     />
@@ -101,19 +101,6 @@ function FormControl({ ...props }: ComponentProps<typeof Slot>) {
       id={formItemId}
       aria-describedby={!error ? `${formDescriptionId}` : `${formDescriptionId} ${formMessageId}`}
       aria-invalid={!!error}
-      {...props}
-    />
-  );
-}
-
-function FormDescription({ className, ...props }: ComponentProps<'p'>) {
-  const { formDescriptionId } = useFormField();
-
-  return (
-    <p
-      data-slot="form-description"
-      id={formDescriptionId}
-      className={cn('text-muted-foreground text-sm', className)}
       {...props}
     />
   );
@@ -157,14 +144,4 @@ function FormItemContent({ children, itemprops, labelprops }: FormItemContentPro
   );
 }
 
-export {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormItemContent,
-  FormLabel,
-  FormMessage,
-  useFormField,
-};
+export { Form, FormField, FormItemContent };

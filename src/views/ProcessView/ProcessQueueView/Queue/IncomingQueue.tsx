@@ -22,7 +22,7 @@ export default function IncomingQueue({ incomingProcesses }: TProps) {
         </motion.div>
       ))}
       {incomingProcesses.length === 0 && (
-        <p className="py-8 text-center text-sm text-gray-400">No incoming processes</p>
+        <p className="text-muted-foreground py-8 text-center text-sm">No incoming processes</p>
       )}
     </BaseQueue>
   );

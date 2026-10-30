@@ -1,6 +1,5 @@
 'use client';
 
-import { AnimatePresence, motion } from 'motion/react';
 import { ComponentProps, memo, useMemo } from 'react';
 import GameWinLines from 'src/components/games/GameWinLines';
 import { cn } from 'src/lib/utils';
@@ -8,6 +7,7 @@ import { TCaroGame, TTurn, TWinState } from 'src/types/caro.type';
 
 interface TCaroCellProps extends ComponentProps<'div'> {
   location: number;
+  boardSize: number;
   size: number;
   turn: TTurn | undefined;
   winTypes: TWinState['locations'][number] | undefined;
@@ -22,6 +22,7 @@ interface TCaroCellProps extends ComponentProps<'div'> {
 function CaroCell(params: TCaroCellProps) {
   const {
     location,
+    boardSize,
     size,
     turn,
     winTypes,
@@ -51,10 +52,10 @@ function CaroCell(params: TCaroCellProps) {
     if (turn === 0) {
       return cn(
         baseClasses,
-        'text-orange-400 font-bold',
-        winTypes && 'bg-orange-400/10 relative',
-        gameType === 'normal' ? 'hover:bg-orange-400/20!' : 'hover:bg-background/60',
-        isCurrent && 'bg-orange-400/20!'
+        'text-player-1 font-bold',
+        winTypes && 'bg-player-1/10 relative',
+        gameType === 'normal' ? 'hover:bg-player-1/20!' : 'hover:bg-background/60',
+        isCurrent && 'bg-player-1/20!'
       );
     }
 
@@ -62,10 +63,10 @@ function CaroCell(params: TCaroCellProps) {
     if (turn === 1) {
       return cn(
         baseClasses,
-        'text-blue-400 font-bold',
-        winTypes && 'bg-blue-400/10 relative',
-        gameType === 'normal' ? 'hover:bg-blue-400/20!' : 'hover:bg-background/60',
-        isCurrent && 'bg-blue-400/20!'
+        'text-player-2 font-bold',
+        winTypes && 'bg-player-2/10 relative',
+        gameType === 'normal' ? 'hover:bg-player-2/20!' : 'hover:bg-background/60',
+        isCurrent && 'bg-player-2/20!'
       );
     }
 
@@ -82,32 +83,25 @@ function CaroCell(params: TCaroCellProps) {
   return (
     <div
       {...props}
+      role="button"
+      aria-label={`Row ${Math.floor(location / boardSize) + 1}, column ${(location % boardSize) + 1}${icon ? `: ${icon.toUpperCase()}` : ''}`}
+      aria-disabled={shouldDisableBoard || isWin || undefined}
       className={cellClassName}
       style={{
         width: size,
         height: size,
         fontSize: size * 0.7,
-        border: '0.5px solid var(--border)',
       }}
       onClick={() => onMove(location)}
     >
-      <AnimatePresence mode="wait">
-        {icon && (
-          <motion.span
-            key={icon}
-            initial={{ scale: 0, rotate: -45, opacity: 0 }}
-            animate={{ scale: 1, rotate: 0, opacity: 1 }}
-            transition={{
-              type: 'spring',
-              stiffness: 260,
-              damping: 20,
-            }}
-            className="flex h-full w-full items-center justify-center"
-          >
-            {icon}
-          </motion.span>
-        )}
-      </AnimatePresence>
+      {icon && (
+        <span
+          key={icon}
+          className="animate-in zoom-in-50 fade-in flex h-full w-full items-center justify-center duration-200"
+        >
+          {icon}
+        </span>
+      )}
       <GameWinLines turn={turn} winTypes={winTypes} />
     </div>
   );

@@ -1,33 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Metadata } from 'next';
 import { APP_NAME } from 'src/configs/constance';
 import { TPosition } from 'src/types/global';
-import { USER_ROLE } from 'src/types/papp.type';
-
-/**
- * Converts a hexadecimal string to a Uint8Array.
- * @param hex - The hexadecimal string to convert (must have even length)
- * @returns A Uint8Array containing the converted bytes
- * @throws Error if the hex string has odd length
- */
-export function hexToUint8Array(hex: string): Uint8Array {
-  if (hex.length % 2 !== 0) {
-    throw new Error('Invalid hex string');
-  }
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
-  }
-  return bytes;
-}
-
-/**
- * Gets the current Unix timestamp in seconds.
- * @returns The current timestamp in seconds since Unix epoch
- */
-export function getCurrentTimestamp(): number {
-  return Math.floor(Date.now() / 1000);
-}
 
 /**
  * Creates a randomly shuffled array of numbers from 0 to range-1 using Fisher-Yates shuffle.
@@ -54,10 +27,19 @@ export function formatText(s: string, frac = 3): string {
 }
 
 export function generateAppMetadata(title: string, description?: string): Metadata {
+  // Page-level openGraph/twitter replace the layout's objects, so repeat the shared fields.
+  const images = ['/opengraph-image'];
   return {
-    title: `${APP_NAME} | ${title}`,
-    description: description || undefined,
-    openGraph: { title: `${APP_NAME} | ${title}` },
+    title,
+    description,
+    openGraph: {
+      type: 'website',
+      siteName: APP_NAME,
+      title: `${title} | ${APP_NAME}`,
+      description,
+      images,
+    },
+    twitter: { card: 'summary_large_image', title: `${title} | ${APP_NAME}`, description, images },
   };
 }
 
@@ -106,25 +88,4 @@ export function removeAtIndex<T>(arr: T[], index: number): T[] {
  */
 export function getRandom(len: number): number {
   return Math.floor(Math.random() * len);
-}
-
-export function getAxiosError(error: any) {
-  let message = error?.response?.data?.message;
-  if (typeof message == 'string') return message;
-  message = error?.response?.data;
-  if (typeof message == 'string') return message;
-  message = error?.message;
-  if (typeof message == 'string') return message;
-  return undefined;
-}
-
-export function getUserRole(role?: USER_ROLE) {
-  switch (role) {
-    case USER_ROLE.ADMIN:
-      return 'Admin';
-    case USER_ROLE.USER:
-      return 'User';
-    default:
-      return 'Unknown';
-  }
 }

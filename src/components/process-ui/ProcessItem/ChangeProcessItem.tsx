@@ -80,7 +80,7 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
               >
                 <BaseInput
                   type="number"
-                  className="rounded-none"
+                  className=""
                   {...field}
                   onChange={(e) => {
                     const val = e.target.value === '' ? '' : Number(e.target.value);
@@ -103,7 +103,7 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
               >
                 <BaseInput
                   type="number"
-                  className="rounded-none"
+                  className=""
                   {...field}
                   onChange={(e) => {
                     const val = e.target.value === '' ? '' : Number(e.target.value);
@@ -116,7 +116,7 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
               </FormItemContent>
             )}
           />
-          <Button className="mt-2 rounded-none" onClick={events?.onAddBlockTask} type="button">
+          <Button className="mt-2" onClick={events?.onAddBlockTask} type="button">
             + add block tasks
           </Button>
           {(data?.blockTasks || []).length > 0 && (
@@ -126,7 +126,7 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
                   <div key={index} className="flex items-center gap-2">
                     <BaseInput
                       type="number"
-                      className="rounded-none"
+                      className=""
                       name={`blockTask-${index}-start`}
                       placeholder="Start"
                       value={item.arrivalTime}
@@ -138,7 +138,7 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
                     <BaseInput
                       name={`blockTask-${index}-duration`}
                       type="number"
-                      className="rounded-none"
+                      className=""
                       placeholder="Duration"
                       value={item.executionTime}
                       onChange={(event) => {

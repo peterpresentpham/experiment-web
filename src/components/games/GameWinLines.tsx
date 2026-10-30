@@ -13,7 +13,7 @@ export default function GameWinLines({ turn, winTypes }: TProps) {
         <div
           className={cn(
             'absolute top-1/2 h-px w-full -translate-y-1/2',
-            turn == 0 ? 'bg-chart-1' : 'bg-chart-2'
+            turn == 0 ? 'bg-player-1' : 'bg-player-2'
           )}
         />
       )}
@@ -21,7 +21,7 @@ export default function GameWinLines({ turn, winTypes }: TProps) {
         <div
           className={cn(
             'absolute left-1/2 h-full w-px -translate-x-1/2',
-            turn == 0 ? 'bg-chart-1' : 'bg-chart-2'
+            turn == 0 ? 'bg-player-1' : 'bg-player-2'
           )}
         />
       )}
@@ -29,7 +29,7 @@ export default function GameWinLines({ turn, winTypes }: TProps) {
         <div
           className={cn(
             'absolute top-1/2 left-1/2 h-px w-[140%] origin-center -translate-1/2 rotate-45',
-            turn == 0 ? 'bg-chart-1' : 'bg-chart-2'
+            turn == 0 ? 'bg-player-1' : 'bg-player-2'
           )}
         />
       )}
@@ -37,7 +37,7 @@ export default function GameWinLines({ turn, winTypes }: TProps) {
         <div
           className={cn(
             'absolute top-1/2 left-1/2 h-px w-[140%] origin-center -translate-1/2 -rotate-45',
-            turn == 0 ? 'bg-chart-1' : 'bg-chart-2'
+            turn == 0 ? 'bg-player-1' : 'bg-player-2'
           )}
         />
       )}

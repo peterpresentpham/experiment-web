@@ -39,7 +39,7 @@ export default function PathDraw({ size, selectedPath }: TProps) {
           <div
             key={index}
             style={{ width, height, left, top }}
-            className="absolute rounded-full bg-amber-500/60 shadow-[0_0_12px_rgba(251,191,36,0.35)] dark:bg-amber-300/80 dark:shadow-[0_0_12px_rgba(251,191,36,0.7)]"
+            className="bg-primary/70 absolute rounded-full shadow-sm"
           />
         );
       })}

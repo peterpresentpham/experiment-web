@@ -32,7 +32,7 @@ export default function WaitingQueue({ processList }: TProps) {
           </motion.div>
         ))}
         {waitingProcesses.length === 0 && (
-          <p className="py-8 text-center text-sm text-gray-400">No waiting processes</p>
+          <p className="text-muted-foreground py-8 text-center text-sm">No waiting processes</p>
         )}
       </AnimatePresence>
     </BaseQueue>

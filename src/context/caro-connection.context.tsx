@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import useGameSignalingSocket from 'src/hooks/useGameSignalingSocket';
 import { createCaroMessage, decodeCaroMessage, TSyncReturnType } from 'src/services/caro.utils';
 import { useCaroStore } from 'src/states/caro.state';
-import { useGameMessengerChat } from 'src/states/messenger.state';
+import { useCaroChat } from 'src/states/messenger.state';
 import { TConnection, TRole } from 'src/types/caro.type';
 
 export type TCaroConnectionContext = {
@@ -56,7 +56,7 @@ export default function CaroConnectionProvider({ children }: TProps) {
   const pendingSignalRef = useRef<string | null>(null);
   const {
     fn: { addChats },
-  } = useGameMessengerChat('caro');
+  } = useCaroChat();
   const {
     metadata: { size, gameType, isOverride },
     fn: { setMetadata, move, undo, reset },

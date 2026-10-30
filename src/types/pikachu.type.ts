@@ -1,4 +1,4 @@
-import { TPosition, TVector } from './global';
+import { TPosition } from './global';
 
 export type TPikachuImg = 'internal' | 'external';
 export type TPikachuGame = 'normal' | 'customBoard' | 'randomBoard' | 'blind';
@@ -42,16 +42,6 @@ export type TPikachuTransform =
   | 'spreadOut'
   | 'collapseToCenter';
 
-export type TPerformFormat = {
-  board: Array<Array<number>>;
-  vector: TVector;
-  space: [TPosition, TPosition];
-};
-
-export type TPerformTransform = TPerformFormat & {
-  moves: Array<TPosition>;
-};
-
 export type TMoveParams = TBasePikachu & {
   moves: Array<TPosition>;
 };
@@ -59,19 +49,19 @@ export type TMoveParams = TBasePikachu & {
 export enum PikachuMachineState {
   INITIAL = 'initial',
   PLAYING = 'playing',
+  // Two matching pieces were picked: the path is shown and the input is locked.
+  MATCHED = 'matched',
+  // Transient state that routes to the next state once a match has been committed.
+  RESOLVING = 'resolving',
   OUT_OF_MOVE = 'out-of-move',
-  ENDED = 'ended',
 }
 
 export enum PikachuMachineEvent {
   CREATE = 'create',
   LOAD_SAVE_GAME = 'load-save-game',
   CHANGE = 'change',
-  OUT_OF_MOVE = 'out-of-move',
   MOVE = 'move',
-  RESET_SELECTION = 'reset-selection',
   SHOW_HINT = 'show-hint',
-  WIN = 'win',
 }
 
 export type TPikachuCreateEvent = {
@@ -86,15 +76,25 @@ export type TPikachuEvent =
   | TPikachuCreateEvent
   | { type: PikachuMachineEvent.CHANGE }
   | TPikachuMoveEvent
-  | { type: PikachuMachineEvent.RESET_SELECTION }
   | { type: PikachuMachineEvent.SHOW_HINT }
-  | { type: PikachuMachineEvent.OUT_OF_MOVE }
-  | { type: PikachuMachineEvent.LOAD_SAVE_GAME }
-  | { type: PikachuMachineEvent.WIN };
+  | { type: PikachuMachineEvent.LOAD_SAVE_GAME };
+
+export type TMatchOutcome = 'continue' | 'outOfMove' | 'cleared';
+
+// Result of applying a matched pair to the board; computed purely, then committed to the store.
+export type TMatchResult = {
+  board: Array<Array<number>>;
+  suggestion?: Array<TPosition>;
+  outcome: TMatchOutcome;
+  randomCounter: number;
+  randomRoundListIndex?: number;
+};
 
 export type TPikachuContext = {
   position?: TPosition;
   selectedPath: Array<TPosition>;
+  matchedPair?: [TPosition, TPosition];
+  matchResult?: TMatchResult;
   randomCounter: number;
   hintRunning: boolean;
 };

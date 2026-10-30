@@ -139,7 +139,7 @@ export default function ExportImportData({ components, isShowExport = true }: TP
                   type="file"
                   accept="application/json"
                   onChange={onFileChange}
-                  className="file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer rounded-none file:mr-4 file:border-0 file:px-4 file:py-1 file:text-sm file:font-semibold"
+                  className="file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer file:mr-4 file:border-0 file:px-4 file:py-1 file:text-sm file:font-semibold"
                 />
               </div>
               <div className="relative">
@@ -156,7 +156,7 @@ export default function ExportImportData({ components, isShowExport = true }: TP
                 <Label className="text-base font-semibold">Quick Start</Label>
                 <Button
                   variant="outline"
-                  className="hover:bg-primary/5 hover:text-primary group h-12 w-full justify-start rounded-none px-4 transition-all"
+                  className="hover:bg-primary/5 hover:text-primary group h-12 w-full justify-start px-4 transition-all"
                   onClick={onUseExampleData}
                 >
                   <div className="flex items-center space-x-3">
@@ -185,8 +185,8 @@ export default function ExportImportData({ components, isShowExport = true }: TP
                     }}
                   />
                 </div>
-                <div className="bg-zinc-950 p-4">
-                  <pre className="overflow-x-auto font-mono text-[10px] leading-relaxed text-zinc-400">
+                <div className="bg-secondary p-4">
+                  <pre className="text-muted-foreground overflow-x-auto font-mono text-xs leading-relaxed">
                     {EXAMPLE_JSON_SNIPPET}
                   </pre>
                 </div>

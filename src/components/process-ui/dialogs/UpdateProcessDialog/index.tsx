@@ -90,22 +90,16 @@ export default function UpdateProcessDialog(props: DialogProps) {
           size="sm"
           variant="outline"
           disabled={status != 'initial' && status != 'ready'}
-          className="cursor-pointer rounded-none"
+          className="cursor-pointer"
         >
           Data
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl rounded-none p-4">
+      <DialogContent className="max-w-2xl p-4">
         <DialogHeader>Update Process</DialogHeader>
         <div className="flex items-center justify-between">
           <p className="text-lg font-semibold">Processes</p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-none"
-            onClick={onCreateProcess}
-            type="button"
-          >
+          <Button variant="outline" size="sm" className="" onClick={onCreateProcess} type="button">
             + Add Process
           </Button>
         </div>

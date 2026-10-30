@@ -16,7 +16,6 @@ type TCaroMetadataType = {
   gameType: TCaroGame;
   winMode: TCaroWinMode;
   isOverride: boolean;
-  status: 'playing' | 'win';
   size: TCaroSizeBoard;
   maxNumberOfBlindError: number;
   preWinner: number;
@@ -35,7 +34,7 @@ type TCaroStateType = {
     undo: () => void;
     reset: (turn?: TTurn) => void;
     countNumberOfBlindError: (turn: TTurn) => void;
-    setMetadata: (metadata: Partial<Omit<TCaroMetadataType, 'status'>>) => void;
+    setMetadata: (metadata: Partial<TCaroMetadataType>) => void;
   };
 };
 
@@ -51,11 +50,9 @@ export const useCaroStore = create<
           gameType: 'normal',
           winMode: 'blockOpponent',
           isOverride: false,
-          status: 'playing',
           size: 10,
           maxNumberOfBlindError: 5,
           preWinner: 0,
-          isSound: true,
         },
         numberOfBlindError: { 0: 0, 1: 0 },
         isBlindForceOver: false,
@@ -75,7 +72,6 @@ export const useCaroStore = create<
               );
               if (_winState.winMode.length > 0) {
                 state.winState = _winState;
-                state.metadata.status = 'win';
               } else state.turn = (1 - state.turn) as TTurn;
             });
           },
@@ -95,7 +91,6 @@ export const useCaroStore = create<
           },
           reset: (turn) => {
             set((state) => {
-              state.metadata.status = 'playing';
               state.numberOfBlindError = { 0: 0, 1: 0 };
               if (turn != undefined) state.turn = turn;
               state.metadata.preWinner = state.turn;
@@ -137,7 +132,6 @@ export const useCaroStore = create<
             ...rest.metadata,
             playMode: 'offline',
             preWinner: 0,
-            status: 'playing',
           };
           return {
             ...rest,

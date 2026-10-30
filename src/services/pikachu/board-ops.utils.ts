@@ -228,4 +228,4 @@ export const boardOpConfigs: TBoardOpMapping = {
   collapseToCenter,
 };
 
-export type { TCellTraversalCallback, TSpaceConfig };
+export type { TSpaceConfig };

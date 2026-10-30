@@ -5,23 +5,14 @@ import BaseInput from 'src/components/input/BaseInput';
 import { Button } from 'src/components/shadcn/button';
 import { useCaroConnectionContext } from 'src/context/caro-connection.context';
 import { useCaroStore } from 'src/states/caro.state';
-import { TMyGame } from 'src/types/caro.type';
 import { useCaroConfigContext } from '../CaroConfigDialog/caroConfig.context';
-import useBoardGameConfigContext from './useBoardGameConfigContext';
 
-interface TProps {
-  game: TMyGame;
-}
-
-export default function GameTypeConfig({ game }: TProps) {
+export default function GameTypeConfig() {
   const {
     gameType,
     maxError,
-    fn: { setGameType, setMaxError },
-  } = useBoardGameConfigContext(game);
-  const {
     isOverride,
-    fn: { setIsOverride },
+    fn: { setGameType, setMaxError, setIsOverride },
   } = useCaroConfigContext();
   const { role, connectionType } = useCaroConnectionContext();
   const {
@@ -54,15 +45,13 @@ export default function GameTypeConfig({ game }: TProps) {
         >
           Blind
         </Button>
-        {game == 'caro' && (
-          <Button
-            disabled={canNotConfig}
-            variant={isOverride ? 'default' : 'outline'}
-            onClick={() => setIsOverride((preValue) => !preValue)}
-          >
-            Override
-          </Button>
-        )}
+        <Button
+          disabled={canNotConfig}
+          variant={isOverride ? 'default' : 'outline'}
+          onClick={() => setIsOverride((preValue) => !preValue)}
+        >
+          Override
+        </Button>
       </div>
       {gameType == 'blind' && (
         <div className="mt-6">

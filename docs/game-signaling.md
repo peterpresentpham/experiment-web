@@ -1,12 +1,12 @@
-# Game signaling (Caro/Connect4 online mode)
+# Game signaling (Caro online mode)
 
 Tài liệu này giải thích cơ chế **tự động thiết lập kết nối peer-to-peer (WebRTC)**
-giữa hai người chơi Caro/Connect4 ở chế độ `online`: vấn đề nó giải quyết, luồng hoạt
+giữa hai người chơi Caro ở chế độ `online`: vấn đề nó giải quyết, luồng hoạt
 động chi tiết, và các file liên quan trong codebase.
 
 ## 1. Vấn đề cần giải quyết
 
-Caro/Connect4 chơi online bằng cách 2 trình duyệt kết nối **trực tiếp** với nhau qua
+Caro chơi online bằng cách 2 trình duyệt kết nối **trực tiếp** với nhau qua
 WebRTC data channel (thư viện [`simple-peer`](https://github.com/feross/simple-peer)) —
 không có server nào đứng giữa để xử lý nước đi, chat, sync cấu hình bàn cờ.
 
@@ -74,8 +74,7 @@ Các file liên quan:
   namespace đó (`io('${GAME_SIGNAL_URL}/game-signal')`).
 - `src/types/signaling.type.ts` — định nghĩa type cho các event, dùng chung
   client/server để tránh gõ nhầm tên event.
-- `src/context/caro-connection.context.tsx` (và bản song song
-  `connect4-connection.context.tsx`) — nơi ghép nối `simple-peer` với socket
+- `src/context/caro-connection.context.tsx` — nơi ghép nối `simple-peer` với socket
   signaling: nghe event `signal` của `Peer` để gửi đi, nghe `receive_signal` từ server
   để nạp ngược vào `Peer`.
 
@@ -193,7 +192,7 @@ Diễn giải từng bước bằng lời:
   đủ, miễn signaling server chạy 1 instance (đúng với cách project tự host hiện tại).
 - **Không cần đăng nhập/tài khoản**: không tái sử dụng backend `papp` (vốn là chat
   service khác, cần tài khoản + đã kết bạn) để giữ trải nghiệm ẩn danh vốn có của
-  Caro/Connect4 — chỉ cần một room code dùng 1 lần.
+  Caro — chỉ cần một room code dùng 1 lần.
 - **Tách biệt hoàn toàn với dữ liệu game**: server signaling không bao giờ thấy nước
   đi, chat hay bất kỳ dữ liệu gameplay nào — chỉ thấy room code và các gói SDP mã hoá
   cơ hội kết nối, đúng tinh thần P2P ban đầu của tính năng.
@@ -216,8 +215,7 @@ Diễn giải từng bước bằng lời:
 | `src/hooks/useGameSignalingSocket.ts` | Hook tạo kết nối Socket.IO tới `/game-signal` |
 | `src/configs/constance.ts` (`GAME_SIGNAL_URL`) | Địa chỉ signaling server, đọc từ `NEXT_PUBLIC_GAME_SIGNAL_URL` |
 | `src/context/caro-connection.context.tsx` | Ghép `simple-peer` với signaling cho Caro |
-| `src/context/connect4-connection.context.tsx` | Bản tương tự cho Connect4 |
 | `Dockerfile` / `Dockerfile.signal` / `docker-compose.yaml` | Build/chạy 2 service riêng: frontend và signaling server |
 | `src/components/AppDialog/CaroConnectionDialog/HostConnection.tsx` | UI hiển thị room code cho host |
 | `src/components/AppDialog/CaroConnectionDialog/GuestConnection.tsx` | UI nhập room code cho guest |
-| `README.md` (mục "Caro / Connect4 real-time server") | Hướng dẫn chạy local, Docker, và deploy tách server trên Vercel |
+| `README.md` (mục "Caro real-time server") | Hướng dẫn chạy local, Docker, và deploy tách server trên Vercel |

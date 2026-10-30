@@ -6,8 +6,8 @@ export default function CaroView() {
   return (
     <CaroConnectionProvider>
       <CaroStateProvider>
-        <div className="mx-8 flex h-full justify-center gap-2 py-4">
-          <CaroBoard className="w-fit flex-1" />
+        <div className="container flex flex-1 flex-col">
+          <CaroBoard className="flex-1" />
         </div>
       </CaroStateProvider>
     </CaroConnectionProvider>

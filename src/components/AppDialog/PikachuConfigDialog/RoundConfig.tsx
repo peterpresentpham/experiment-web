@@ -70,7 +70,7 @@ export default function RoundConfig() {
                   <p className="font-bold">{index + 1}.</p>
                   <p className="text-sm text-nowrap">{pikachuTransformConfig[id].title}</p>
                 </div>
-                <IconButton onClick={() => onRemove(id)}>
+                <IconButton aria-label="Remove round" onClick={() => onRemove(id)}>
                   <Trash size={14} />
                 </IconButton>
               </SortableItem>

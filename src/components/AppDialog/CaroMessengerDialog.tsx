@@ -1,26 +1,21 @@
 import { MessageCircle, Send } from 'lucide-react';
+import IconDialogTrigger from 'src/components/AppDialog/components/IconDialogTrigger';
 import { KeyboardEvent, MouseEvent, useEffect, useRef, useState } from 'react';
 import { beVietnamPro } from 'src/configs/constance';
 import { useCaroConnectionContext } from 'src/context/caro-connection.context';
 import { cn } from 'src/lib/utils';
 import { createCaroMessage } from 'src/services/caro.utils';
-import { useGameMessengerChat } from 'src/states/messenger.state';
-import { TMyGame } from 'src/types/caro.type';
-import AppTooltip from '../AppTooltip';
-import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '../shadcn/dialog';
+import { useCaroChat } from 'src/states/messenger.state';
+import { Dialog, DialogContent, DialogHeader } from '../shadcn/dialog';
 import { Textarea } from '../shadcn/textarea';
 
-interface TProps {
-  gameType: TMyGame;
-}
-
-export default function CaroMessengerDialog({ gameType }: TProps) {
+export default function CaroMessengerDialog() {
   const { peer, connectionType } = useCaroConnectionContext();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const {
     chats,
     fn: { addChats },
-  } = useGameMessengerChat(gameType);
+  } = useCaroChat();
   const [message, setMessage] = useState('');
 
   function _sendMessage(message: string) {
@@ -50,11 +45,7 @@ export default function CaroMessengerDialog({ gameType }: TProps) {
 
   return connectionType == 'connected' ? (
     <Dialog>
-      <DialogTrigger className="cursor-pointer">
-        <AppTooltip tooltipContent="Message" contentProps={{ side: 'bottom' }}>
-          <MessageCircle size={16} />
-        </AppTooltip>
-      </DialogTrigger>
+      <IconDialogTrigger label="Message" icon={MessageCircle} />
       <DialogContent className="flex h-3/4 flex-col">
         <DialogHeader className="h-fit">Messenger</DialogHeader>
         <div className="flex h-[calc(100%-20px)] flex-col gap-4">

@@ -145,10 +145,9 @@ function _analyticStep(
 /**
  * Checks if the current move results in a win condition.
  *
- * This function analyzes all four possible win directions (left diagonal, right diagonal,
- * vertical, and horizontal) from the current step position. It counts consecutive pieces
- * in each direction and determines if they meet the win condition (4 in a row for boards > 3x3,
- * 2 in a row for 3x3 boards).
+ * Looks along the four lines through the current step (horizontal, vertical and both diagonals)
+ * and counts the consecutive pieces of the current player on each side. A line wins with five
+ * in a row on boards larger than 3x3 and three in a row on a 3x3 board.
  *
  * @param params - Object containing the game state:
  *   - steps: Map of board positions to player turns
@@ -163,41 +162,16 @@ function _analyticStep(
  *   - locations: Map of winning cell locations to their win types
  */
 export function checkWin(params: TParamsType, winConfigMode: TCaroWinMode): TWinState {
-  const _sizeForWin = params.size > 3 ? 4 : 2;
-  const leftDiagonal = _analyticStep('leftDiagonal', params, winConfigMode, _sizeForWin);
-  const rightDiagonal = _analyticStep('rightDiagonal', params, winConfigMode, _sizeForWin);
-  const vertical = _analyticStep('vertical', params, winConfigMode, _sizeForWin);
-  const horizontal = _analyticStep('horizontal', params, winConfigMode, _sizeForWin);
-  const { currentStep } = params;
+  const sizeForWin = params.size > 3 ? 4 : 2;
+  const winMode: Array<TCaroWin> = [];
   const locations: TWinState['locations'] = {};
 
-  const winMode: Array<TCaroWin> = [];
-  if (leftDiagonal.isWin) {
-    winMode.push('leftDiagonal');
-    for (const _location of leftDiagonal.arr.concat(currentStep)) {
-      if (!locations[_location]) locations[_location] = {};
-      locations[_location]['leftDiagonal'] = true;
-    }
-  }
-  if (rightDiagonal.isWin) {
-    winMode.push('rightDiagonal');
-    for (const _location of rightDiagonal.arr.concat(currentStep)) {
-      if (!locations[_location]) locations[_location] = {};
-      locations[_location]['rightDiagonal'] = true;
-    }
-  }
-  if (vertical.isWin) {
-    winMode.push('vertical');
-    for (const _location of vertical.arr.concat(currentStep)) {
-      if (!locations[_location]) locations[_location] = {};
-      locations[_location]['vertical'] = true;
-    }
-  }
-  if (horizontal.isWin) {
-    winMode.push('horizontal');
-    for (const _location of horizontal.arr.concat(currentStep)) {
-      if (!locations[_location]) locations[_location] = {};
-      locations[_location]['horizontal'] = true;
+  for (const type of Object.keys(config) as Array<TCaroWin>) {
+    const { isWin, arr } = _analyticStep(type, params, winConfigMode, sizeForWin);
+    if (!isWin) continue;
+    winMode.push(type);
+    for (const location of [...arr, params.currentStep]) {
+      locations[location] = { ...locations[location], [type]: true };
     }
   }
 

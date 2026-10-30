@@ -1,48 +1,23 @@
 import { Be_Vietnam_Pro } from 'next/font/google';
-import IconImg from 'public/favicon.ico';
-import ThumbImg from 'public/thumbnail.webp';
-import { TMyAllGame } from 'src/types/caro.type';
-import { ENV_TYPE, TPageMetadata } from 'src/types/global';
 import { SchedulerModeType } from 'src/types/process.type';
 
 export const APP_NAME = 'Experiment App';
 export const MAX_CARO_BOARD_SIZE = 50;
-export const MAX_CONNECT4_BOARD_SIZE = 80;
 
-export const ENCRYPT_KEY = process.env.NEXT_PUBLIC_ENCRYPT_KEY || '';
-export const IV_HEX = process.env.NEXT_PUBLIC_IV_HEX || '00112233445566778899aabbccddeeff';
-export const PAPP_BACKEND_URL = process.env.NEXT_PUBLIC_PAPP_BACKEND_URL || '';
 // The game-signaling server (src/server/signaling.mjs) always runs as its own
 // process (`yarn signal`), separate from the Next.js app — this must point to it.
-// See README "Caro / Connect4 real-time server".
+// See README "Caro real-time server".
 export const GAME_SIGNAL_URL = process.env.NEXT_PUBLIC_GAME_SIGNAL_URL || '';
-export const ENV = (process.env.NEXT_PUBLIC_ENV || 'production') as ENV_TYPE;
 
 export enum DIALOG_KEY {
   caroConfigDialog = 'caroConfigDialog',
   caroConnectionDialog = 'caroConnectionDialog',
   caroInstructionDialog = 'caroInstructionDialog',
-  connect4ConfigDialog = 'connect4ConfigDialog',
-  connect4InstructionDialog = 'connect4InstructionDialog',
   pikachuConfigDialog = 'pikachuConfigDialog',
   pikachuInstructionDialog = 'pikachuInstructionDialog',
-  routingGameDialog = 'routingGameDialog',
   changeBoardConfirmDialog = 'changeBoardConfirmDialog',
   globalConfigDialog = 'globalConfigDialog',
 }
-
-export enum QUERY_KEY {
-  getMe = 'getMe',
-  getListConversations = 'getListConversations',
-  findUsers = 'findUsers',
-  getMessages = 'getMessages',
-}
-
-export const gameConfigs: { [game in TMyAllGame]: { title: string } } = {
-  caro: { title: 'Caro' },
-  connect4: { title: 'Connect4' },
-  pikachu: { title: 'Pikachu' },
-};
 
 export const ProcessSchedulerConfigs: Record<
   SchedulerModeType,
@@ -58,16 +33,10 @@ export const ProcessSchedulerConfigs: Record<
   },
 };
 
-export const siteMetadata: TPageMetadata = {
-  title: APP_NAME,
-  description: 'I will deploy some app to domain.',
-  url: 'https://experiment.peter-present.xyz/',
-  siteName: APP_NAME,
-  twitterHandle: 'PhamHon08928762',
-  icon: IconImg.src,
-  image: ThumbImg.src,
-  keywords: '',
-};
+export const SITE_URL = 'https://experiment.peter-present.xyz';
+export const SITE_DESCRIPTION =
+  'A playground of small web experiments: board games, an OS process scheduler visualizer and a chat app.';
+export const GTM_ID = 'GTM-W3M57J7H';
 
 export const beVietnamPro = Be_Vietnam_Pro({
   subsets: ['vietnamese'],

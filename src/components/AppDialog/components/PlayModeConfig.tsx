@@ -1,19 +1,15 @@
 import { Bluetooth, Settings } from 'lucide-react';
 import { Button } from 'src/components/shadcn/button';
-import useBoardGameConnectionContext from 'src/hooks/useBoardGameConnection';
-import { TMyGame, TPlayMode } from 'src/types/caro.type';
-import useBoardGameConfigContext from './useBoardGameConfigContext';
+import { useCaroConnectionContext } from 'src/context/caro-connection.context';
+import { TPlayMode } from 'src/types/caro.type';
+import { useCaroConfigContext } from '../CaroConfigDialog/caroConfig.context';
 
-interface TProps {
-  game: TMyGame;
-}
-
-export default function PlayModeConfig({ game }: TProps) {
+export default function PlayModeConfig() {
   const {
     playMode,
     fn: { setPlayMode },
-  } = useBoardGameConfigContext(game);
-  const { peer } = useBoardGameConnectionContext(game);
+  } = useCaroConfigContext();
+  const { peer } = useCaroConnectionContext();
 
   function onChangePlayMode(playMode: TPlayMode) {
     setPlayMode(playMode);

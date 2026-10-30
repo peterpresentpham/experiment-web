@@ -3,20 +3,18 @@ import CaroConfigDialog from 'src/components/AppDialog/CaroConfigDialog';
 import CaroConnectionDialog from 'src/components/AppDialog/CaroConnectionDialog';
 import CaroInstructionDialog from 'src/components/AppDialog/CaroInstructionDialog';
 import CaroMessengerDialog from 'src/components/AppDialog/CaroMessengerDialog';
-import RoutingGameDialog from 'src/components/AppDialog/RoutingGameDialog';
 import TitleBox from 'src/components/box/TitleBox';
+import GameStatus from 'src/components/games/GameStatus';
+import GameToolbar from 'src/components/games/GameToolbar';
 import { Button } from 'src/components/shadcn/button';
 import { useCaroStateContext } from 'src/context/caro-state.context';
-import { cn } from 'src/lib/utils';
 import { useCaroStore } from 'src/states/caro.state';
 
 export default function HeaderConfig(props: ComponentProps<'div'>) {
-  const {
-    turn,
-    stepsOrder,
-    numberOfBlindError,
-    metadata: { gameType },
-  } = useCaroStore();
+  const turn = useCaroStore((state) => state.turn);
+  const stepCount = useCaroStore((state) => state.stepsOrder.length);
+  const numberOfBlindError = useCaroStore((state) => state.numberOfBlindError);
+  const gameType = useCaroStore((state) => state.metadata.gameType);
   const {
     shouldDisableBoard,
     playerText,
@@ -25,51 +23,51 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
   } = useCaroStateContext();
 
   return (
-    <div {...props} className={cn('flex flex-col items-center gap-1', props.className)}>
-      <div className="flex items-center gap-2">
-        <RoutingGameDialog game="caro" />
-        <CaroConfigDialog />
-        <CaroInstructionDialog />
-        <CaroConnectionDialog />
-        <CaroMessengerDialog gameType="caro" />
-        <p className={cn('text-xs', turn == 0 && 'text-chart-1', turn == 1 && 'text-chart-2')}>
-          {playerText}
-        </p>
-        {!isOver ? (
+    <GameToolbar
+      {...props}
+      title="Caro"
+      status={<GameStatus text={playerText} turn={turn} isOver={isOver} />}
+      tools={
+        <>
+          <CaroConfigDialog />
+          <CaroInstructionDialog />
+          <CaroConnectionDialog />
+          <CaroMessengerDialog />
+        </>
+      }
+      actions={
+        !isOver ? (
           <Button
             size="sm"
             variant="outline"
-            className={cn(
-              turn == 0 && 'text-chart-1 hover:text-chart-1/50',
-              turn == 1 && 'text-chart-2 hover:text-chart-2/50'
-            )}
             onClick={undo}
-            disabled={stepsOrder.length <= 1 || shouldDisableBoard}
+            disabled={stepCount <= 1 || shouldDisableBoard}
           >
             Undo
           </Button>
         ) : (
-          <Button disabled={!isOver} size="sm" onClick={() => reset()}>
+          <Button size="sm" onClick={() => reset()}>
             New game
           </Button>
-        )}
-      </div>
+        )
+      }
+    >
       {gameType == 'blind' && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-4">
           <TitleBox
-            title="Player1"
+            title="Player 1 errors"
             value={numberOfBlindError[0]}
-            titleProps={{ className: 'text-chart-1' }}
+            titleProps={{ className: 'text-player-1' }}
             valueProps={{ className: 'text-destructive' }}
           />
           <TitleBox
-            title="Player2"
+            title="Player 2 errors"
             value={numberOfBlindError[1]}
-            titleProps={{ className: 'text-chart-2' }}
+            titleProps={{ className: 'text-player-2' }}
             valueProps={{ className: 'text-destructive' }}
           />
         </div>
       )}
-    </div>
+    </GameToolbar>
   );
 }

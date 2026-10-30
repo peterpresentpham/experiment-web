@@ -1,6 +1,5 @@
 import { CSSProperties } from 'react';
-import { cn } from 'src/lib/utils';
-import { TAnimationComponentDivProps, TAnimationComponentProps } from 'src/types/global';
+import { TAnimationComponentProps } from 'src/types/global';
 
 interface TClockLoaderProps extends TAnimationComponentProps {
   isReverse?: boolean;
@@ -47,17 +46,6 @@ export default function ClockLoader({
         className="ClockLoader_item ClockLoader top-[25%] right-[50%] h-[25%]"
         style={{ '--animation-time': '20s', '--color': color } as CSSProperties}
       />
-    </div>
-  );
-}
-
-export function ClockLoaderBox({
-  iconProps,
-  ...props
-}: TAnimationComponentDivProps<TClockLoaderProps>) {
-  return (
-    <div {...props} className={cn('flex justify-center', props.className)}>
-      <ClockLoader {...iconProps} />
     </div>
   );
 }

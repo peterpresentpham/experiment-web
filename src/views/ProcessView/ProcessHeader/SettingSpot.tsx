@@ -9,7 +9,7 @@ export default function SettingSpot() {
     <div className="flex items-center gap-2">
       <Badge
         variant="outline"
-        className="rounded-none border-blue-500/20 bg-blue-500/5 px-2 text-[9px] font-black tracking-widest text-blue-600 uppercase dark:text-blue-400"
+        className="border-info/30 bg-info/10 text-info px-2 text-xs font-semibold tracking-wide uppercase"
       >
         STATUS: {status}
       </Badge>

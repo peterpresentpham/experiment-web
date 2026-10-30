@@ -11,8 +11,6 @@ This project uses:
 - Zustand
 - React Context
 - XState
-- TanStack Query
-- Axios
 - Vitest
 - Testing Library
 
@@ -50,11 +48,8 @@ Prefer consistency over theoretical improvements.
 The repository contains multiple independent domains:
 
 - Caro
-- Connect4
 - Pikachu
 - Process/State Machine Simulator
-- PApp
-- Web3 Wallet
 - Utility Tools
 
 Do not merge unrelated domains into shared abstractions.
@@ -164,40 +159,6 @@ Follow the existing pattern used by the feature.
 
 ---
 
-## API Layer
-
-```txt
-src/api/
-src/queries/
-```
-
-Responsibilities:
-
-- HTTP communication
-- query orchestration
-- caching logic
-
-Avoid direct API calls from components.
-
----
-
-## Web3
-
-```txt
-src/web3/
-```
-
-Responsibilities:
-
-- wallet integrations
-- balances
-- contracts
-- chain utilities
-
-Keep blockchain-specific code isolated.
-
----
-
 # Component Rules
 
 Components should:
@@ -250,7 +211,6 @@ Examples:
 - board game rules
 - state transitions
 - queue logic
-- encryption
 - data transformations
 
 These belong in:
@@ -342,7 +302,6 @@ Examples:
 
 - Zustand area → extend Zustand
 - XState area → extend XState
-- Query area → use TanStack Query
 
 Do not introduce a second pattern without a strong reason.
 
@@ -413,9 +372,9 @@ Before completing work:
 Typical commands:
 
 ```bash
-bun run test -- <pattern>
-bun run eslint
-bun run build
+npm run test -- <pattern>
+npm run eslint
+npm run build
 ```
 
 ---
@@ -435,7 +394,7 @@ Make the smallest change that:
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 

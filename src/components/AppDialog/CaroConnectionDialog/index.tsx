@@ -1,8 +1,8 @@
 import { Bluetooth } from 'lucide-react';
+import IconDialogTrigger from 'src/components/AppDialog/components/IconDialogTrigger';
 import { useState } from 'react';
-import AppTooltip from 'src/components/AppTooltip';
 import { Button } from 'src/components/shadcn/button';
-import { Dialog, DialogContent, DialogHeader, DialogTrigger } from 'src/components/shadcn/dialog';
+import { Dialog, DialogContent, DialogHeader } from 'src/components/shadcn/dialog';
 import { DIALOG_KEY } from 'src/configs/constance';
 import { useCaroConnectionContext } from 'src/context/caro-connection.context';
 import { useCaroStore } from 'src/states/caro.state';
@@ -25,11 +25,7 @@ export default function CaroConnectionDialog() {
       open={dialog[DIALOG_KEY.caroConnectionDialog]}
       onOpenChange={(open) => setDialog(DIALOG_KEY.caroConnectionDialog, open)}
     >
-      <DialogTrigger className="cursor-pointer">
-        <AppTooltip tooltipContent="Connection" contentProps={{ side: 'bottom' }}>
-          <Bluetooth size={16} />
-        </AppTooltip>
-      </DialogTrigger>
+      <IconDialogTrigger label="Connection" icon={Bluetooth} />
       <DialogContent>
         <DialogHeader>Caro peer-to-peer connection</DialogHeader>
         <div className="flex items-center justify-between">
@@ -68,9 +64,9 @@ export default function CaroConnectionDialog() {
           <p className="text-sm">
             You{' '}
             {connectionType == 'connected' ? (
-              <span className="text-sm text-emerald-400">connected</span>
+              <span className="text-success text-sm">connected</span>
             ) : (
-              <span className="text-sm text-shadow-amber-400">are connecting</span>
+              <span className="text-warning-foreground text-sm">are connecting</span>
             )}{' '}
             as a <span className="text-chart-3">{role}</span>
           </p>

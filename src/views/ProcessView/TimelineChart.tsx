@@ -57,7 +57,7 @@ export default function TimelineChart() {
         x: p.start,
         x2: p.end,
         y: key,
-        color: isRunning ? '#2ecc71' : '#e74c3c',
+        color: isRunning ? 'var(--success)' : 'var(--destructive)',
         status: isRunning ? 'Running' : 'I/O Blocked',
       };
     });

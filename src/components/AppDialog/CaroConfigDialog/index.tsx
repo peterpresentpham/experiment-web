@@ -1,8 +1,8 @@
 import { Settings } from 'lucide-react';
+import IconDialogTrigger from 'src/components/AppDialog/components/IconDialogTrigger';
 import { MouseEvent } from 'react';
-import AppTooltip from 'src/components/AppTooltip';
 import { Button } from 'src/components/shadcn/button';
-import { Dialog, DialogContent, DialogHeader, DialogTrigger } from 'src/components/shadcn/dialog';
+import { Dialog, DialogContent, DialogHeader } from 'src/components/shadcn/dialog';
 import { DIALOG_KEY } from 'src/configs/constance';
 import { useCaroStore } from 'src/states/caro.state';
 import { useDialogStore } from 'src/states/dialog.state';
@@ -54,22 +54,18 @@ function CaroConfigDialogLayout() {
 
   return (
     <Dialog open={dialog[DIALOG_KEY.caroConfigDialog]} onOpenChange={onOpenChange}>
-      <DialogTrigger>
-        <AppTooltip tooltipContent="Config" contentProps={{ side: 'bottom' }}>
-          <Settings size={16} />
-        </AppTooltip>
-      </DialogTrigger>
+      <IconDialogTrigger label="Config" icon={Settings} />
       <DialogContent>
         <DialogHeader>Caro config</DialogHeader>
         <form onSubmit={onSaveConfig} className="scroll-hidden max-h-[75vh] overflow-auto">
-          <PlayModeConfig game="caro" />
-          <GameTypeConfig game="caro" />
+          <PlayModeConfig />
+          <GameTypeConfig />
           <WinTypeConfig />
           <BoardSizeConfig />
           <div className="mt-4 flex items-center justify-between">
             <Button onClick={onNewGame}>New game</Button>
             <div>
-              <Button onClick={onCancel} variant="destructive" className="mr-2">
+              <Button type="button" onClick={onCancel} variant="outline" className="mr-2">
                 Cancel
               </Button>
               <Button type="submit">Save</Button>

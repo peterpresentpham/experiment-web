@@ -15,10 +15,10 @@ export default function TimeSliceCounter({ className }: TProps) {
         className
       )}
     >
-      <span className="font-mono text-xl font-black tracking-tighter text-blue-600 tabular-nums dark:text-blue-400">
+      <span className="text-primary font-mono text-xl font-semibold tracking-tighter tabular-nums">
         {state.context.counter.toString().padStart(4, '0')}
       </span>
-      <span className="text-muted-foreground font-mono text-[9px] font-black tracking-widest uppercase opacity-70">
+      <span className="text-muted-foreground font-mono text-xs font-semibold tracking-wide uppercase opacity-70">
         ms
       </span>
     </div>

@@ -27,31 +27,24 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
     <div
       {...props}
       className={cn(
-        'group relative overflow-hidden border p-1 transition-all duration-300 hover:shadow-xl',
-        'bg-card/40 border-border/50 backdrop-blur-sm',
+        'group relative overflow-hidden rounded-lg border p-2 transition-all duration-300 hover:shadow-md',
+        'bg-card border-border/60',
         {
-          'bg-blue-50/30 ring-1 ring-blue-500/20 dark:bg-blue-900/10':
-            data.state == ProcessStatusType.NEW,
-          'bg-yellow-50/30 ring-1 ring-yellow-500/20 dark:bg-yellow-900/10':
-            data.state == ProcessStatusType.READY,
-          'border-green-500/30 bg-green-50/40 shadow-[0_0_15px_rgba(34,197,94,0.1)] ring-1 ring-green-500/30 dark:bg-green-900/20':
-            isRunning,
-          'bg-orange-50/30 ring-1 ring-orange-500/20 dark:bg-orange-900/10':
-            data.state == ProcessStatusType.WAITING,
+          'bg-info/5 ring-info/20 ring-1': data.state == ProcessStatusType.NEW,
+          'bg-warning/10 ring-warning/30 ring-1': data.state == ProcessStatusType.READY,
+          'border-success/30 bg-success/10 ring-success/30 shadow-sm ring-1': isRunning,
+          'bg-primary/5 ring-primary/20 ring-1': data.state == ProcessStatusType.WAITING,
           'bg-muted/20 opacity-75 grayscale-[0.5]': isTerminated,
         }
       )}
     >
-      {/* Glossy Overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-white/10 to-transparent" />
-
       {/* Header Info */}
       <div className="relative mb-1.5 flex items-start justify-between gap-1">
         <div className="flex w-full flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <AppTooltip tooltipContent={data.pid}>
-                <span className="font-mono text-sm font-black tracking-tighter">
+                <span className="font-mono text-sm font-semibold tracking-tighter">
                   {data.index ? `P${data.index}` : formatText(data.pid, 4)}
                 </span>
               </AppTooltip>
@@ -66,7 +59,7 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
                 {data.readyPriority >= 0 && data.state == ProcessStatusType.READY && (
                   <Badge
                     variant="outline"
-                    className="rounded-3xs h-4 border-yellow-500/50 bg-yellow-500/5 text-[8px] font-black tracking-widest text-yellow-600 dark:text-yellow-400"
+                    className="border-warning/50 bg-warning/15 text-warning-foreground h-4 rounded-md text-xs font-semibold tracking-wide"
                   >
                     PRIORITY {data.readyPriority}
                   </Badge>
@@ -74,7 +67,7 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
                 {data.waitingPriority >= 0 && data.state == ProcessStatusType.WAITING && (
                   <Badge
                     variant="outline"
-                    className="rounded-3xs h-4 border-orange-500/50 bg-orange-500/5 text-[8px] font-black tracking-widest text-orange-600 dark:text-orange-400"
+                    className="border-primary/40 bg-primary/10 text-primary h-4 rounded-md text-xs font-semibold tracking-wide"
                   >
                     WAITING {data.waitingPriority}
                   </Badge>
@@ -84,17 +77,14 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
             <div className="flex items-center gap-2">
               <div className="relative flex h-2 w-2 items-center justify-center">
                 {isRunning && (
-                  <span className="absolute h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                  <span className="bg-success/60 absolute h-full w-full animate-ping rounded-full" />
                 )}
                 <span
                   className={cn('h-1.5 w-1.5 rounded-full transition-colors duration-500', {
-                    'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]':
-                      data.state == ProcessStatusType.NEW,
-                    'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]':
-                      data.state == ProcessStatusType.READY,
-                    'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.8)]': isRunning,
-                    'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]':
-                      data.state == ProcessStatusType.WAITING,
+                    'bg-info': data.state == ProcessStatusType.NEW,
+                    'bg-warning': data.state == ProcessStatusType.READY,
+                    'bg-success': isRunning,
+                    'bg-primary': data.state == ProcessStatusType.WAITING,
                     'bg-muted-foreground/30': isTerminated,
                   })}
                 />
@@ -102,28 +92,28 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
               <ProcessStatus
                 state={data.state}
                 rootprops={{
-                  className: 'text-[9px] font-bold uppercase tracking-widest opacity-80',
+                  className: 'text-xs font-bold uppercase tracking-wide opacity-80',
                 }}
               />
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <div className="text-muted-foreground flex items-center gap-1 text-[10px] font-medium whitespace-nowrap">
+            <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium whitespace-nowrap">
               <Clock size={10} strokeWidth={3} className="opacity-70" />
               <span>
                 Arr: <span className="text-foreground font-mono">{data.arrivalTime}</span>
               </span>
             </div>
             {data.beginAt >= 0 && (
-              <div className="text-muted-foreground flex items-center gap-1 text-[10px] font-medium whitespace-nowrap">
-                <Timer size={10} className="text-green-500/70" />
+              <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium whitespace-nowrap">
+                <Timer size={10} className="text-success" />
                 <span>
                   Start: <span className="text-foreground font-mono">{data.beginAt}</span>
                 </span>
               </div>
             )}
             {isTerminated && data.endAt >= 0 && (
-              <div className="text-muted-foreground flex items-center gap-1 text-[10px] font-medium whitespace-nowrap">
+              <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium whitespace-nowrap">
                 <Timer size={10} className="text-primary/70" />
                 <span>
                   End: <span className="text-foreground font-mono">{data.endAt}</span>
@@ -137,7 +127,7 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
       {/* Progress & Tasks */}
       <div className="relative space-y-1.5">
         <div className="space-y-1">
-          <div className="flex items-center justify-between text-[9px] font-black tracking-widest uppercase opacity-70">
+          <div className="flex items-center justify-between text-xs font-semibold tracking-wide uppercase opacity-70">
             <span>CPU Cycle Execution</span>
             <span
               className={cn('font-mono', isTerminated ? 'text-muted-foreground' : 'text-primary')}
@@ -145,26 +135,19 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
               {data.runtime}/{data.executionTime}ms
             </span>
           </div>
-          <div className="bg-muted/30 h-1.5 overflow-hidden ring-1 ring-black/5 ring-inset dark:ring-white/5">
+          <div className="bg-muted h-1.5 overflow-hidden rounded-full">
             <motion.div
               initial={false}
               animate={{ width: `${progress}%` }}
               transition={{ type: 'spring', bounce: 0, duration: 0.5 }}
               className={cn('relative h-full overflow-hidden', {
-                'bg-blue-500': data.state == ProcessStatusType.NEW,
-                'bg-yellow-500': data.state == ProcessStatusType.READY,
-                'bg-green-500': isRunning,
-                'bg-orange-500': data.state == ProcessStatusType.WAITING,
+                'bg-info': data.state == ProcessStatusType.NEW,
+                'bg-warning': data.state == ProcessStatusType.READY,
+                'bg-success': isRunning,
+                'bg-primary': data.state == ProcessStatusType.WAITING,
                 'bg-muted-foreground/40': isTerminated,
               })}
-            >
-              {isRunning && (
-                <div
-                  className="animate-shimmer absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent"
-                  style={{ backgroundSize: '200% 100%' }}
-                />
-              )}
-            </motion.div>
+            ></motion.div>
           </div>
         </div>
 

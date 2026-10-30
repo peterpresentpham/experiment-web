@@ -16,12 +16,12 @@ export default function MainProcessList({ data, setData }: TProps) {
       {Object.values(data).length === 0 ? (
         <ListEmpty
           title="No processes created yet."
-          rootprops={{ className: 'cols-span-2 flex-col rounded-none mt-2' }}
+          rootprops={{ className: 'cols-span-2 flex-col mt-2' }}
           component={
             <div className="mt-2 flex items-center gap-2">
               <ExportImportData
                 isShowExport={false}
-                components={{ import: <Button className="rounded-none">Import</Button> }}
+                components={{ import: <Button className="">Import</Button> }}
               />
             </div>
           }

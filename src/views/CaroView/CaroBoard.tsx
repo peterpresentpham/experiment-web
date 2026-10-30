@@ -1,14 +1,7 @@
 'use client';
 
-import {
-  ComponentProps,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { ComponentProps, useCallback, useEffect, useMemo, useRef } from 'react';
+import useFitBoard from 'src/hooks/useFitBoard';
 import { MAX_CARO_BOARD_SIZE } from 'src/configs/constance';
 import { useCaroStateContext } from 'src/context/caro-state.context';
 import { cn } from 'src/lib/utils';
@@ -20,76 +13,49 @@ import HeaderConfig from './HeaderConfig';
 
 export default function CaroBoard(props: ComponentProps<'div'>) {
   const caroRef = useRef<HTMLDivElement | null>(null);
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [size, setSize] = useState(0);
-  const {
-    metadata: { size: boardSize, isOverride, gameType },
-    numberOfBlindError,
-    isBlindForceOver,
-    steps,
-    stepsOrder,
-    winState,
-    turn,
-    fn: { countNumberOfBlindError },
-  } = useCaroStore();
+  const boardSize = useCaroStore((state) => state.metadata.size);
+  const gameType = useCaroStore((state) => state.metadata.gameType);
+  const numberOfBlindError = useCaroStore((state) => state.numberOfBlindError);
+  const isBlindForceOver = useCaroStore((state) => state.isBlindForceOver);
+  const steps = useCaroStore((state) => state.steps);
+  const lastStep = useCaroStore((state) => state.stepsOrder.at(-1));
+  const winState = useCaroStore((state) => state.winState);
   const {
     shouldDisableBoard,
     fn: { move },
   } = useCaroStateContext();
 
-  const errorCount = useMemo(() => {
-    return numberOfBlindError[0] + numberOfBlindError[1];
-  }, [numberOfBlindError]);
+  const errorCount = numberOfBlindError[0] + numberOfBlindError[1];
 
-  useLayoutEffect(() => {
-    if (!ref.current) return;
+  const { ref, size } = useFitBoard(
+    useCallback(
+      (width, height) => {
+        const column = (width - boardSize - 1) / boardSize;
+        const row = (height - boardSize - 1) / boardSize;
+        return Math.min(column, row, MAX_CARO_BOARD_SIZE);
+      },
+      [boardSize]
+    )
+  );
 
-    const measure = () => {
-      if (!ref.current) return;
-      const { width, height } = ref.current.getBoundingClientRect();
-      const _column = (width - boardSize - 1) / boardSize;
-      const _row = (height - boardSize - 1) / boardSize;
-      setSize(Math.min(_column, _row, MAX_CARO_BOARD_SIZE));
-    };
-
-    measure();
-
-    const observer = new ResizeObserver(measure);
-    observer.observe(ref.current);
-
-    return () => observer.disconnect();
-  }, [boardSize]);
-
+  // Reads the latest state at click time so the callback stays stable and memoized cells skip renders.
   const onMove = useCallback(
     (location: number) => {
-      const isWin = winState != undefined || isBlindForceOver == true;
+      const { metadata, steps, turn, winState, isBlindForceOver, fn } = useCaroStore.getState();
+      const isOver = winState != undefined || isBlindForceOver;
+      const isOccupied = steps[location] != undefined;
+      const isBlocked = isOver || shouldDisableBoard;
 
-      if (gameType == 'blind' && steps[location] != undefined) {
-        countNumberOfBlindError(turn);
-        soundtrack.play({ type: TSound.ERROR });
-      }
+      if (metadata.gameType == 'blind' && isOccupied && !isBlocked)
+        fn.countNumberOfBlindError(turn);
 
-      if (isOverride) {
-        if (!isWin && !shouldDisableBoard && steps[location] != turn) {
-          soundtrack.play({ type: TSound.CLICK });
-          move(location);
-        } else soundtrack.play({ type: TSound.ERROR });
-      } else if (steps[location] == undefined && !isWin && !shouldDisableBoard) {
+      const canMove = !isBlocked && (metadata.isOverride ? steps[location] != turn : !isOccupied);
+      if (canMove) {
         soundtrack.play({ type: TSound.CLICK });
         move(location);
       } else soundtrack.play({ type: TSound.ERROR });
     },
-    [
-      countNumberOfBlindError,
-      gameType,
-      isBlindForceOver,
-      isOverride,
-      move,
-      shouldDisableBoard,
-      steps,
-      turn,
-      winState,
-    ]
+    [move, shouldDisableBoard]
   );
 
   const locations = useMemo(() => {
@@ -111,14 +77,15 @@ export default function CaroBoard(props: ComponentProps<'div'>) {
     }
   }, [errorCount, gameType]);
 
-  const isWin = useMemo(() => {
-    return winState != undefined || isBlindForceOver == true;
-  }, [isBlindForceOver, winState]);
+  const isWin = winState != undefined || isBlindForceOver;
 
   return (
-    <div {...props} className={cn('flex flex-col items-center gap-2', props.className)}>
+    <div {...props} className={cn('flex flex-col gap-3', props.className)}>
       <HeaderConfig />
-      <div ref={ref} className="flex h-full w-full justify-center overflow-hidden p-4">
+      <div
+        ref={ref}
+        className="flex min-h-72 min-w-0 flex-1 items-center justify-center overflow-hidden"
+      >
         {size > 0 && (
           <div
             ref={caroRef}
@@ -126,20 +93,18 @@ export default function CaroBoard(props: ComponentProps<'div'>) {
               width: boardSize * size + boardSize + 1,
               height: boardSize * size + boardSize + 1,
             }}
-            className={cn(
-              'bg-border flex flex-wrap gap-px border shadow-2xl transition-shadow duration-500',
-              turn === 0 ? 'shadow-orange-400/20' : 'shadow-blue-400/20'
-            )}
+            className="bg-border flex flex-wrap gap-px overflow-hidden rounded-lg border"
           >
             {locations.map((location) => {
               const _turn = steps[location];
               const _winTypes = winState?.locations?.[location];
-              const isCurrent = stepsOrder.at(-1) === location;
+              const isCurrent = lastStep === location;
 
               return (
                 <CaroCell
                   key={location}
                   location={location}
+                  boardSize={boardSize}
                   size={size}
                   turn={_turn}
                   winTypes={_winTypes}

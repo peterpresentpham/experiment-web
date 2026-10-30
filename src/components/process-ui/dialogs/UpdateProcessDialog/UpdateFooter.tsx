@@ -23,23 +23,17 @@ export default function UpdateFooter({ onSave, onOpenChange }: TProps) {
         variant="outline"
         size="sm"
         disabled={status === 'running'}
-        className="text-destructive hover:text-destructive/50 border-destructive! hover:border-destructive/50 rounded-none"
+        className="text-destructive hover:text-destructive/50 border-destructive! hover:border-destructive/50"
         onClick={onClear}
-        contentprops={{ className: 'flex items-center gap-1' }}
       >
         <Trash size={10} />
-        <span className="text-[11px] font-medium tracking-tight uppercase">Clear all</span>
+        <span className="text-xs font-medium tracking-tight uppercase">Clear all</span>
       </Button>
       <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          onClick={() => onOpenChange?.(false)}
-          type="button"
-          className="rounded-none"
-        >
+        <Button variant="outline" onClick={() => onOpenChange?.(false)} type="button" className="">
           Cancel
         </Button>
-        <Button onClick={onSave} type="button" className="rounded-none">
+        <Button onClick={onSave} type="button" className="">
           Save changes
         </Button>
       </div>

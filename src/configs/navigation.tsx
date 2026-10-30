@@ -1,4 +1,4 @@
-import { Cpu, Gamepad2, LucideIcon, Puzzle } from 'lucide-react';
+import { BookOpen, Cpu, Gamepad2, LucideIcon, Puzzle } from 'lucide-react';
 
 export type TNavItem = {
   title: string;
@@ -22,6 +22,13 @@ export const NAV_ITEMS: Array<TNavItem> = [
     href: '/pikachu',
     icon: Puzzle,
     tag: 'Game',
+  },
+  {
+    title: 'Blog',
+    description: 'A master thesis on account abstraction and ZK proofs, plus library docs.',
+    href: '/blog',
+    icon: BookOpen,
+    tag: 'Writing',
   },
   {
     title: 'Process',

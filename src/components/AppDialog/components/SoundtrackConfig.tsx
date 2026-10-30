@@ -32,6 +32,9 @@ export default function SoundtrackConfig() {
         <Button sound={TSound.ERROR} isSound={true}>
           Error
         </Button>
+        <Button sound={TSound.WIN} isSound={true} variant="secondary">
+          Win
+        </Button>
       </div>
     </div>
   );

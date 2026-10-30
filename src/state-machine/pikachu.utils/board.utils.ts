@@ -1,8 +1,9 @@
 import { toast } from 'sonner';
 import { getRandom, isPositionEqual } from 'src/services';
+import { soundtrack } from 'src/services/soundtrack';
 import PikachuService from 'src/services/pikachu';
 import { usePikachuStore } from 'src/states/pikachu.state';
-import { TPosition } from 'src/types/global';
+import { TPosition, TSound } from 'src/types/global';
 import { TMatchResult, TPikachuContext } from 'src/types/pikachu.type';
 
 export type TMoveResolution =
@@ -116,5 +117,6 @@ export function notifyOutOfMove() {
 }
 
 export function notifyWin() {
+  soundtrack.play({ type: TSound.WIN });
   toast.success('You win!!!');
 }

@@ -1,5 +1,5 @@
 import { LucideProps } from 'lucide-react';
-import { RefAttributes } from 'react';
+import { ComponentProps, RefAttributes } from 'react';
 
 export type TPosition = [number, number]; // expect [row, column]
 export type TVector = TPosition; // expect [x, y]
@@ -9,6 +9,7 @@ export enum TSound {
   MOVE = 'move',
   SUCCESS = 'success',
   ERROR = 'error',
+  WIN = 'win',
   BACKGROUND = 'background',
 }
 
@@ -19,6 +20,7 @@ export type TSoundConfigType = {
   isEnabled?: boolean;
 };
 
+export type TDivProps = ComponentProps<'div'>;
 export type TIconProps = Omit<LucideProps, 'ref'> & RefAttributes<SVGSVGElement>;
 
 export interface TAnimationComponentProps {

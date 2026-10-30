@@ -1,10 +1,12 @@
 /* eslint-disable quotes */
 'use client';
 
-import { createContext, ReactNode, useCallback, useContext, useMemo } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react';
 import { createCaroMessage } from 'src/services/caro.utils';
+import { soundtrack } from 'src/services/soundtrack';
 import { useCaroStore } from 'src/states/caro.state';
 import { TTurn } from 'src/types/caro.type';
+import { TSound } from 'src/types/global';
 import { useCaroConnectionContext } from './caro-connection.context';
 
 type TCaroStateContextType = {
@@ -79,6 +81,10 @@ export default function CaroStateProvider({ children }: TProps) {
       else return { playerText: `${playerName}${playerTitle}`, isWin: false, isOver: false };
     }
   }, [isOverWin, playMode, connectionType, role, turn, stepCount, size]);
+
+  useEffect(() => {
+    if (isWin) soundtrack.play({ type: TSound.WIN });
+  }, [isWin]);
 
   const { shouldDisableBoard } = useMemo(() => {
     if (connectionType == 'connected' && playMode == 'online') {

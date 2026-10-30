@@ -89,3 +89,11 @@ export function removeAtIndex<T>(arr: T[], index: number): T[] {
 export function getRandom(len: number): number {
   return Math.floor(Math.random() * len);
 }
+
+/**
+ * Upper-cases the first character of a string.
+ * @param val - The string to format
+ */
+export function capitalizeFirstLetter(val: string): string {
+  return val.charAt(0).toUpperCase() + val.slice(1);
+}

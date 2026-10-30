@@ -49,6 +49,7 @@ The repository contains multiple independent domains:
 
 - Caro
 - Pikachu
+- Blog (master thesis web book, @peter-present/format-number docs; routes under /blog)
 - Process/State Machine Simulator
 - Utility Tools
 

@@ -27,11 +27,14 @@ export default function useEnableSoundtrack() {
       soundtrack.play({
         type: TSound.BACKGROUND,
         loop: true,
-        volume: 0.4,
         isEnabled: true,
       });
     } else {
       soundtrack.stop(TSound.BACKGROUND);
     }
   }, [backgroundSound, audioUnlocked]);
+
+  useEffect(() => {
+    return () => soundtrack.stop(TSound.BACKGROUND);
+  }, []);
 }

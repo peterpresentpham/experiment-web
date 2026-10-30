@@ -239,3 +239,21 @@ input[type='number'] {
 .animate-pulse-soft {
   animation: pikachuPulseSoft 1.6s ease-in-out infinite;
 }
+
+.card-copy-fog {
+  position: relative;
+}
+
+.card-copy-fog::after {
+  content: 'Copied!';
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 700;
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(3px);
+  pointer-events: none;
+  background-color: color-mix(in oklab, var(--background) 70%, transparent);
+}

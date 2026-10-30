@@ -6,6 +6,7 @@ Sân chơi thử nghiệm xây bằng **Next.js 16**, **React 19**, **XState 5**
 
 - **Process Management**: mô phỏng lập lịch tiến trình (MLFQ), dashboard CPU core, terminal log và vòng đời tiến trình.
 - **Games**: Caro (chơi online P2P qua WebRTC) và Pikachu.
+- **Blog** (`/blog`): luận văn thạc sĩ (`/blog/master-thesis`) và tài liệu thư viện `@peter-present/format-number` (`/blog/format-number/*`) và bảng F2L Rubik 3x3 (`/blog/rubik3x3`), chuyển từ `my-next-app`.
 
 ## Cấu trúc
 
@@ -36,14 +37,14 @@ Signaling server là process Node riêng, chỉ trao đổi room code và offer/
 
 ## Scripts
 
-| Lệnh | Mô tả |
-| --- | --- |
-| `npm run dev` | Chạy Next.js dev |
+| Lệnh                              | Mô tả                   |
+| --------------------------------- | ----------------------- |
+| `npm run dev`                     | Chạy Next.js dev        |
 | `npm run build` / `npm run start` | Build / chạy production |
-| `npm run signal` | Chạy signaling server |
-| `npm run eslint` | Lint |
-| `npm run format` | Format bằng Prettier |
-| `npm test` | Chạy test (Vitest) |
+| `npm run signal`                  | Chạy signaling server   |
+| `npm run eslint`                  | Lint                    |
+| `npm run format`                  | Format bằng Prettier    |
+| `npm test`                        | Chạy test (Vitest)      |
 
 ## Biến môi trường
 

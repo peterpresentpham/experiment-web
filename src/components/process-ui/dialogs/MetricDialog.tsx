@@ -4,8 +4,11 @@ import { Button } from 'src/components/shadcn/button';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from 'src/components/shadcn/dialog';
 import { useProcessStateMachine } from 'src/state-machine/process.state-machine';
 import { TProcessMeasureMetrics } from 'src/types/process.type';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 export default function MetricDialog(props: DialogProps) {
+  const { metrics } = useMessages(processMessages);
   const { state } = useProcessStateMachine();
   const [open, setOpen] = useState(false);
 
@@ -49,14 +52,16 @@ export default function MetricDialog(props: DialogProps) {
   return (
     <Dialog {...props} open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="hover:border-border h-8 border-x border-transparent">Metrics</Button>
+        <Button className="hover:border-border h-8 border-x border-transparent">
+          {metrics.trigger}
+        </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl opacity-80">
-        <DialogHeader>Metric Dialog</DialogHeader>
+        <DialogHeader>{metrics.title}</DialogHeader>
         <div className="flex min-w-[320px] flex-1 flex-col gap-2 px-3 py-2 text-xs">
           <div className="text-foreground flex flex-wrap items-center gap-3">
             <div className="bg-muted px-2 py-1">
-              Avg Turnaround:{' '}
+              {metrics.avgTurnaround}:{' '}
               <span className="font-semibold">
                 {globalMetric.turnaroundTime !== undefined
                   ? globalMetric.turnaroundTime.toFixed(2)
@@ -64,13 +69,13 @@ export default function MetricDialog(props: DialogProps) {
               </span>
             </div>
             <div className="bg-muted px-2 py-1">
-              Avg Waiting:{' '}
+              {metrics.avgWaiting}:{' '}
               <span className="font-semibold">
                 {globalMetric.waitingTime !== undefined ? globalMetric.waitingTime.toFixed(2) : '—'}
               </span>
             </div>
             <div className="bg-muted px-2 py-1">
-              Avg Response:{' '}
+              {metrics.avgResponse}:{' '}
               <span className="font-semibold">
                 {globalMetric.responseTime !== undefined
                   ? globalMetric.responseTime.toFixed(2)
@@ -84,16 +89,16 @@ export default function MetricDialog(props: DialogProps) {
               <thead>
                 <tr className="border-border text-muted-foreground border-b">
                   <th className="py-1 pr-2">#</th>
-                  <th className="py-1 pr-2">Turnaround</th>
-                  <th className="py-1 pr-2">Waiting</th>
-                  <th className="py-1">Response</th>
+                  <th className="py-1 pr-2">{metrics.turnaround}</th>
+                  <th className="py-1 pr-2">{metrics.waiting}</th>
+                  <th className="py-1">{metrics.response}</th>
                 </tr>
               </thead>
               <tbody>
                 {processMetrics.length === 0 ? (
                   <tr>
                     <td className="text-muted-foreground py-2" colSpan={4}>
-                      No metrics yet
+                      {metrics.empty}
                     </td>
                   </tr>
                 ) : (

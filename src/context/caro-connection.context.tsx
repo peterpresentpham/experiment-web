@@ -13,6 +13,8 @@ import {
 import Peer, { Instance } from 'simple-peer';
 import { toast } from 'sonner';
 import useGameSignalingSocket from 'src/hooks/useGameSignalingSocket';
+import { useMessages } from 'src/i18n/client';
+import { caroMessages } from 'src/i18n/messages/caro';
 import { createCaroMessage, decodeCaroMessage, TSyncReturnType } from 'src/services/caro.utils';
 import { useCaroStore } from 'src/states/caro.state';
 import { useCaroChat } from 'src/states/messenger.state';
@@ -52,6 +54,7 @@ export default function CaroConnectionProvider({ children }: TProps) {
   const [roomCode, setRoomCode] = useState('');
   const [connection, setConnection] = useState<TConnection>('init');
   const { socket } = useGameSignalingSocket();
+  const { connection: text, config: configText } = useMessages(caroMessages);
   const roomCodeRef = useRef('');
   const pendingSignalRef = useRef<string | null>(null);
   const {
@@ -97,7 +100,7 @@ export default function CaroConnectionProvider({ children }: TProps) {
   const joinRoom = useCallback(
     (code: string) => {
       if (!socket) {
-        toast.error('Signaling is not ready, please try again');
+        toast.error(text.notReady);
         return;
       }
       roomCodeRef.current = code;
@@ -106,7 +109,7 @@ export default function CaroConnectionProvider({ children }: TProps) {
       setPeer(p);
       socket.emit('join_room', { roomCode: code });
     },
-    [socket]
+    [socket, text]
   );
 
   useEffect(() => {
@@ -117,12 +120,12 @@ export default function CaroConnectionProvider({ children }: TProps) {
     if (!socket) return;
 
     const onRoomCreated = ({ roomCode: code }: { roomCode: string }) => flushRoomCode(code);
-    const onPeerJoined = () => toast.info('Your friend joined the room');
+    const onPeerJoined = () => toast.info(text.friendJoined);
     const onPeerLeft = () => {
-      if (connection != 'connected') toast.warning('Your friend left the room');
+      if (connection != 'connected') toast.warning(text.friendLeft);
     };
     const onRoomError = ({ reason }: { reason: string }) => {
-      toast.error(reason);
+      toast.error(text.roomErrors[reason] ?? reason);
       setConnection('init');
       setRoomCode('');
       roomCodeRef.current = '';
@@ -151,7 +154,7 @@ export default function CaroConnectionProvider({ children }: TProps) {
       socket.off('room_error', onRoomError);
       socket.off('receive_signal', onReceiveSignal);
     };
-  }, [socket, connection, flushRoomCode]);
+  }, [socket, connection, flushRoomCode, text]);
 
   useEffect(() => {
     if (peer && connection == 'connected' && role == 'host') {
@@ -166,8 +169,8 @@ export default function CaroConnectionProvider({ children }: TProps) {
       });
 
       peer.on('connect', () => {
-        addChats('yourChat', 'Hello');
-        peer.send(createCaroMessage('chat', 'Hello'));
+        addChats('yourChat', text.greeting);
+        peer.send(createCaroMessage('chat', text.greeting));
         setConnection('connected');
       });
 
@@ -179,22 +182,20 @@ export default function CaroConnectionProvider({ children }: TProps) {
             const { type, message } = result;
             if (type == 'chat') {
               addChats('friendChat', message);
-              toast.info('New message!!');
+              toast.info(text.newMessage);
             } else if (type == 'sync') {
               const { size, gameType, isOverride } = message as TSyncReturnType;
               setMetadata({ size, gameType, isOverride });
-              toast.info(`Set board size to ${size}x${size}`);
-              toast.info(
-                `Set game type to ${gameType} ${isOverride ? 'with' : 'without'} override`
-              );
+              toast.info(text.syncBoard(size));
+              toast.info(text.syncGameType(configText[gameType], isOverride));
             } else if (type == 'move') {
               const location = Number(message);
               move(location);
             } else if (type == 'undo') {
               undo();
-              toast.warning('Opponent undo caro board');
+              toast.warning(text.opponentUndo);
             } else if (type == 'newGame') reset();
-          } else toast.error('Message is not decoded');
+          } else toast.error(text.decodeError);
         } catch (error) {
           console.error(error);
         }
@@ -209,13 +210,13 @@ export default function CaroConnectionProvider({ children }: TProps) {
         setConnection('init');
         setRoomCode('');
         roomCodeRef.current = '';
-        toast.info('Connection closed');
+        toast.info(text.closed);
         if (peer) peer.destroy();
       });
 
       return () => peer.destroy();
     }
-  }, [addChats, move, peer, sendSignal, setMetadata, reset, undo]);
+  }, [addChats, move, peer, sendSignal, setMetadata, reset, undo, text, configText]);
 
   const contextData = useMemo<TCaroConnectionContext>(() => {
     return {

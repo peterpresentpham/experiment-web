@@ -1,5 +1,7 @@
 import { memo } from 'react';
 import { PIKACHU_URL } from 'src/configs/pikachu.constance';
+import { useMessages } from 'src/i18n/client';
+import { pikachuMessages } from 'src/i18n/messages/pikachu';
 import { cn } from 'src/lib/utils';
 import { TPikachuImg } from 'src/types/pikachu.type';
 
@@ -16,6 +18,7 @@ type TProps = {
 // Memoized so a click only re-renders the cells whose props actually changed.
 function PikachuCell({ row, column, size, value, imgType, isSelected, onPieceClick }: TProps) {
   const hasPiece = value > 0;
+  const { piece } = useMessages(pikachuMessages);
 
   return (
     <div
@@ -32,7 +35,7 @@ function PikachuCell({ row, column, size, value, imgType, isSelected, onPieceCli
       {hasPiece && (
         <img
           src={imgType == 'external' ? `${PIKACHU_URL}/${value}.png` : `/pikachu/piece${value}.png`}
-          alt={`Piece ${value}, row ${row}, column ${column}`}
+          alt={piece(value, row, column)}
           draggable={false}
           decoding="async"
           className="animate-in zoom-in-75 fade-in h-full w-full object-contain p-1 drop-shadow-sm duration-200"

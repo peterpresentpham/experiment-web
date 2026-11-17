@@ -9,6 +9,8 @@ import { useTooltip, Tooltip, defaultStyles } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
 import { useProcessMonitorData } from 'src/state-machine/process.state-machine';
 import { ProcessMonitoringStatusType } from 'src/types/process.type';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 const MARGIN = { top: 50, right: 20, bottom: 50, left: 80 };
 const BAR_HEIGHT = 24;
@@ -22,6 +24,7 @@ type TTooltipData = {
 };
 
 export default function TimelineChart() {
+  const { chart } = useMessages(processMessages);
   const containerRef = useRef<HTMLDivElement>(null);
   const monitorData = useProcessMonitorData();
 
@@ -58,17 +61,17 @@ export default function TimelineChart() {
         x2: p.end,
         y: key,
         color: isRunning ? 'var(--success)' : 'var(--destructive)',
-        status: isRunning ? 'Running' : 'I/O Blocked',
+        status: isRunning ? chart.running : chart.blocked,
       };
     });
 
     return { width: w, height: h, categories: cats, xScale, yScale, bars };
-  }, [monitorData]);
+  }, [monitorData, chart]);
 
   if (monitorData.length === 0) {
     return (
       <div className="text-muted-foreground flex h-48 items-center justify-center text-sm">
-        No timeline data yet. Start the process simulation to see the chart.
+        {chart.empty}
       </div>
     );
   }
@@ -78,7 +81,7 @@ export default function TimelineChart() {
       <svg width={width} height={height} className="overflow-visible">
         {/* Title */}
         <text x={MARGIN.left} y={22} fill="var(--foreground, #000)" fontSize={16} fontWeight={700}>
-          Realtime Process Scheduling
+          {chart.title}
         </text>
 
         {/* Y Axis */}
@@ -103,7 +106,7 @@ export default function TimelineChart() {
           top={height - MARGIN.bottom}
           stroke="var(--muted-foreground, #666)"
           tickStroke="var(--muted-foreground, #666)"
-          label="Time (Units)"
+          label={chart.time}
           labelProps={{
             fill: 'var(--muted-foreground, #666)',
             fontSize: 12,
@@ -193,7 +196,7 @@ export default function TimelineChart() {
             <br />
             {tooltipData.start} – {tooltipData.end}
             <br />
-            Status: <strong>{tooltipData.status}</strong>
+            {chart.status}: <strong>{tooltipData.status}</strong>
           </div>
         </Tooltip>
       )}

@@ -82,43 +82,45 @@ export default function CaroBoard(props: ComponentProps<'div'>) {
   return (
     <div {...props} className={cn('flex flex-col gap-3', props.className)}>
       <HeaderConfig />
-      <div
-        ref={ref}
-        className="flex min-h-72 min-w-0 flex-1 items-center justify-center overflow-hidden"
-      >
-        {size > 0 && (
-          <div
-            ref={caroRef}
-            style={{
-              width: boardSize * size + boardSize + 1,
-              height: boardSize * size + boardSize + 1,
-            }}
-            className="bg-border flex flex-wrap gap-px overflow-hidden rounded-lg border"
-          >
-            {locations.map((location) => {
-              const _turn = steps[location];
-              const _winTypes = winState?.locations?.[location];
-              const isCurrent = lastStep === location;
+      {/* The board is absolutely positioned so it never stretches the measured container:
+          otherwise a board taller than the viewport makes the container grow, the next
+          measurement keeps the oversized cells, and the bottom rows stay off screen. */}
+      <div ref={ref} className="relative min-h-72 min-w-0 flex-1 overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center">
+          {size > 0 && (
+            <div
+              ref={caroRef}
+              style={{
+                width: boardSize * size + boardSize + 1,
+                height: boardSize * size + boardSize + 1,
+              }}
+              className="bg-border flex flex-wrap gap-px overflow-hidden rounded-lg border"
+            >
+              {locations.map((location) => {
+                const _turn = steps[location];
+                const _winTypes = winState?.locations?.[location];
+                const isCurrent = lastStep === location;
 
-              return (
-                <CaroCell
-                  key={location}
-                  location={location}
-                  boardSize={boardSize}
-                  size={size}
-                  turn={_turn}
-                  winTypes={_winTypes}
-                  gameType={gameType}
-                  isCurrent={isCurrent}
-                  isWin={isWin}
-                  isBlindForceOver={isBlindForceOver}
-                  shouldDisableBoard={shouldDisableBoard}
-                  onMove={onMove}
-                />
-              );
-            })}
-          </div>
-        )}
+                return (
+                  <CaroCell
+                    key={location}
+                    location={location}
+                    boardSize={boardSize}
+                    size={size}
+                    turn={_turn}
+                    winTypes={_winTypes}
+                    gameType={gameType}
+                    isCurrent={isCurrent}
+                    isWin={isWin}
+                    isBlindForceOver={isBlindForceOver}
+                    shouldDisableBoard={shouldDisableBoard}
+                    onMove={onMove}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

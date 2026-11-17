@@ -2,6 +2,8 @@
 
 import { Check, Copy } from 'lucide-react';
 import { ComponentProps, MouseEvent, useState } from 'react';
+import { useMessages } from 'src/i18n/client';
+import { commonMessages } from 'src/i18n/messages/common';
 import { cn } from 'src/lib/utils';
 import { TIconProps } from 'src/types/global';
 
@@ -12,6 +14,7 @@ interface TProps extends ComponentProps<'button'> {
 
 export default function CopyClipboard({ copyText, iconprops, ...props }: TProps) {
   const [copied, setCopied] = useState(false);
+  const { actions } = useMessages(commonMessages);
 
   async function handleCopy(event: MouseEvent<HTMLButtonElement>) {
     event.stopPropagation();
@@ -25,7 +28,7 @@ export default function CopyClipboard({ copyText, iconprops, ...props }: TProps)
   }
 
   return (
-    <button {...props} onClick={handleCopy}>
+    <button aria-label={copied ? actions.copied : actions.copy} {...props} onClick={handleCopy}>
       {copied ? (
         <Check {...iconprops} className={cn('size-4 cursor-pointer', iconprops?.className)} />
       ) : (
@@ -42,6 +45,7 @@ interface TContainerProps extends ComponentProps<'div'> {
 // Click anywhere on the container to copy; a short "Copied!" overlay confirms it.
 export function ContainerClipboard({ copyText, ...props }: TContainerProps) {
   const [copied, setCopied] = useState(false);
+  const { actions } = useMessages(commonMessages);
 
   async function handleCopy(event: MouseEvent<HTMLDivElement>) {
     event.stopPropagation();
@@ -58,6 +62,7 @@ export function ContainerClipboard({ copyText, ...props }: TContainerProps) {
     <div
       {...props}
       onClick={handleCopy}
+      data-copied-label={`${actions.copied}!`}
       className={cn(copied && 'card-copy-fog', 'cursor-pointer', props.className)}
     >
       {props.children}

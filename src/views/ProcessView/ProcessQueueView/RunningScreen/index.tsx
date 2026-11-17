@@ -5,12 +5,15 @@ import { useProcessStore } from 'src/states/process.state';
 import { ProcessMachineEvent, TProcess } from 'src/types/process.type';
 import ExportImportData from '../../ExportImportData';
 import RunningProcessView from './RunningProcessView';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 interface TProps {
   runningProcess: TProcess | undefined;
 }
 
 export default function RunningScreen({ runningProcess }: TProps) {
+  const text = useMessages(processMessages);
   const { mode } = useProcessStore();
   const { send } = useProcessStateMachine();
 
@@ -24,7 +27,9 @@ export default function RunningScreen({ runningProcess }: TProps) {
         <div className="border-border bg-muted/50 flex items-center justify-between border-b px-3 py-2">
           <div className="flex h-4 items-center gap-2">
             <Cpu size={16} className="text-primary" />
-            <h2 className="text-xs font-bold tracking-tight uppercase">Processor Core | {mode}</h2>
+            <h2 className="text-xs font-bold tracking-tight uppercase">
+              {text.core.title(text.schedulers[mode])}
+            </h2>
           </div>
           {runningProcess && (
             <div className="flex items-center gap-1.5">
@@ -32,14 +37,14 @@ export default function RunningScreen({ runningProcess }: TProps) {
                 <span className="bg-success/60 absolute inline-flex h-full w-full animate-ping rounded-full"></span>
                 <span className="bg-success relative inline-flex h-2 w-2 rounded-full"></span>
               </span>
-              <span className="text-success text-xs font-medium">ACTIVE</span>
+              <span className="text-success text-xs font-medium uppercase">{text.core.active}</span>
             </div>
           )}
         </div>
         <RunningProcessView runningProcess={runningProcess} />
         <div className="absolute right-2 bottom-2 flex items-center gap-2">
           <ExportImportData />
-          <AppTooltip tooltipContent="Reset">
+          <AppTooltip tooltipContent={text.reset}>
             <svg
               stroke="currentColor"
               fill="currentColor"
@@ -47,6 +52,8 @@ export default function RunningScreen({ runningProcess }: TProps) {
               viewBox="0 0 24 24"
               height="12px"
               width="12px"
+              role="button"
+              aria-label={text.reset}
               onClick={onReset}
             >
               <path d="M22 12C22 17.5228 17.5229 22 12 22C6.4772 22 2 17.5228 2 12C2 6.47715 6.4772 2 12 2V4C7.5817 4 4 7.58172 4 12C4 16.4183 7.5817 20 12 20C16.4183 20 20 16.4183 20 12C20 9.53614 18.8862 7.33243 17.1346 5.86492L15 8V2L21 2L18.5535 4.44656C20.6649 6.28002 22 8.9841 22 12Z"></path>

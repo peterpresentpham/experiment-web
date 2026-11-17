@@ -55,7 +55,7 @@ export const usePikachuStore = create<
               const { roundList, round } = state.metadata;
               state.board = board;
               state.suggestion = path;
-              if (mode == 'newGame' || round == roundList.length) state.metadata.round = 1;
+              if (mode == 'newGame' || round >= roundList.length) state.metadata.round = 1;
               else {
                 const round = state.metadata.round;
                 state.metadata.round = round + 1;

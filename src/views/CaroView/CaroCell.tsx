@@ -2,6 +2,8 @@
 
 import { ComponentProps, memo, useMemo } from 'react';
 import GameWinLines from 'src/components/games/GameWinLines';
+import { useMessages } from 'src/i18n/client';
+import { caroMessages } from 'src/i18n/messages/caro';
 import { cn } from 'src/lib/utils';
 import { TCaroGame, TTurn, TWinState } from 'src/types/caro.type';
 
@@ -34,6 +36,7 @@ function CaroCell(params: TCaroCellProps) {
     onMove,
     ...props
   } = params;
+  const { cell: cellLabel } = useMessages(caroMessages);
   const icon = useMemo(() => {
     // In blind mode, only show icon if game is over or it's the last move
     if (gameType === 'blind' && !isWin && !isCurrent) {
@@ -84,7 +87,11 @@ function CaroCell(params: TCaroCellProps) {
     <div
       {...props}
       role="button"
-      aria-label={`Row ${Math.floor(location / boardSize) + 1}, column ${(location % boardSize) + 1}${icon ? `: ${icon.toUpperCase()}` : ''}`}
+      aria-label={cellLabel(
+        Math.floor(location / boardSize) + 1,
+        (location % boardSize) + 1,
+        icon?.toUpperCase()
+      )}
       aria-disabled={shouldDisableBoard || isWin || undefined}
       className={cellClassName}
       style={{

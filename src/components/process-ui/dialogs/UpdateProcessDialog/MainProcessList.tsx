@@ -4,6 +4,8 @@ import ChangeProcessItem from 'src/components/process-ui/ProcessItem/ChangeProce
 import { Button } from 'src/components/shadcn/button';
 import { TProcessDataObject } from 'src/types/process.type';
 import ExportImportData from 'src/views/ProcessView/ExportImportData';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 interface TProps {
   data: TProcessDataObject;
@@ -11,17 +13,18 @@ interface TProps {
 }
 
 export default function MainProcessList({ data, setData }: TProps) {
+  const text = useMessages(processMessages);
   return (
     <div className="max-h-100 overflow-y-auto">
       {Object.values(data).length === 0 ? (
         <ListEmpty
-          title="No processes created yet."
+          title={text.empty}
           rootprops={{ className: 'cols-span-2 flex-col mt-2' }}
           component={
             <div className="mt-2 flex items-center gap-2">
               <ExportImportData
                 isShowExport={false}
-                components={{ import: <Button>Import</Button> }}
+                components={{ import: <Button>{text.import}</Button> }}
               />
             </div>
           }

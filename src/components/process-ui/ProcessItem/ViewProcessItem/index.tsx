@@ -9,6 +9,8 @@ import { formatText } from 'src/services';
 import { ProcessStatusType, TProcess } from 'src/types/process.type';
 import BlockTaskList from './BlockTaskList';
 import { Clock, Timer } from 'lucide-react';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 interface TProps {
   data: TProcess;
@@ -19,6 +21,7 @@ interface TProps {
 }
 
 export default function ViewProcessItem({ data, metadata, props }: TProps) {
+  const { item: text } = useMessages(processMessages);
   const progress = (data.runtime / data.executionTime) * 100;
   const isTerminated = data.state === ProcessStatusType.TERMINATED;
   const isRunning = data.state === ProcessStatusType.RUNNING;
@@ -61,7 +64,7 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
                     variant="outline"
                     className="border-warning/50 bg-warning/15 text-warning-foreground h-4 rounded-md text-xs font-semibold tracking-wide"
                   >
-                    PRIORITY {data.readyPriority}
+                    {text.priority(data.readyPriority)}
                   </Badge>
                 )}
                 {data.waitingPriority >= 0 && data.state == ProcessStatusType.WAITING && (
@@ -69,7 +72,7 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
                     variant="outline"
                     className="border-primary/40 bg-primary/10 text-primary h-4 rounded-md text-xs font-semibold tracking-wide"
                   >
-                    WAITING {data.waitingPriority}
+                    {text.waiting(data.waitingPriority)}
                   </Badge>
                 )}
               </div>
@@ -101,14 +104,15 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
             <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium whitespace-nowrap">
               <Clock size={10} strokeWidth={3} className="opacity-70" />
               <span>
-                Arr: <span className="text-foreground font-mono">{data.arrivalTime}</span>
+                {text.arrival}:{' '}
+                <span className="text-foreground font-mono">{data.arrivalTime}</span>
               </span>
             </div>
             {data.beginAt >= 0 && (
               <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium whitespace-nowrap">
                 <Timer size={10} className="text-success" />
                 <span>
-                  Start: <span className="text-foreground font-mono">{data.beginAt}</span>
+                  {text.start}: <span className="text-foreground font-mono">{data.beginAt}</span>
                 </span>
               </div>
             )}
@@ -116,7 +120,7 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
               <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium whitespace-nowrap">
                 <Timer size={10} className="text-primary/70" />
                 <span>
-                  End: <span className="text-foreground font-mono">{data.endAt}</span>
+                  {text.end}: <span className="text-foreground font-mono">{data.endAt}</span>
                 </span>
               </div>
             )}
@@ -128,7 +132,7 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
       <div className="relative space-y-1.5">
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs font-semibold tracking-wide uppercase opacity-70">
-            <span>CPU Cycle Execution</span>
+            <span>{text.cpu}</span>
             <span
               className={cn('font-mono', isTerminated ? 'text-muted-foreground' : 'text-primary')}
             >

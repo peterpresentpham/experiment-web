@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
 import { parseNum } from '@peter-present/format-number';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
@@ -8,8 +7,11 @@ import CopyClipboard from 'src/components/CopyClipboard';
 import ElementItem from 'src/components/format-number/ElementItem';
 import { Input } from 'src/components/shadcn/input';
 import { useDebounceValue } from 'src/hooks/useDebounce';
+import { useMessages } from 'src/i18n/client';
+import { formatNumberMessages } from 'src/i18n/messages/formatNumber';
 
 export default function ParseNumPage() {
+  const t = useMessages(formatNumberMessages);
   const [value, setValue] = useState('0');
   const [debounceValue] = useDebounceValue(value, 500);
 
@@ -38,9 +40,9 @@ export default function ParseNumPage() {
           ): string
         </>
       }
-      description="Parses various input formats into a standard decimal string. Supports currencies ($€£¥), commas, underscores, scientific notation (e+), and custom subscript notation."
+      description={t.fn.parseNum.description}
     >
-      <p className="my-4 text-lg font-bold">Params</p>
+      <p className="my-4 text-lg font-bold">{t.params}</p>
       <ArticleUL className="list-disc">
         <ArticleLI isFirst>
           <span>
@@ -50,17 +52,17 @@ export default function ParseNumPage() {
             </Link>
             )
           </span>
-          {': The input value to parse. Can be a number, string, or bigint.'}
+          {`: ${t.fn.parseNum.params.value}`}
         </ArticleLI>
       </ArticleUL>
-      <p className="my-4 text-lg font-bold">Returns</p>
-      <p>(string): A standardized decimal string (e.g., "1234.56").</p>
-      <p className="my-4 text-lg font-bold">Example</p>
+      <p className="my-4 text-lg font-bold">{t.returns}</p>
+      <p>{t.fn.parseNum.returns}</p>
+      <p className="my-4 text-lg font-bold">{t.example}</p>
       <TitleBox
         title="value"
         value={
           <Input
-            placeholder="Number"
+            placeholder={t.numberPlaceholder}
             onChange={(event) => setValue(event.target.value)}
             value={value}
           />
@@ -73,7 +75,7 @@ export default function ParseNumPage() {
           iconprops={{ className: 'size-4' }}
         />
         <p>{fnText}</p>
-        <p>{`Result: ${result}`}</p>
+        <p>{t.result(result)}</p>
       </div>
     </ElementItem>
   );

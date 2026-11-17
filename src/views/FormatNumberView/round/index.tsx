@@ -10,8 +10,11 @@ import ElementItem from 'src/components/format-number/ElementItem';
 import RoundTypeSelect from 'src/components/format-number/RoundTypeSelect';
 import { Input } from 'src/components/shadcn/input';
 import { useDebounceValue } from 'src/hooks/useDebounce';
+import { useMessages } from 'src/i18n/client';
+import { formatNumberMessages } from 'src/i18n/messages/formatNumber';
 
 export default function RoundPage() {
+  const t = useMessages(formatNumberMessages);
   const [value, setValue] = useState('0');
   const [debounceValue] = useDebounceValue(value, 500);
   const [rounding, setRounding] = useState<RoundingMode>('half');
@@ -46,9 +49,9 @@ export default function RoundPage() {
           ): string
         </>
       }
-      description="Rounds a number based on the specified precision and rounding mode."
+      description={t.fn.round.description}
     >
-      <p className="my-4 text-lg font-bold">Params</p>
+      <p className="my-4 text-lg font-bold">{t.params}</p>
       <ArticleUL className="list-disc">
         <ArticleLI isFirst>
           <span>
@@ -58,7 +61,7 @@ export default function RoundPage() {
             </Link>
             )
           </span>
-          {': The value to be rounded. Can be a number, string, or bigint.'}
+          {`: ${t.fn.round.params.value}`}
         </ArticleLI>
         <ArticleLI>
           <span>
@@ -68,17 +71,17 @@ export default function RoundPage() {
             </Link>
             )
           </span>
-          {': Configuration for rounding.'}
+          {`: ${t.fn.round.params.options}`}
         </ArticleLI>
       </ArticleUL>
-      <p className="my-4 text-lg font-bold">Returns</p>
-      <p>(string): The rounded number as a string.</p>
-      <p className="my-4 text-lg font-bold">Example</p>
+      <p className="my-4 text-lg font-bold">{t.returns}</p>
+      <p>{t.fn.round.returns}</p>
+      <p className="my-4 text-lg font-bold">{t.example}</p>
       <TitleBox
         title="value"
         value={
           <Input
-            placeholder="Number"
+            placeholder={t.numberPlaceholder}
             onChange={(event) => setValue(event.target.value)}
             type="number"
             value={value}
@@ -106,7 +109,7 @@ export default function RoundPage() {
           iconprops={{ className: 'size-4' }}
         />
         <p>{fnText}</p>
-        <p>{`Result: ${result}`}</p>
+        <p>{t.result(result)}</p>
       </div>
     </ElementItem>
   );

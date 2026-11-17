@@ -11,7 +11,14 @@ import {
   useState,
 } from 'react';
 import { useCaroStore } from 'src/states/caro.state';
-import { TCaroGame, TCaroSizeBoard, TCaroWinMode, TPlayMode } from 'src/types/caro.type';
+import {
+  TCaroGame,
+  TCaroMachineLevel,
+  TCaroSizeBoard,
+  TCaroWinMode,
+  TPlayMode,
+  TTurn,
+} from 'src/types/caro.type';
 
 type TCaroConfigContextType = {
   size: TCaroSizeBoard;
@@ -20,6 +27,8 @@ type TCaroConfigContextType = {
   winMode: TCaroWinMode;
   isOverride: boolean;
   maxError: number;
+  machineLevel: TCaroMachineLevel;
+  machineTurn: TTurn;
   fn: {
     setSize: Dispatch<SetStateAction<TCaroSizeBoard>>;
     setPlayMode: Dispatch<SetStateAction<TPlayMode>>;
@@ -27,6 +36,8 @@ type TCaroConfigContextType = {
     setIsOverride: Dispatch<SetStateAction<boolean>>;
     setMaxError: Dispatch<SetStateAction<number>>;
     setWinMode: Dispatch<SetStateAction<TCaroWinMode>>;
+    setMachineLevel: Dispatch<SetStateAction<TCaroMachineLevel>>;
+    setMachineTurn: Dispatch<SetStateAction<TTurn>>;
   };
 };
 
@@ -37,6 +48,8 @@ const caroConfigContextDefault: TCaroConfigContextType = {
   winMode: 'blockOpponent',
   isOverride: false,
   maxError: 5,
+  machineLevel: 'medium',
+  machineTurn: 1,
   fn: {
     setSize: () => {},
     setPlayMode: () => {},
@@ -44,6 +57,8 @@ const caroConfigContextDefault: TCaroConfigContextType = {
     setIsOverride: () => {},
     setMaxError: () => {},
     setWinMode: () => {},
+    setMachineLevel: () => {},
+    setMachineTurn: () => {},
   },
 };
 
@@ -62,6 +77,8 @@ export default function CaroConfigProvider({ children }: TProps) {
   const [winMode, setWinMode] = useState(metadata.winMode);
   const [isOverride, setIsOverride] = useState(metadata.isOverride);
   const [maxError, setMaxError] = useState(metadata.maxNumberOfBlindError);
+  const [machineLevel, setMachineLevel] = useState(metadata.machineLevel);
+  const [machineTurn, setMachineTurn] = useState(metadata.machineTurn);
 
   useEffect(() => {
     setWinMode(metadata.winMode);
@@ -87,6 +104,14 @@ export default function CaroConfigProvider({ children }: TProps) {
     setMaxError(metadata.maxNumberOfBlindError);
   }, [metadata.maxNumberOfBlindError]);
 
+  useEffect(() => {
+    setMachineLevel(metadata.machineLevel);
+  }, [metadata.machineLevel]);
+
+  useEffect(() => {
+    setMachineTurn(metadata.machineTurn);
+  }, [metadata.machineTurn]);
+
   const contextData = useMemo<TCaroConfigContextType>(() => {
     return {
       size,
@@ -95,9 +120,20 @@ export default function CaroConfigProvider({ children }: TProps) {
       winMode,
       isOverride,
       maxError,
-      fn: { setSize, setPlayMode, setGameType, setWinMode, setIsOverride, setMaxError },
+      machineLevel,
+      machineTurn,
+      fn: {
+        setSize,
+        setPlayMode,
+        setGameType,
+        setWinMode,
+        setIsOverride,
+        setMaxError,
+        setMachineLevel,
+        setMachineTurn,
+      },
     };
-  }, [size, playMode, winMode, gameType, isOverride, maxError]);
+  }, [size, playMode, winMode, gameType, isOverride, maxError, machineLevel, machineTurn]);
 
   return <CaroConfigContext.Provider value={contextData}>{children}</CaroConfigContext.Provider>;
 }

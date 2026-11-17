@@ -21,21 +21,15 @@ export enum DIALOG_KEY {
 
 export const ProcessSchedulerConfigs: Record<
   SchedulerModeType,
-  { id: SchedulerModeType; name: string; coming?: boolean }
+  { id: SchedulerModeType; coming?: boolean }
 > = {
-  [SchedulerModeType.FIFO]: { id: SchedulerModeType.FIFO, name: 'First In, First Out' },
-  [SchedulerModeType.SJF]: { id: SchedulerModeType.SJF, name: 'Shortest Job First', coming: true },
-  [SchedulerModeType.ROUND_ROBIN]: { id: SchedulerModeType.ROUND_ROBIN, name: 'Round Robin' },
-  [SchedulerModeType.MLFQ]: {
-    id: SchedulerModeType.MLFQ,
-    name: 'Multilevel Feedback Queue',
-    coming: true,
-  },
+  [SchedulerModeType.FIFO]: { id: SchedulerModeType.FIFO },
+  [SchedulerModeType.SJF]: { id: SchedulerModeType.SJF, coming: true },
+  [SchedulerModeType.ROUND_ROBIN]: { id: SchedulerModeType.ROUND_ROBIN },
+  [SchedulerModeType.MLFQ]: { id: SchedulerModeType.MLFQ, coming: true },
 };
 
 export const SITE_URL = 'https://experiment.peter-present.xyz';
-export const SITE_DESCRIPTION =
-  'A playground of small web experiments: board games, an OS process scheduler visualizer and a chat app.';
 export const GTM_ID = 'GTM-W3M57J7H';
 
 export const beVietnamPro = Be_Vietnam_Pro({

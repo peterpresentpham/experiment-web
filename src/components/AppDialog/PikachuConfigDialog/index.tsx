@@ -13,9 +13,13 @@ import { MouseEvent } from 'react';
 import { Button } from 'src/components/shadcn/button';
 import { Dialog, DialogContent, DialogHeader } from 'src/components/shadcn/dialog';
 import { DIALOG_KEY } from 'src/configs/constance';
+import { useMessages } from 'src/i18n/client';
+import { commonMessages } from 'src/i18n/messages/common';
+import { pikachuMessages } from 'src/i18n/messages/pikachu';
 import { useDialogStore } from 'src/states/dialog.state';
+import { usePikachuSend } from 'src/state-machine/pikachu.state-machine';
 import { usePikachuStore } from 'src/states/pikachu.state';
-import { TPikachuTransform } from 'src/types/pikachu.type';
+import { PikachuMachineEvent, TPikachuTransform } from 'src/types/pikachu.type';
 import BoardSizeConfig from './BoardSizeConfig';
 import GameTypeConfig from './GameTypeConfig';
 import ImgTypeConfig from './ImgTypeConfig';
@@ -37,9 +41,22 @@ function PikachuConfigDialogLayout() {
     gameType,
     fn: { setSize, setNumberOfLines, setImgType, setRounds, setGameType },
   } = usePikachuConfigContext();
+  const send = usePikachuSend();
+  const { config: text } = useMessages(pikachuMessages);
+  const { actions } = useMessages(commonMessages);
 
   function onSaveConfig(event: MouseEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (rounds.length == 0) return;
+
+    // The current board was built for the old size, image set and rules, so any change restarts.
+    const isChanged =
+      size.numberOfRows != metadata.numberOfRows ||
+      size.numberOfColumns != metadata.numberOfColumns ||
+      numberOfLines != metadata.numberOfLines ||
+      imgType != metadata.imgType ||
+      gameType != metadata.gameType ||
+      rounds.join() != metadata.roundList.join();
 
     setMetadata({
       numberOfRows: size.numberOfRows,
@@ -49,6 +66,7 @@ function PikachuConfigDialogLayout() {
       roundList: rounds,
       gameType,
     });
+    if (isChanged) send({ type: PikachuMachineEvent.CREATE, mode: 'newGame' });
     setDialog(DIALOG_KEY.pikachuConfigDialog, false);
   }
 
@@ -67,15 +85,17 @@ function PikachuConfigDialogLayout() {
 
   return (
     <Dialog open={dialog[DIALOG_KEY.pikachuConfigDialog]} onOpenChange={onOpenChange}>
-      <IconDialogTrigger label="Config" icon={Settings} />
+      <IconDialogTrigger label={actions.config} icon={Settings} />
       <DialogContent>
-        <DialogHeader>Pikachu config</DialogHeader>
+        <DialogHeader>{text.title}</DialogHeader>
         <form onSubmit={onSaveConfig} className="scroll-hidden max-h-[75vh] overflow-auto">
           <div className="bg-background fixed right-0 left-0 flex items-center justify-between px-6 py-2 shadow-2xl">
             <Button type="button" onClick={onCancel} variant="outline" className="mr-2">
-              Cancel
+              {actions.cancel}
             </Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit" disabled={rounds.length == 0}>
+              {actions.save}
+            </Button>
           </div>
           <BoardSizeConfig />
           <ImgTypeConfig />

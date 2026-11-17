@@ -4,6 +4,9 @@ import IconDialogTrigger from 'src/components/AppDialog/components/IconDialogTri
 import { useState } from 'react';
 import { DIALOG_KEY } from 'src/configs/constance';
 import { PIKACHU_PIECE_SIZE, PIKACHU_URL } from 'src/configs/pikachu.constance';
+import { useMessages } from 'src/i18n/client';
+import { commonMessages } from 'src/i18n/messages/common';
+import { pikachuMessages } from 'src/i18n/messages/pikachu';
 import { useDialogStore } from 'src/states/dialog.state';
 import AppPagination from '../AppPagination';
 import { Dialog, DialogContent, DialogHeader } from '../shadcn/dialog';
@@ -11,17 +14,19 @@ import { Dialog, DialogContent, DialogHeader } from '../shadcn/dialog';
 export default function PikachuInstructionDialog() {
   const { dialog, setDialog } = useDialogStore();
   const [currentPage, setCurrentPage] = useState(1);
+  const { instruction: text } = useMessages(pikachuMessages);
+  const { actions } = useMessages(commonMessages);
 
   return (
     <Dialog
       open={dialog[DIALOG_KEY.pikachuInstructionDialog]}
       onOpenChange={(open) => setDialog(DIALOG_KEY.pikachuInstructionDialog, open)}
     >
-      <IconDialogTrigger label="Instructions" icon={Info} />
+      <IconDialogTrigger label={actions.instructions} icon={Info} />
       <DialogContent className="sm:max-w-4xl!">
-        <DialogHeader>Pikachu instruction</DialogHeader>
+        <DialogHeader>{text.title}</DialogHeader>
         <div className="scroll-hidden h-fit max-h-[75vh] overflow-auto">
-          <p className="text-lg">1. Internal images</p>
+          <p className="text-lg">{text.internal}</p>
           <div className="mt-2 flex flex-wrap gap-1">
             {Array.from({ length: 90 }).map((_, index) => {
               const _index = index + 1;
@@ -47,7 +52,7 @@ export default function PikachuInstructionDialog() {
               );
             })}
           </div>
-          <p className="text-lg">2. External images</p>
+          <p className="text-lg">{text.external}</p>
           <div className="mt-2">
             <div className="flex flex-wrap gap-1">
               {Array.from({ length: currentPage < 12 ? 90 : 35 }).map((_, index) => {

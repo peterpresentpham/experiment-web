@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import {
   clearLeadingZero,
   clearTrailingZero,
@@ -11,6 +10,8 @@ import CopyClipboard from 'src/components/CopyClipboard';
 import ElementItem from 'src/components/format-number/ElementItem';
 import { Input } from 'src/components/shadcn/input';
 import { useDebounceValue } from 'src/hooks/useDebounce';
+import { useMessages } from 'src/i18n/client';
+import { formatNumberMessages } from 'src/i18n/messages/formatNumber';
 
 type ModeType = 'leading' | 'trailing' | 'unnecessary';
 
@@ -19,26 +20,28 @@ interface TProps {
 }
 
 const configs: {
-  [key in ModeType]: { fn: (value: string) => string; title: string; description: string };
+  [key in ModeType]: {
+    fn: (value: string) => string;
+    title: 'clearLeadingZero' | 'clearTrailingZero' | 'clearUnnecessaryZero';
+  };
 } = {
   leading: {
     fn: clearLeadingZero,
     title: 'clearLeadingZero',
-    description: "Removes leading zeros from a string (e.g., '005' -> '5').",
   },
   trailing: {
     fn: clearTrailingZero,
     title: 'clearTrailingZero',
-    description: "Removes trailing zeros from a decimal string (e.g., '1.500' -> '1.5').",
   },
   unnecessary: {
     fn: clearUnnecessaryZero,
     title: 'clearUnnecessaryZero',
-    description: 'Removes redundant leading and trailing zeros from a number string.',
   },
 };
 
 export default function ZeroPage({ mode }: TProps) {
+  const t = useMessages(formatNumberMessages);
+  const doc = t.fn[configs[mode].title];
   const [value, setValue] = useState('0');
   const [debounceValue] = useDebounceValue(value, 500);
 
@@ -56,29 +59,29 @@ export default function ZeroPage({ mode }: TProps) {
       title={
         <>
           <span className="text-keyword">function</span>{' '}
-          <span className="text-name">clearLeadingZero</span>(
+          <span className="text-name">{configs[mode].title}</span>(
           <span className="text-params">value</span>: string): string
         </>
       }
-      description={configs[mode].description}
+      description={doc.description}
     >
-      <p className="my-4 text-lg font-bold">Params</p>
+      <p className="my-4 text-lg font-bold">{t.params}</p>
       <ArticleUL className="list-disc">
         <ArticleLI isFirst>
           <span>
             <span className="text-params">value</span>: string
           </span>
-          {': The number string to clean.'}
+          {`: ${doc.params.value}`}
         </ArticleLI>
       </ArticleUL>
-      <p className="my-4 text-lg font-bold">Return</p>
-      <p>(string): The cleaned number string.</p>
-      <p className="my-4 text-lg font-bold">Example</p>
+      <p className="my-4 text-lg font-bold">{t.returns}</p>
+      <p>{doc.returns}</p>
+      <p className="my-4 text-lg font-bold">{t.example}</p>
       <TitleBox
         title="value"
         value={
           <Input
-            placeholder="Number"
+            placeholder={t.numberPlaceholder}
             onChange={(event) => setValue(event.target.value)}
             value={value}
             type="number"
@@ -92,7 +95,7 @@ export default function ZeroPage({ mode }: TProps) {
           iconprops={{ className: 'size-4' }}
         />
         <p>{fnText}</p>
-        <p>{`Result: ${result}`}</p>
+        <p>{t.result(result)}</p>
       </div>
     </ElementItem>
   );

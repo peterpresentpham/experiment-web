@@ -1,6 +1,8 @@
 import { ComponentProps } from 'react';
 import { cn } from 'src/lib/utils';
 import { ProcessStatusType } from 'src/types/process.type';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 type TProps = {
   state: ProcessStatusType;
@@ -8,6 +10,7 @@ type TProps = {
 };
 
 export default function ProcessStatus({ state, rootprops }: TProps) {
+  const { processStatus } = useMessages(processMessages);
   return (
     <span
       {...rootprops}
@@ -23,7 +26,7 @@ export default function ProcessStatus({ state, rootprops }: TProps) {
         rootprops?.className
       )}
     >
-      {state}
+      {processStatus[state]}
     </span>
   );
 }

@@ -2,6 +2,7 @@ export type TTurn = 0 | 1;
 export type TRole = 'host' | 'guest';
 export type TConnection = 'init' | 'connecting' | 'connected';
 export type TPlayMode = 'offline' | 'online' | 'machine';
+export type TCaroMachineLevel = 'easy' | 'medium' | 'hard';
 export type TCaroGame = 'normal' | 'blind';
 export type TCaroWinMode = 'blockOpponent' | 'non-blockOpponent';
 export type TCaroSizeBoard = 3 | 10 | 15;

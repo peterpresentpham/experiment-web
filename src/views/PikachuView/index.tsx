@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { PIKACHU_PIECE_SIZE } from 'src/configs/pikachu.constance';
 import useFitBoard from 'src/hooks/useFitBoard';
+import { hasPieces } from 'src/services/pikachu/round.utils';
 import useAssetsPreLoader from 'src/hooks/useAssetsPreLoader';
 import useEnableSoundtrack from 'src/hooks/useEnableSoundtrack';
 import { PikachuMachineContext, usePikachuSend } from 'src/state-machine/pikachu.state-machine';
@@ -43,12 +44,13 @@ function PikachuViewLayout() {
 
   useEffect(() => {
     if (hasLoadedSaveRef.current) return;
-    if (board.length === 0) return;
+    // A cleared board (e.g. saved right after winning random mode) waits for a new game instead.
+    if (!hasPieces(board)) return;
     if (!isInitial) return;
 
     hasLoadedSaveRef.current = true;
     send({ type: PikachuMachineEvent.LOAD_SAVE_GAME });
-  }, [board.length, send, isInitial]);
+  }, [board, send, isInitial]);
 
   return (
     <div className="container flex flex-1 flex-col gap-3">

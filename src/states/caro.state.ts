@@ -1,6 +1,7 @@
 import { checkWin } from 'src/services/caro.utils';
 import {
   TCaroGame,
+  TCaroMachineLevel,
   TCaroSizeBoard,
   TCaroWinMode,
   TPlayMode,
@@ -19,6 +20,21 @@ type TCaroMetadataType = {
   size: TCaroSizeBoard;
   maxNumberOfBlindError: number;
   preWinner: number;
+  machineLevel: TCaroMachineLevel;
+  /** The player the machine controls in machine play mode. */
+  machineTurn: TTurn;
+};
+
+const DEFAULT_METADATA: TCaroMetadataType = {
+  playMode: 'offline',
+  gameType: 'normal',
+  winMode: 'blockOpponent',
+  isOverride: false,
+  size: 10,
+  maxNumberOfBlindError: 5,
+  preWinner: 0,
+  machineLevel: 'medium',
+  machineTurn: 1,
 };
 
 type TCaroStateType = {
@@ -45,15 +61,7 @@ export const useCaroStore = create<
   persist(
     immer((set) => {
       return {
-        metadata: {
-          playMode: 'offline',
-          gameType: 'normal',
-          winMode: 'blockOpponent',
-          isOverride: false,
-          size: 10,
-          maxNumberOfBlindError: 5,
-          preWinner: 0,
-        },
+        metadata: DEFAULT_METADATA,
         numberOfBlindError: { 0: 0, 1: 0 },
         isBlindForceOver: false,
         turn: 0,
@@ -120,10 +128,13 @@ export const useCaroStore = create<
     }),
     {
       name: 'experiment.caro',
-      version: 1.0,
+      version: 1.1,
       migrate(persistedState, version) {
-        if (version < 1.0) return { ...(persistedState as TCaroStateType) };
-        return persistedState;
+        const state = persistedState as TCaroStateType;
+        // 1.1 added the machine play mode settings.
+        if (version < 1.1)
+          return { ...state, metadata: { ...DEFAULT_METADATA, ...state.metadata } };
+        return state;
       },
       partialize: (state) => {
         const { fn, ...rest } = state;

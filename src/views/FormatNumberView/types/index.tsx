@@ -1,9 +1,12 @@
 /* eslint-disable react/no-unescaped-entities */
-/* eslint-disable quotes */
 import { ArticleLI, ArticleUL } from 'src/components/box/ArticleBox';
 import ElementItem from 'src/components/format-number/ElementItem';
+import { formatNumberMessages } from 'src/i18n/messages/formatNumber';
+import { getMessages } from 'src/i18n/server';
 
-export default function TypesPage() {
+export default async function TypesPage() {
+  const { types: t } = await getMessages(formatNumberMessages);
+
   return (
     <div>
       <ElementItem
@@ -14,7 +17,7 @@ export default function TypesPage() {
             = number | string | bigint
           </span>
         }
-        description="Supported input types for number formatting"
+        description={t.NumberType}
       />
       <ElementItem
         id="RoundingMode"
@@ -25,18 +28,14 @@ export default function TypesPage() {
             'truncate'
           </>
         }
-        description="Strategies for rounding numbers"
+        description={t.RoundingMode}
       >
         <ArticleUL className="list-disc">
-          <ArticleLI isFirst>
-            {'half: Round to the nearest neighbor. If equidistant, round away from zero.'}
-          </ArticleLI>
-          <ArticleLI>{'up: Round towards Positive Infinity.'}</ArticleLI>
-          <ArticleLI>{'down: Round towards Negative Infinity.'}</ArticleLI>
-          <ArticleLI>{'truncate: Round towards Zero.'}</ArticleLI>
-          <ArticleLI>
-            {'banker: Round to the nearest even neighbor (Statistical rounding).'}
-          </ArticleLI>
+          {(['half', 'up', 'down', 'truncate', 'banker'] as const).map((mode, index) => (
+            <ArticleLI key={mode} isFirst={index == 0}>
+              <span className="text-params">{mode}</span>: {t.roundingModes[mode]}
+            </ArticleLI>
+          ))}
         </ArticleUL>
       </ElementItem>
       <ElementItem
@@ -47,7 +46,7 @@ export default function TypesPage() {
             <span className="text-name">NotationMode</span> = 'subscript' | 'scientific'
           </>
         }
-        description="Modes for special numerical notation"
+        description={t.NotationMode}
       />
       <ElementItem
         id="SignType"
@@ -57,11 +56,11 @@ export default function TypesPage() {
             '-' | ''
           </>
         }
-        description="Possible sign values for internal number representation"
+        description={t.SignType}
       />
       <ElementItem
         id="RoundingConfigType"
-        description="Configuration for rounding operations"
+        description={t.RoundingConfigType}
         title={
           <>
             <span className="text-keyword">type</span>{' '}
@@ -75,16 +74,16 @@ export default function TypesPage() {
       >
         <ArticleUL className="list-disc">
           <ArticleLI isFirst>
-            <span className="text-params">rounding</span>: The rounding strategy to use
+            <span className="text-params">rounding</span>: {t.rounding}
           </ArticleLI>
           <ArticleLI>
-            <span className="text-params">precision</span>: Number of decimal places to keep
+            <span className="text-params">precision</span>: {t.precision}
           </ArticleLI>
         </ArticleUL>
       </ElementItem>
       <ElementItem
         id="NumberConfigType"
-        description="Configuration for basic number display properties"
+        description={t.NumberConfigType}
         title={
           <>
             <span className="text-keyword">type</span>{' '}
@@ -100,20 +99,19 @@ export default function TypesPage() {
       >
         <ArticleUL className="list-disc">
           <ArticleLI isFirst>
-            <span className="text-params">prefix</span>: Text to prepend to the number (e.g., '$')
+            <span className="text-params">prefix</span>: {t.prefix}
           </ArticleLI>
           <ArticleLI>
-            <span className="text-params">suffix</span>: Text to append to the number (e.g., '
-            units')
+            <span className="text-params">suffix</span>: {t.suffix}
           </ArticleLI>
           <ArticleLI>
-            <span className="text-params">notation</span>: The notation style to apply
+            <span className="text-params">notation</span>: {t.notation}
           </ArticleLI>
         </ArticleUL>
       </ElementItem>
       <ElementItem
         id="ObjectNumberType"
-        description="Internal object structure containing full formatting state"
+        description={t.ObjectNumberType}
         title={
           <>
             <span className="text-keyword">type</span>{' '}
@@ -126,14 +124,13 @@ export default function TypesPage() {
       >
         <ArticleUL className="list-disc">
           <ArticleLI isFirst>
-            <span className="text-params">compactedSymbol</span>: The symbol used for compact
-            notation (e.g., 'K', 'M')
+            <span className="text-params">compactedSymbol</span>: {t.compactedSymbol}
           </ArticleLI>
         </ArticleUL>
       </ElementItem>
       <ElementItem
         id="FormattingConfigType"
-        description="Full configuration options for the formatNumber function"
+        description={t.FormattingConfigType}
         title={
           <>
             <span className="text-keyword">type</span>{' '}
@@ -146,87 +143,59 @@ export default function TypesPage() {
       >
         <ArticleUL className="list-disc">
           <ArticleLI isFirst>
-            <span className="text-params">isCompact</span>: Whether to use compact notation (K, M,
-            B, etc.)
+            <span className="text-params">isCompact</span>: {t.isCompact}
           </ArticleLI>
         </ArticleUL>
       </ElementItem>
       <ElementItem
         id="FNType"
         title={
-          <p>
+          <div>
             <span className="text-keyword">type</span> <span className="text-name">FNType</span>{' '}
             <span>{'= {'}</span>
-            <p className="ml-4">
+            <div className="ml-4">
               <span className="text-name">round</span>(options?:{' '}
               <span className="text-name">RoundingConfigType</span>):{' '}
               <span className="text-name">FNType</span>;
-            </p>
-            <p className="ml-4">
+            </div>
+            <div className="ml-4">
               <span className="text-name">compact</span>(options?:{' '}
               <span className="text-name">RoundingConfigType</span>):{' '}
               <span className="text-name">FNType</span>;
-            </p>
-            <p className="ml-4">
+            </div>
+            <div className="ml-4">
               <span className="text-name">notation</span>(mode?:{' '}
               <span className="text-name">NotationMode</span>):{' '}
               <span className="text-name">FNType</span>;
-            </p>
-            <p className="ml-4">
+            </div>
+            <div className="ml-4">
               <span className="text-name">prefix</span>(symbol: string):{' '}
               <span className="text-name">FNType</span>;
-            </p>
-            <p className="ml-4">
+            </div>
+            <div className="ml-4">
               <span className="text-name">suffix</span>(symbol: string):{' '}
               <span className="text-name">FNType</span>;
-            </p>
-            <p className="ml-4">
+            </div>
+            <div className="ml-4">
               <span className="text-name">toNumber</span>(): string;
-            </p>
-            <p className="ml-4">
+            </div>
+            <div className="ml-4">
               <span className="text-name">toObject</span>():{' '}
               <span className="text-name">ObjectNumberType</span>;
-            </p>
-            <p>{'};'}</p>
-          </p>
+            </div>
+            <div>{'};'}</div>
+          </div>
         }
-        description="Fluent API interface for chainable number formatting operations."
+        description={t.FNType}
       >
         <ArticleUL className="list-disc">
-          <ArticleLI isFirst>
-            <span className="text-name">round</span>
-            {': Rounds the number based on the provided precision and strategy.'}
-          </ArticleLI>
-          <ArticleLI>
-            <span className="text-name">compact</span>
-            {': Converts the number to a compact representation (e.g., 1K, 1M, 1B).'}
-            {': '}
-          </ArticleLI>
-          <ArticleLI>
-            <span className="text-name">notation</span>
-            {': Sets the notation style for the number (e.g., scientific, subscript).'}
-            {': '}
-          </ArticleLI>
-          <ArticleLI>
-            <span className="text-name">prefix</span>
-            {': Adds a prefix to the formatted number string.'}
-            {': '}
-          </ArticleLI>
-          <ArticleLI>
-            <span className="text-name">suffix</span>
-            {': Adds a suffix to the formatted number string.'}
-            {': '}
-          </ArticleLI>
-          <ArticleLI>
-            <span className="text-name">toNumber</span>
-            {': Finalizes the chain and returns the formatted number as a string.'}
-            {': '}
-          </ArticleLI>
-          <ArticleLI>
-            <span className="text-name">toObject</span>
-            {': Returns the internal state of the number as an ObjectNumberType.'}
-            {': '}
-          </ArticleLI>
+          {(
+            ['round', 'compact', 'notation', 'prefix', 'suffix', 'toNumber', 'toObject'] as const
+          ).map((member, index) => (
+            <ArticleLI key={member} isFirst={index == 0}>
+              <span className="text-name">{member}</span>: {t.fnMembers[member]}
+            </ArticleLI>
+          ))}
         </ArticleUL>
       </ElementItem>
       <ElementItem
@@ -240,12 +209,11 @@ export default function TypesPage() {
             {': string; }>'}
           </>
         }
-        description="Configuration for input parsing"
+        description={t.ParseNumberParamsType}
       >
         <ArticleUL className="list-disc">
           <ArticleLI isFirst>
-            <span className="text-params">fallback</span>:{' '}
-            {"Value to return if parsing fails. Default is '--'"}
+            <span className="text-params">fallback</span>: {t.fallback}
           </ArticleLI>
         </ArticleUL>
       </ElementItem>

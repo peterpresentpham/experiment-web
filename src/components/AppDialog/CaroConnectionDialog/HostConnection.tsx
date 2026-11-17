@@ -3,6 +3,8 @@ import TitleBox from 'src/components/box/TitleBox';
 import CopyClipboard from 'src/components/CopyClipboard';
 import { Button } from 'src/components/shadcn/button';
 import { useCaroConnectionContext } from 'src/context/caro-connection.context';
+import { useMessages } from 'src/i18n/client';
+import { caroMessages } from 'src/i18n/messages/caro';
 
 export default function HostConnection() {
   const {
@@ -10,6 +12,7 @@ export default function HostConnection() {
     roomCode,
     fn: { initConnection },
   } = useCaroConnectionContext();
+  const { connection: text } = useMessages(caroMessages);
 
   return (
     <Fragment>
@@ -17,7 +20,7 @@ export default function HostConnection() {
         <TitleBox
           className="mt-2 items-start"
           valueProps={{ className: 'flex items-center gap-1' }}
-          title="Room code"
+          title={text.roomCode}
           value={
             roomCode ? (
               <Fragment>
@@ -25,12 +28,12 @@ export default function HostConnection() {
                 <CopyClipboard copyText={roomCode} iconprops={{ size: 16 }} />
               </Fragment>
             ) : (
-              <span className="text-sm">Creating room...</span>
+              <span className="text-sm">{text.creatingRoom}</span>
             )
           }
         />
       ) : (
-        <Button onClick={() => initConnection('host')}>Connect</Button>
+        <Button onClick={() => initConnection('host')}>{text.connect}</Button>
       )}
     </Fragment>
   );

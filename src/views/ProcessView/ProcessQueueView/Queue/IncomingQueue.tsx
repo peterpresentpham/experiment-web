@@ -2,14 +2,17 @@ import { motion } from 'motion/react';
 import ViewProcessItem from 'src/components/process-ui/ProcessItem/ViewProcessItem';
 import { TProcess } from 'src/types/process.type';
 import BaseQueue from './BaseQueue';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 interface TProps {
   incomingProcesses: TProcess[];
 }
 
 export default function IncomingQueue({ incomingProcesses }: TProps) {
+  const { queues } = useMessages(processMessages);
   return (
-    <BaseQueue title="Incoming" count={incomingProcesses.length}>
+    <BaseQueue title={queues.incoming} count={incomingProcesses.length}>
       {incomingProcesses.map((process) => (
         <motion.div
           key={process.pid}
@@ -22,7 +25,7 @@ export default function IncomingQueue({ incomingProcesses }: TProps) {
         </motion.div>
       ))}
       {incomingProcesses.length === 0 && (
-        <p className="text-muted-foreground py-8 text-center text-sm">No incoming processes</p>
+        <p className="text-muted-foreground py-8 text-center text-sm">{queues.noIncoming}</p>
       )}
     </BaseQueue>
   );

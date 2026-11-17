@@ -6,6 +6,8 @@ import CopyClipboard from 'src/components/CopyClipboard';
 import { Separator } from 'src/components/shadcn/separator';
 import { ToggleGroup, ToggleGroupItem } from 'src/components/shadcn/toggle-group';
 import { IMAGES } from 'src/configs/images';
+import { useMessages } from 'src/i18n/client';
+import { formatNumberMessages } from 'src/i18n/messages/formatNumber';
 
 type CliType = 'npm' | 'yarn' | 'pnpm' | 'bun';
 
@@ -26,7 +28,7 @@ const configs: { [id in CliType]: { id: CliType; img: string; title: string; cli
     id: 'pnpm',
     img: IMAGES.cli.pnpm,
     title: 'pnpm',
-    cli: 'pnpm create @peter-present/format-number',
+    cli: 'pnpm add @peter-present/format-number',
   },
   bun: {
     id: 'bun',
@@ -37,23 +39,15 @@ const configs: { [id in CliType]: { id: CliType; img: string; title: string; cli
 };
 
 export default function GettingStartedPage() {
+  const t = useMessages(formatNumberMessages);
   const [cli, setCli] = useState<CliType>('npm');
 
   return (
     <div>
-      <p className="text-2xl font-bold">Getting Started</p>
-      <p className="mt-2">
-        {
-          'A lightweight, zero-dependency JavaScript/TypeScript library for precise number formatting. Designed for financial applications, crypto dashboards, and scientific data where precision is paramount.'
-        }
-      </p>
-      <p>
-        Unlike standard libraries that rely on floating-point math, the library uses internal
-        string-based arithmetic to handle numbers of any size (including{' '}
-        <span className="font-semibold">string</span>, <span className="font-semibold">number</span>
-        , and <span className="font-semibold">bigint</span>) without losing a single decimal point.
-      </p>
-      <p className="mt-5 text-lg font-bold">Installation</p>
+      <p className="text-2xl font-bold">{t.gettingStarted.title}</p>
+      <p className="mt-2">{t.gettingStarted.intro}</p>
+      <p>{t.gettingStarted.arithmetic}</p>
+      <p className="mt-5 text-lg font-bold">{t.gettingStarted.installation}</p>
       <Separator />
       <div className="bg-secondary rounded-2xl">
         <ToggleGroup className="mt-2" type="single">

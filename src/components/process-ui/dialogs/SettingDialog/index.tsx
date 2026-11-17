@@ -11,6 +11,9 @@ import {
   DialogTrigger,
 } from 'src/components/shadcn/dialog';
 import { ProcessSchedulerConfigs } from 'src/configs/constance';
+import { useMessages } from 'src/i18n/client';
+import { commonMessages } from 'src/i18n/messages/common';
+import { processMessages } from 'src/i18n/messages/process';
 import { useProcessStore } from 'src/states/process.state';
 
 export default function SettingDialog(props: DialogProps) {
@@ -24,6 +27,8 @@ export default function SettingDialog(props: DialogProps) {
   const [localMode, setLocalMode] = useState(mode);
   const [localMaxBlock, setLocalMaxBlock] = useState(maxBlockTaskPerSlice);
   const [open, setOpen] = useState(false);
+  const { settings, schedulers } = useMessages(processMessages);
+  const { actions } = useMessages(commonMessages);
 
   useEffect(() => {
     if (open) {
@@ -45,11 +50,11 @@ export default function SettingDialog(props: DialogProps) {
   return (
     <Dialog {...props} open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Settings size={14} className="cursor-pointer" />
+        <Settings role="button" aria-label={settings.open} size={14} className="cursor-pointer" />
       </DialogTrigger>
       <DialogContent className="max-w-2xl p-4">
-        <DialogHeader className="max-w-2xl p-4">Process Setting</DialogHeader>
-        <p className="text-lg font-semibold">Scheduler Mode</p>
+        <DialogHeader className="max-w-2xl p-4">{settings.title}</DialogHeader>
+        <p className="text-lg font-semibold">{settings.scheduler}</p>
         <div className="flex flex-wrap items-center gap-1">
           {Object.values(ProcessSchedulerConfigs).map((item) => {
             return (
@@ -60,13 +65,13 @@ export default function SettingDialog(props: DialogProps) {
 
                 disabled={item.coming}
               >
-                {item.name}
+                {schedulers[item.id]}
               </Button>
             );
           })}
         </div>
 
-        <p className="border-t pt-2 text-lg font-semibold">Max blocks task</p>
+        <p className="border-t pt-2 text-lg font-semibold">{settings.maxBlockTasks}</p>
         <BaseInput
           value={localMaxBlock}
           name="input-max-block"
@@ -81,12 +86,12 @@ export default function SettingDialog(props: DialogProps) {
             setLocalMaxBlock(validatedValue);
           }}
         />
-        <p className="border-t pt-2 text-lg font-semibold">Display mode</p>
+        <p className="border-t pt-2 text-lg font-semibold">{settings.displayMode}</p>
         <Button onClick={onChangeDisplayMode} className="w-fit" size="sm">
-          {displayMode}
+          {settings.displayModes[displayMode]}
         </Button>
         <DialogFooter className="mt-4 border-t pt-2">
-          <Button onClick={onSave}>Save</Button>
+          <Button onClick={onSave}>{actions.save}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

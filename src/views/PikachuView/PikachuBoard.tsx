@@ -8,12 +8,15 @@ import { PikachuMachineEvent, PikachuMachineState } from 'src/types/pikachu.type
 import PathDraw from './PathDraw';
 import PikachuCell from './PikachuCell';
 import SuggestionDraw from './SuggestionDraw';
+import { useMessages } from 'src/i18n/client';
+import { pikachuMessages } from 'src/i18n/messages/pikachu';
 
 type TProps = {
   size: number;
 };
 
 export default function PikachuBoard({ size }: TProps) {
+  const { outOfMoveOverlay } = useMessages(pikachuMessages);
   const send = usePikachuSend();
   const position = PikachuMachineContext.useSelector((snapshot) => snapshot.context.position);
   const selectedPath = PikachuMachineContext.useSelector(
@@ -61,7 +64,7 @@ export default function PikachuBoard({ size }: TProps) {
           role="status"
           className="bg-foreground/60 text-background absolute inset-0 z-20 flex items-center justify-center rounded-xl text-center text-sm font-medium"
         >
-          No more moves. Change the board to continue.
+          {outOfMoveOverlay}
         </div>
       )}
       {Array.from({ length: numberOfRows }, (_, rowIndex) => {

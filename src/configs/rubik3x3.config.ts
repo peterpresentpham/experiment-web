@@ -2,11 +2,12 @@
 
 type ItemType = { id: string; methods: Array<string> };
 
-type ConfigType = Array<{ title: string; data: Array<ItemType> }>;
+// Groups are numbered in order; `basic` marks the two groups of basic insertions.
+type ConfigType = Array<{ basic?: boolean; data: Array<ItemType> }>;
 
 export const F2LConfig: ConfigType = [
   {
-    title: 'Group 1: basic F2L',
+    basic: true,
     data: [
       { id: '1.1', methods: ["U (R U' R')"] },
       { id: '1.2', methods: ["y' U' (R' U R)"] },
@@ -14,14 +15,13 @@ export const F2LConfig: ConfigType = [
     ],
   },
   {
-    title: 'Group 2: basic F2L',
+    basic: true,
     data: [
       { id: '2.1', methods: ["R U R'"] },
       { id: '2.2', methods: ["y' (R' U' R)"] },
     ],
   },
   {
-    title: 'Group 3',
     data: [
       { id: '3.1', methods: ["U (R U2 R') U (R U' R')"] },
       { id: '3.2', methods: ["y' U' (R' U2 R) U' (R' U R)"] },
@@ -30,14 +30,12 @@ export const F2LConfig: ConfigType = [
     ],
   },
   {
-    title: 'Group 4',
     data: [
       { id: '4.1', methods: ["U (R U' R') (F R' F' R)"] },
       { id: '4.2', methods: ["U' (R' F R F') (R U R')"] },
     ],
   },
   {
-    title: 'Group 5',
     data: [
       { id: '5.1', methods: ["(R U' R' U) (R U' R')"] },
       { id: '5.2', methods: ["(R U R' U') F R' F' R"] },
@@ -46,7 +44,6 @@ export const F2LConfig: ConfigType = [
     ],
   },
   {
-    title: 'Group 6',
     data: [
       { id: '6.1', methods: ["U' (R U R') U2 (R U' R')"] },
       { id: '6.2', methods: ["d (R' U' R) U2' (R' U R)"] },
@@ -56,7 +53,6 @@ export const F2LConfig: ConfigType = [
     ],
   },
   {
-    title: 'Group 7',
     data: [
       { id: '7.1', methods: ["U' (R U R') U (R U R')"] },
       { id: '7.2', methods: ["d (R' U' R U')(R' U' R)"] },
@@ -69,7 +65,6 @@ export const F2LConfig: ConfigType = [
     ],
   },
   {
-    title: 'Group 8',
     data: [
       { id: '8.1', methods: ["R U2 R' U' (R U R')"] },
       { id: '8.2', methods: ["y' (R' U2 R) U (R' U' R)"] },
@@ -80,7 +75,6 @@ export const F2LConfig: ConfigType = [
     ],
   },
   {
-    title: 'Group 9',
     data: [
       { id: '9.1', methods: ["U' (R U' R') U2 (R U' R')"] },
       { id: '9.2', methods: ["U (R U R') U2 (R U R')"] },
@@ -89,7 +83,6 @@ export const F2LConfig: ConfigType = [
     ],
   },
   {
-    title: 'Group 10',
     data: [
       { id: '10.1', methods: ["(R U' R') d (R' U' R)(U' R' U' R)"] },
       { id: '10.2', methods: ["(R U R') U2 (R U' R' U)(R U R')"] },

@@ -5,6 +5,8 @@ import { Button } from 'src/components/shadcn/button';
 import { Dialog, DialogContent, DialogHeader } from 'src/components/shadcn/dialog';
 import { DIALOG_KEY } from 'src/configs/constance';
 import { useCaroConnectionContext } from 'src/context/caro-connection.context';
+import { useMessages } from 'src/i18n/client';
+import { caroMessages } from 'src/i18n/messages/caro';
 import { useCaroStore } from 'src/states/caro.state';
 import { useDialogStore } from 'src/states/dialog.state';
 import { TRole } from 'src/types/caro.type';
@@ -19,15 +21,16 @@ export default function CaroConnectionDialog() {
   const [role, setRole] = useState<TRole>('host');
   const { peer, connectionType } = useCaroConnectionContext();
   const isBusy = connectionType != 'init';
+  const { connection: text } = useMessages(caroMessages);
 
   return playMode == 'online' ? (
     <Dialog
       open={dialog[DIALOG_KEY.caroConnectionDialog]}
       onOpenChange={(open) => setDialog(DIALOG_KEY.caroConnectionDialog, open)}
     >
-      <IconDialogTrigger label="Connection" icon={Bluetooth} />
+      <IconDialogTrigger label={text.trigger} icon={Bluetooth} />
       <DialogContent>
-        <DialogHeader>Caro peer-to-peer connection</DialogHeader>
+        <DialogHeader>{text.title}</DialogHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Button
@@ -35,14 +38,14 @@ export default function CaroConnectionDialog() {
               variant={role == 'host' ? 'default' : 'secondary'}
               disabled={isBusy}
             >
-              Host
+              {text.host}
             </Button>
             <Button
               onClick={() => setRole('guest')}
               variant={role == 'guest' ? 'default' : 'secondary'}
               disabled={isBusy}
             >
-              Guest
+              {text.guest}
             </Button>
           </div>
           {connectionType == 'connected' && (
@@ -52,23 +55,22 @@ export default function CaroConnectionDialog() {
                 if (peer) peer.destroy();
               }}
             >
-              Disconnect
+              {text.disconnect}
             </Button>
           )}
         </div>
         {connectionType == 'init' ? (
           <p className="text-sm">
-            You are a <span className="text-chart-3">{role}</span>
+            {text.youAre} <span className="text-chart-3">{text.roleLabel[role]}</span>
           </p>
         ) : (
           <p className="text-sm">
-            You{' '}
             {connectionType == 'connected' ? (
-              <span className="text-success text-sm">connected</span>
+              <span className="text-success">{text.youConnected}</span>
             ) : (
-              <span className="text-warning-foreground text-sm">are connecting</span>
+              <span className="text-warning-foreground">{text.youConnecting}</span>
             )}{' '}
-            as a <span className="text-chart-3">{role}</span>
+            <span className="text-chart-3">{text.roleLabel[role]}</span>
           </p>
         )}
         {role == 'host' ? <HostConnection /> : <GuestConnection />}

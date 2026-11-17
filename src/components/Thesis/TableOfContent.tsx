@@ -159,7 +159,7 @@ export default function TableOfContent({ id, firstLevel, children }: TProps) {
         })}
       </div>
       <div className="mb-5">
-        <p className="text-xl font-bold">List of Figures</p>
+        <p className="text-xl font-bold">List of Tables</p>
         {tables.map((chapterTable, index) => {
           return (
             <div key={index} className="mt-3">

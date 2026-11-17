@@ -8,6 +8,9 @@ import GameStatus from 'src/components/games/GameStatus';
 import GameToolbar from 'src/components/games/GameToolbar';
 import { Button } from 'src/components/shadcn/button';
 import { useCaroStateContext } from 'src/context/caro-state.context';
+import { useMessages } from 'src/i18n/client';
+import { caroMessages } from 'src/i18n/messages/caro';
+import { commonMessages } from 'src/i18n/messages/common';
 import { useCaroStore } from 'src/states/caro.state';
 
 export default function HeaderConfig(props: ComponentProps<'div'>) {
@@ -21,11 +24,13 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
     isOver,
     fn: { undo, reset },
   } = useCaroStateContext();
+  const text = useMessages(caroMessages);
+  const { actions } = useMessages(commonMessages);
 
   return (
     <GameToolbar
       {...props}
-      title="Caro"
+      title={text.title}
       status={<GameStatus text={playerText} turn={turn} isOver={isOver} />}
       tools={
         <>
@@ -43,11 +48,11 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
             onClick={undo}
             disabled={stepCount <= 1 || shouldDisableBoard}
           >
-            Undo
+            {actions.undo}
           </Button>
         ) : (
           <Button size="sm" onClick={() => reset()}>
-            New game
+            {actions.newGame}
           </Button>
         )
       }
@@ -55,13 +60,13 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
       {gameType == 'blind' && (
         <div className="flex flex-wrap items-center gap-4">
           <TitleBox
-            title="Player 1 errors"
+            title={text.blindErrors(1)}
             value={numberOfBlindError[0]}
             titleProps={{ className: 'text-player-1' }}
             valueProps={{ className: 'text-destructive' }}
           />
           <TitleBox
-            title="Player 2 errors"
+            title={text.blindErrors(2)}
             value={numberOfBlindError[1]}
             titleProps={{ className: 'text-player-2' }}
             valueProps={{ className: 'text-destructive' }}

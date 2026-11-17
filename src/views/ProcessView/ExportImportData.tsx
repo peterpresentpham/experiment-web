@@ -9,6 +9,8 @@ import { Label } from 'src/components/shadcn/label';
 import { exampleProcessData } from 'src/configs/example-process';
 import { parseImportedProcesses } from 'src/services/process.utils';
 import { useProcessStore } from 'src/states/process.state';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 interface TProps {
   components?: {
@@ -30,6 +32,7 @@ const EXAMPLE_JSON_SNIPPET = `{
 }`;
 
 export default function ExportImportData({ components, isShowExport = true }: TProps) {
+  const text = useMessages(processMessages);
   const { processes, fn } = useProcessStore();
   const [open, setOpen] = useState(false);
 
@@ -56,7 +59,7 @@ export default function ExportImportData({ components, isShowExport = true }: TP
         setOpen(false);
       } catch (error) {
         console.error(error);
-        alert('Invalid JSON file');
+        alert(text.importDialog.invalidJson);
       }
     };
     reader.readAsText(file);
@@ -74,8 +77,8 @@ export default function ExportImportData({ components, isShowExport = true }: TP
           {components?.import ? (
             <div className="cursor-pointer">{components.import}</div>
           ) : (
-            <button className="flex items-center justify-center">
-              <AppTooltip tooltipContent="Import">
+            <button aria-label={text.import} className="flex items-center justify-center">
+              <AppTooltip tooltipContent={text.import}>
                 <Import size={14} className="cursor-pointer" />
               </AppTooltip>
             </button>
@@ -84,12 +87,12 @@ export default function ExportImportData({ components, isShowExport = true }: TP
         <DialogContent className="from-background to-muted/30 max-w-3xl overflow-hidden border-none bg-linear-to-br p-0">
           <div className="col-span-3 flex flex-col space-y-6 p-8">
             <DialogHeader titleProps={{ className: 'text-2xl font-bold tracking-tight' }}>
-              Data Configuration
+              {text.importDialog.title}
             </DialogHeader>
             <div className="space-y-6">
               <div className="space-y-3">
                 <Label htmlFor="file-upload" className="text-base font-semibold">
-                  Upload Configuration
+                  {text.importDialog.upload}
                 </Label>
                 <Input
                   id="file-upload"
@@ -105,12 +108,12 @@ export default function ExportImportData({ components, isShowExport = true }: TP
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-background text-muted-foreground px-3 font-medium">
-                    Alternative
+                    {text.importDialog.alternative}
                   </span>
                 </div>
               </div>
               <div className="space-y-3">
-                <Label className="text-base font-semibold">Quick Start</Label>
+                <Label className="text-base font-semibold">{text.importDialog.quickStart}</Label>
                 <Button
                   variant="outline"
                   className="hover:bg-primary/5 hover:text-primary group h-12 w-full justify-start px-4 transition-all"
@@ -121,9 +124,9 @@ export default function ExportImportData({ components, isShowExport = true }: TP
                       <Import size={18} />
                     </div>
                     <div className="text-left">
-                      <div className="font-bold">Load Example Data</div>
+                      <div className="font-bold">{text.importDialog.loadExample}</div>
                       <div className="text-muted-foreground text-xs">
-                        Get started quickly with preset processes
+                        {text.importDialog.loadExampleHint}
                       </div>
                     </div>
                   </div>
@@ -132,7 +135,7 @@ export default function ExportImportData({ components, isShowExport = true }: TP
               <div className="border-border/50 bg-muted/30 overflow-hidden border">
                 <div className="bg-muted/50 border-border/50 flex items-center justify-between border-b px-4 py-2">
                   <span className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
-                    JSON Template
+                    {text.importDialog.template}
                   </span>
                   <CopyClipboard
                     copyText={EXAMPLE_JSON_SNIPPET}
@@ -153,11 +156,17 @@ export default function ExportImportData({ components, isShowExport = true }: TP
         </DialogContent>
       </Dialog>
       {isShowExport && (
-        <AppTooltip tooltipContent="Export">
+        <AppTooltip tooltipContent={text.export}>
           {components?.export ? (
             <div className="cursor-pointer">{components.export}</div>
           ) : (
-            <Download onClick={onExport} size={14} className="cursor-pointer" />
+            <Download
+              role="button"
+              aria-label={text.export}
+              onClick={onExport}
+              size={14}
+              className="cursor-pointer"
+            />
           )}
         </AppTooltip>
       )}

@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Trash } from 'lucide-react';
-import { ComponentProps, useEffect } from 'react';
+import { ComponentProps, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import AppTooltip from 'src/components/AppTooltip';
 import CopyClipboard from 'src/components/CopyClipboard';
@@ -13,20 +13,22 @@ import { Form, FormField, FormItemContent } from 'src/components/shadcn/form';
 import { formatText } from 'src/services';
 import { TProcess } from 'src/types/process.type';
 import z from 'zod';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
-const processTimeSchema = z.object({
-  arrivalTime: z.number().min(0, 'arrivalTime must be >= 0'),
-  executionTime: z
-    .number()
-    .min(1, 'executionTime must be >= 1')
-    .max(120, 'executionTime must be <= 120'),
-});
+type TSchemaErrors = { arrivalMin: string; executionMin: string; executionMax: string };
 
-const schema = processTimeSchema.extend({
-  blockTasks: z.array(processTimeSchema).optional(),
-});
+function createSchema(errors: TSchemaErrors) {
+  const processTimeSchema = z.object({
+    arrivalTime: z.number().min(0, errors.arrivalMin),
+    executionTime: z.number().min(1, errors.executionMin).max(120, errors.executionMax),
+  });
+  return processTimeSchema.extend({
+    blockTasks: z.array(processTimeSchema).optional(),
+  });
+}
 
-type TFormValues = z.infer<typeof schema>;
+type TFormValues = z.infer<ReturnType<typeof createSchema>>;
 
 interface TProps {
   data: TProcess;
@@ -43,6 +45,8 @@ interface TProps {
 }
 
 export default function ChangeProcessItem({ data, events, props }: TProps) {
+  const { data: text } = useMessages(processMessages);
+  const schema = useMemo(() => createSchema(text.errors), [text.errors]);
   const form = useForm<TFormValues>({
     mode: 'onChange',
     resolver: zodResolver(schema),
@@ -65,7 +69,13 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
         </div>
         <div className="flex items-center gap-1">
           <ProcessStatus state={data.state} />
-          <Trash size={14} className="cursor-pointer" onClick={events?.onDelete} />
+          <Trash
+            role="button"
+            aria-label={text.deleteProcess}
+            size={14}
+            className="cursor-pointer"
+            onClick={events?.onDelete}
+          />
         </div>
       </div>
       <Form {...form}>
@@ -76,7 +86,7 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
             render={({ field }) => (
               <FormItemContent
                 itemprops={{ className: 'flex items-center gap-4 space-y-0' }}
-                labelprops={{ className: 'shrink-0', children: 'Arrival Time' }}
+                labelprops={{ className: 'shrink-0', children: text.arrivalTime }}
               >
                 <BaseInput
                   type="number"
@@ -98,7 +108,7 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
             render={({ field }) => (
               <FormItemContent
                 itemprops={{ className: 'flex items-center gap-4 space-y-0 mt-2' }}
-                labelprops={{ className: 'shrink-0', children: 'Execution Time' }}
+                labelprops={{ className: 'shrink-0', children: text.executionTime }}
               >
                 <BaseInput
                   type="number"
@@ -115,7 +125,7 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
             )}
           />
           <Button className="mt-2" onClick={events?.onAddBlockTask} type="button">
-            + add block tasks
+            {text.addBlockTask}
           </Button>
           {(data?.blockTasks || []).length > 0 && (
             <div className="mt-5 flex flex-col gap-5">
@@ -125,7 +135,7 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
                     <BaseInput
                       type="number"
                       name={`blockTask-${index}-start`}
-                      placeholder="Start"
+                      placeholder={text.start}
                       value={item.arrivalTime}
                       onChange={(event) => {
                         const val = event.target.value === '' ? '' : Number(event.target.value);
@@ -135,7 +145,7 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
                     <BaseInput
                       name={`blockTask-${index}-duration`}
                       type="number"
-                      placeholder="Duration"
+                      placeholder={text.duration}
                       value={item.executionTime}
                       onChange={(event) => {
                         const val = event.target.value === '' ? '' : Number(event.target.value);
@@ -143,6 +153,8 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
                       }}
                     />
                     <Trash
+                      role="button"
+                      aria-label={text.deleteBlockTask}
                       size={14}
                       className="cursor-pointer"
                       onClick={() => events?.onBlockTaskDelete?.(index)}

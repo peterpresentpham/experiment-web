@@ -1,6 +1,6 @@
 /* eslint-disable quotes */
 import { F2LConfig } from 'src/configs/rubik3x3.config';
-import { BEGINNER_STEPS, OLL_EDGES_2LOOK } from 'src/configs/rubikGuide.config';
+import { RUBIK_GUIDE } from 'src/configs/rubikGuide.config';
 import { OLL_CASES, PLL_CASES } from 'src/configs/rubikLL.config';
 import {
   applyAlg,
@@ -156,14 +156,16 @@ describe('F2L algorithms', () => {
 
 describe('beginner and 2-look algorithms', () => {
   it('keeps the first layer for middle-layer and last-layer steps', () => {
-    const algs = BEGINNER_STEPS.slice(2, 6).flatMap((s) => s.algs?.map((a) => a.alg) ?? []);
+    const algs = RUBIK_GUIDE.en.beginnerSteps
+      .slice(2, 6)
+      .flatMap((s) => s.algs?.map((a) => a.alg) ?? []);
     for (const alg of algs) expect(bottomSolved(applyAlg(solvedCube(), alg), 2), alg).toBe(true);
   });
 
   it('keeps the first two layers for last-layer steps', () => {
     const algs = [
-      ...BEGINNER_STEPS.slice(3, 6).flatMap((s) => s.algs?.map((a) => a.alg) ?? []),
-      ...OLL_EDGES_2LOOK.map((a) => a.alg),
+      ...RUBIK_GUIDE.en.beginnerSteps.slice(3, 6).flatMap((s) => s.algs?.map((a) => a.alg) ?? []),
+      ...RUBIK_GUIDE.en.ollEdges2Look.map((a) => a.alg),
     ];
     for (const alg of algs) expect(bottomSolved(applyAlg(solvedCube(), alg), 1), alg).toBe(true);
   });

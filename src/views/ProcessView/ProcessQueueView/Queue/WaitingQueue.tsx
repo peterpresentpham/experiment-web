@@ -2,12 +2,15 @@ import { AnimatePresence, motion } from 'motion/react';
 import ViewProcessItem from 'src/components/process-ui/ProcessItem/ViewProcessItem';
 import { ProcessStatusType, TProcess } from 'src/types/process.type';
 import BaseQueue from './BaseQueue';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 interface TProps {
   processList: TProcess[];
 }
 
 export default function WaitingQueue({ processList }: TProps) {
+  const { queues } = useMessages(processMessages);
   const waitingProcesses = processList
     .filter((p) => p.state === ProcessStatusType.WAITING)
     .sort((p1, p2) => {
@@ -17,7 +20,7 @@ export default function WaitingQueue({ processList }: TProps) {
     });
 
   return (
-    <BaseQueue title="Waiting" count={waitingProcesses.length}>
+    <BaseQueue title={queues.waiting} count={waitingProcesses.length}>
       <AnimatePresence mode="popLayout">
         {waitingProcesses.map((process) => (
           <motion.div
@@ -32,7 +35,7 @@ export default function WaitingQueue({ processList }: TProps) {
           </motion.div>
         ))}
         {waitingProcesses.length === 0 && (
-          <p className="text-muted-foreground py-8 text-center text-sm">No waiting processes</p>
+          <p className="text-muted-foreground py-8 text-center text-sm">{queues.noWaiting}</p>
         )}
       </AnimatePresence>
     </BaseQueue>

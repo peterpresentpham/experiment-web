@@ -1,7 +1,9 @@
-/* eslint-disable quotes */
 'use client';
 
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react';
+import useCaroMachine from 'src/hooks/useCaroMachine';
+import { useMessages } from 'src/i18n/client';
+import { caroMessages } from 'src/i18n/messages/caro';
 import { createCaroMessage } from 'src/services/caro.utils';
 import { soundtrack } from 'src/services/soundtrack';
 import { useCaroStore } from 'src/states/caro.state';
@@ -46,41 +48,41 @@ export default function CaroStateProvider({ children }: TProps) {
   const stepCount = useCaroStore((state) => state.stepsOrder.length);
   const playMode = useCaroStore((state) => state.metadata.playMode);
   const size = useCaroStore((state) => state.metadata.size);
+  const machineTurn = useCaroStore((state) => state.metadata.machineTurn);
   const { move, undo, reset } = useCaroStore.getState().fn;
   const { peer, role, connectionType } = useCaroConnectionContext();
+  const { status } = useMessages(caroMessages);
 
   const isOverWin = Boolean(winState) || isBlindForceOver;
 
   const { playerText, isWin, isOver } = useMemo(() => {
-    let playerTitle = "'s turn";
-    if (isOverWin) playerTitle = ' win';
-    let playerName = '';
-    let _isWin = false;
-    if (playMode == 'online' && connectionType == 'connected') {
-      if (role == 'host') {
-        if (turn == 0) {
-          playerName = 'You';
-          _isWin = true;
-        } else playerName = 'Opponent';
-      } else {
-        if (turn == 0) playerName = 'Opponent';
-        else {
-          playerName = 'You';
-          _isWin = true;
-        }
+    const isDraw = stepCount == size * size;
+    if (playMode == 'machine') {
+      const isMachine = turn == machineTurn;
+      if (isOverWin) {
+        if (isMachine) return { playerText: status.machineWins, isWin: false, isOver: true };
+        return { playerText: status.youWin, isWin: true, isOver: true };
       }
-    } else {
-      playerName = `Player ${turn + 1}`;
-      _isWin = true;
+      if (isDraw) return { playerText: status.draw, isWin: false, isOver: true };
+      const playerText = isMachine ? status.machineThinking : status.yourTurn;
+      return { playerText, isWin: false, isOver: false };
     }
-    const isWin = _isWin && isOverWin;
-    if (isWin) return { playerText: `${playerName}${playerTitle}`, isWin, isOver: isWin };
-    else {
-      if (stepCount == size * size)
-        return { playerText: "It's a draw", isWin: false, isOver: true };
-      else return { playerText: `${playerName}${playerTitle}`, isWin: false, isOver: false };
+    if (playMode == 'online' && connectionType == 'connected') {
+      const isMine = (role == 'host' && turn == 0) || (role == 'guest' && turn == 1);
+      // Only the winner's side treats the game as over; the loser waits for the new game.
+      if (isOverWin && isMine) return { playerText: status.youWin, isWin: true, isOver: true };
+      if (isOverWin) return { playerText: status.opponentWins, isWin: false, isOver: false };
+      if (isDraw) return { playerText: status.draw, isWin: false, isOver: true };
+      return {
+        playerText: isMine ? status.yourTurn : status.opponentTurn,
+        isWin: false,
+        isOver: false,
+      };
     }
-  }, [isOverWin, playMode, connectionType, role, turn, stepCount, size]);
+    if (isOverWin) return { playerText: status.win(turn + 1), isWin: true, isOver: true };
+    if (isDraw) return { playerText: status.draw, isWin: false, isOver: true };
+    return { playerText: status.turn(turn + 1), isWin: false, isOver: false };
+  }, [isOverWin, playMode, machineTurn, connectionType, role, turn, stepCount, size, status]);
 
   useEffect(() => {
     if (isWin) soundtrack.play({ type: TSound.WIN });
@@ -103,6 +105,8 @@ export default function CaroStateProvider({ children }: TProps) {
     [move, peer]
   );
 
+  const { isMachineTurn } = useCaroMachine({ isOver, move: handleMove });
+
   const handleUndo = useCallback(() => {
     undo();
     if (peer) peer.send(createCaroMessage('undo'));
@@ -110,10 +114,11 @@ export default function CaroStateProvider({ children }: TProps) {
 
   const handleReset = useCallback(
     (turn?: TTurn) => {
-      reset(turn);
+      // In machine mode player 1 always starts, so the "first move" setting decides who opens.
+      reset(playMode == 'machine' ? 0 : turn);
       if (peer) peer.send(createCaroMessage('newGame'));
     },
-    [peer, reset]
+    [peer, reset, playMode]
   );
 
   const value = useMemo<TCaroStateContextType>(
@@ -121,10 +126,19 @@ export default function CaroStateProvider({ children }: TProps) {
       playerText,
       isWin,
       isOver,
-      shouldDisableBoard: shouldDisableBoard || isWin || isOver,
+      shouldDisableBoard: shouldDisableBoard || isMachineTurn || isWin || isOver,
       fn: { move: handleMove, undo: handleUndo, reset: handleReset },
     }),
-    [playerText, isWin, isOver, shouldDisableBoard, handleMove, handleUndo, handleReset]
+    [
+      playerText,
+      isWin,
+      isOver,
+      shouldDisableBoard,
+      isMachineTurn,
+      handleMove,
+      handleUndo,
+      handleReset,
+    ]
   );
 
   return <CaroStateContext.Provider value={value}>{children}</CaroStateContext.Provider>;

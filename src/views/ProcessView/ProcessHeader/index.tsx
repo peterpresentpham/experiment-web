@@ -11,17 +11,20 @@ import { useProcessStore } from 'src/states/process.state';
 import { ProcessMachineEvent } from 'src/types/process.type';
 import SettingSpot from './SettingSpot';
 import TimeSliceCounter from './TimeSliceCounter';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 export default function ProcessHeader() {
   const [updateProcessOpen, setUpdateProcessOpen] = useState(false);
   const { processes, status, displayMode, fn } = useProcessStore();
   const { send } = useProcessStateMachine();
 
+  const t = useMessages(processMessages);
   const text = useMemo(() => {
-    if (status == 'ready' || status == 'initial') return 'Run';
-    else if (status == 'ended') return 'Rerun';
-    else return 'Pause';
-  }, [status]);
+    if (status == 'ready' || status == 'initial') return t.run;
+    else if (status == 'ended') return t.rerun;
+    else return t.pause;
+  }, [status, t]);
 
   async function onRun() {
     if (status == 'initial' || status == 'ready')
@@ -63,12 +66,12 @@ export default function ProcessHeader() {
           {displayMode == 'chart' ? (
             <div className="flex items-center gap-1.5">
               <LayoutGrid size={12} className="text-muted-foreground" />
-              <span className="text-xs font-bold tracking-tight uppercase">Column View</span>
+              <span className="text-xs font-bold tracking-tight uppercase">{t.columnView}</span>
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
               <BarChart2 size={12} className="text-muted-foreground" />
-              <span className="text-xs font-bold tracking-tight uppercase">Chart View</span>
+              <span className="text-xs font-bold tracking-tight uppercase">{t.chartView}</span>
             </div>
           )}
         </Button>

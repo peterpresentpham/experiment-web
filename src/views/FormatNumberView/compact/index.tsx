@@ -10,8 +10,11 @@ import ElementItem from 'src/components/format-number/ElementItem';
 import RoundTypeSelect from 'src/components/format-number/RoundTypeSelect';
 import { Input } from 'src/components/shadcn/input';
 import { useDebounceValue } from 'src/hooks/useDebounce';
+import { useMessages } from 'src/i18n/client';
+import { formatNumberMessages } from 'src/i18n/messages/formatNumber';
 
 export default function CompactPage() {
+  const t = useMessages(formatNumberMessages);
   const [value, setValue] = useState('0');
   const [debounceValue] = useDebounceValue(value, 500);
   const [rounding, setRounding] = useState<RoundingMode>('half');
@@ -47,9 +50,9 @@ export default function CompactPage() {
           = {'{}'}): string
         </span>
       }
-      description="Formats a number into a short, human-readable string with a suffix (e.g., K, M, B)."
+      description={t.fn.compact.description}
     >
-      <p className="my-4 text-lg font-bold">Params</p>
+      <p className="my-4 text-lg font-bold">{t.params}</p>
       <ArticleUL className="list-disc">
         <ArticleLI isFirst>
           <span>
@@ -59,7 +62,7 @@ export default function CompactPage() {
             </Link>
             )
           </span>
-          {': The value to be compacted. Can be a number, string, or bigint.'}
+          {`: ${t.fn.compact.params.value}`}
         </ArticleLI>
         <ArticleLI>
           <span>
@@ -69,17 +72,17 @@ export default function CompactPage() {
             </Link>
             )
           </span>
-          {': Configuration for rounding the compacted value.'}
+          {`: ${t.fn.compact.params.options}`}
         </ArticleLI>
       </ArticleUL>
-      <p className="my-4 text-lg font-bold">Returns</p>
-      <p>(string): The compacted number with a suffix as a string.</p>
-      <p className="my-4 text-lg font-bold">Example</p>
+      <p className="my-4 text-lg font-bold">{t.returns}</p>
+      <p>{t.fn.compact.returns}</p>
+      <p className="my-4 text-lg font-bold">{t.example}</p>
       <TitleBox
         title="value"
         value={
           <Input
-            placeholder="Number"
+            placeholder={t.numberPlaceholder}
             onChange={(event) => setValue(event.target.value)}
             type="number"
             value={value}
@@ -107,7 +110,7 @@ export default function CompactPage() {
           iconprops={{ className: 'size-4' }}
         />
         <p>{fnText}</p>
-        <p>{`Result: ${result}`}</p>
+        <p>{t.result(result)}</p>
       </div>
     </ElementItem>
   );

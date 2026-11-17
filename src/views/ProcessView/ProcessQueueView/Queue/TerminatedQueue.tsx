@@ -2,12 +2,15 @@ import { motion } from 'motion/react';
 import ViewProcessItem from 'src/components/process-ui/ProcessItem/ViewProcessItem';
 import { ProcessStatusType, TProcess } from 'src/types/process.type';
 import BaseQueue from './BaseQueue';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 interface TProps {
   processList: TProcess[];
 }
 
 export default function TerminatedQueue({ processList }: TProps) {
+  const { queues } = useMessages(processMessages);
   const terminatedProcesses = processList
     .filter((p) => p.state === ProcessStatusType.TERMINATED)
     .sort((p1, p2) => {
@@ -16,7 +19,7 @@ export default function TerminatedQueue({ processList }: TProps) {
     });
 
   return (
-    <BaseQueue title="Terminated" count={terminatedProcesses.length}>
+    <BaseQueue title={queues.terminated} count={terminatedProcesses.length}>
       {terminatedProcesses.map((process) => (
         <motion.div
           key={process.pid}
@@ -28,7 +31,7 @@ export default function TerminatedQueue({ processList }: TProps) {
         </motion.div>
       ))}
       {terminatedProcesses.length === 0 && (
-        <p className="text-muted-foreground py-8 text-center text-sm">No terminated processes</p>
+        <p className="text-muted-foreground py-8 text-center text-sm">{queues.noTerminated}</p>
       )}
     </BaseQueue>
   );

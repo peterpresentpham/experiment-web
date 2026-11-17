@@ -3,6 +3,9 @@ import { Button } from 'src/components/shadcn/button';
 import { useProcessStateMachine } from 'src/state-machine/process.state-machine';
 import { useProcessStore } from 'src/states/process.state';
 import { ProcessMachineEvent } from 'src/types/process.type';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
+import { commonMessages } from 'src/i18n/messages/common';
 
 interface TProps {
   onSave(): void;
@@ -10,6 +13,8 @@ interface TProps {
 }
 
 export default function UpdateFooter({ onSave, onOpenChange }: TProps) {
+  const { data } = useMessages(processMessages);
+  const { actions } = useMessages(commonMessages);
   const { status } = useProcessStore();
   const { send } = useProcessStateMachine();
 
@@ -27,14 +32,14 @@ export default function UpdateFooter({ onSave, onOpenChange }: TProps) {
         onClick={onClear}
       >
         <Trash size={10} />
-        <span className="text-xs font-medium tracking-tight uppercase">Clear all</span>
+        <span className="text-xs font-medium tracking-tight uppercase">{data.clearAll}</span>
       </Button>
       <div className="flex items-center gap-2">
         <Button variant="outline" onClick={() => onOpenChange?.(false)} type="button">
-          Cancel
+          {actions.cancel}
         </Button>
         <Button onClick={onSave} type="button">
-          Save changes
+          {data.saveChanges}
         </Button>
       </div>
     </div>

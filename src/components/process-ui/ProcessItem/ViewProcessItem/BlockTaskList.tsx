@@ -1,5 +1,7 @@
 import { Timer } from 'lucide-react';
 import { TProcessTime } from 'src/types/process.type';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 interface TBlockTaskItemProps {
   index?: number;
@@ -7,13 +9,14 @@ interface TBlockTaskItemProps {
 }
 
 function BlockTaskItem({ index, item }: TBlockTaskItemProps) {
+  const { item: text } = useMessages(processMessages);
   const subProgress = (item.runtime / item.executionTime) * 100;
 
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between text-xs">
         {index != undefined ? (
-          <span className="text-muted-foreground">Task #{index + 1}</span>
+          <span className="text-muted-foreground">{text.task(index + 1)}</span>
         ) : (
           <div />
         )}
@@ -42,6 +45,7 @@ export default function BlockTaskList({
   data,
   currentBlockTaskIndex,
 }: TProps) {
+  const { item: text } = useMessages(processMessages);
   if (data[currentBlockTaskIndex] == undefined && onlyShowCurrentBlockTask == true) return null;
 
   const content =
@@ -61,7 +65,7 @@ export default function BlockTaskList({
     <div className="bg-muted/60 p-2">
       <p className="text-muted-foreground mb-2 flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase">
         <Timer size={12} />
-        {onlyShowCurrentBlockTask ? 'Next task' : `Blocked Tasks (${data.length})`}
+        {onlyShowCurrentBlockTask ? text.nextTask : text.blockedTasks(data.length)}
       </p>
       {content}
     </div>

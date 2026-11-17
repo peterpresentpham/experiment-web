@@ -1,18 +1,22 @@
 import { TPikachuNewBoard } from 'src/types/pikachu.type';
 import { randomSubGroup } from '..';
 import { findPathWithoutTarget } from './move.utils';
+import { hasPieces } from './round.utils';
+
+// At least one type, and never more types than exist or than there are pairs to fill.
+function clampNumTypes(value: number, halfCells: number, numTypes: number) {
+  return Math.max(1, Math.min(value, numTypes, halfCells));
+}
 
 function __refineNumTypes(halfCells: number, maxNumTypes: number, percent: number) {
-  const newNumTypes = Math.min(maxNumTypes, Math.floor(halfCells * percent));
-  return newNumTypes;
+  return clampNumTypes(Math.floor(halfCells * percent), halfCells, maxNumTypes);
 }
 
 export function _refineNumTypes(halfCells: number, numTypes: number) {
   if (halfCells >= 2 * numTypes) return numTypes;
   if (halfCells <= 25) {
     const random = Math.random();
-    if (random < 0.2) return halfCells - 1;
-    else return halfCells;
+    return clampNumTypes(random < 0.2 ? halfCells - 1 : halfCells, halfCells, numTypes);
   } else if (halfCells <= 50) {
     const random = 0.85 + 0.15 * Math.random();
     return __refineNumTypes(halfCells, numTypes, random);
@@ -118,6 +122,8 @@ export function changePikachuBoard(
   params: TPikachuNewBoard & { currentBoard: Array<Array<number>>; numberOfLines: number }
 ) {
   const { currentBoard, numberOfRows, numberOfColumns, numTypes, numberOfLines } = params;
+  // Nothing to shuffle: retrying would loop forever because an empty board never has a path.
+  if (!hasPieces(currentBoard)) return { board: currentBoard.map((row) => row.slice()), path: [] };
   let board = _changePikachuBoard({ currentBoard, numberOfRows, numberOfColumns, numTypes });
   let path = findPathWithoutTarget({ numberOfRows, numberOfColumns, board, numberOfLines });
   while (!path) {

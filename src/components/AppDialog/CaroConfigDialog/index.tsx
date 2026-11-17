@@ -9,11 +9,17 @@ import { useDialogStore } from 'src/states/dialog.state';
 import GameTypeConfig from '../components/GameTypeConfig';
 import PlayModeConfig from '../components/PlayModeConfig';
 import BoardSizeConfig from './BoardSizeConfig';
+import MachineConfig from './MachineConfig';
 import CaroConfigProvider, { useCaroConfigContext } from './caroConfig.context';
 import WinTypeConfig from './WinTypeConfig';
+import { useMessages } from 'src/i18n/client';
+import { caroMessages } from 'src/i18n/messages/caro';
+import { commonMessages } from 'src/i18n/messages/common';
 
 function CaroConfigDialogLayout() {
   const { dialog, setDialog } = useDialogStore();
+  const { config: text } = useMessages(caroMessages);
+  const { actions } = useMessages(commonMessages);
   const {
     metadata,
     fn: { reset, setMetadata },
@@ -24,18 +30,42 @@ function CaroConfigDialogLayout() {
     gameType,
     isOverride,
     winMode,
-    fn: { setSize, setPlayMode, setGameType, setIsOverride, setWinMode },
+    machineLevel,
+    machineTurn,
+    fn: {
+      setSize,
+      setPlayMode,
+      setGameType,
+      setIsOverride,
+      setWinMode,
+      setMachineLevel,
+      setMachineTurn,
+    },
   } = useCaroConfigContext();
 
   function onSaveConfig(event: MouseEvent<HTMLFormElement>) {
     event.preventDefault();
-    setMetadata({ size, playMode, gameType, isOverride, winMode });
-    if (size != metadata.size) reset();
+    const isMachine = playMode == 'machine';
+    // The machine does not understand override moves, so the option is off against it.
+    setMetadata({
+      size,
+      playMode,
+      gameType,
+      isOverride: isMachine ? false : isOverride,
+      winMode,
+      machineLevel,
+      machineTurn,
+    });
+    const isMachineSetupChanged =
+      isMachine && (metadata.playMode != 'machine' || machineTurn != metadata.machineTurn);
+    // Machine games always start with player 1, so "who plays first" follows machineTurn.
+    if (isMachineSetupChanged) reset(0);
+    else if (size != metadata.size) reset(isMachine ? 0 : undefined);
     setDialog(DIALOG_KEY.caroConfigDialog, false);
   }
 
   function onNewGame() {
-    reset();
+    reset(metadata.playMode == 'machine' ? 0 : undefined);
     setDialog(DIALOG_KEY.caroConfigDialog, false);
   }
 
@@ -45,6 +75,8 @@ function CaroConfigDialogLayout() {
     setGameType(metadata.gameType);
     setIsOverride(metadata.isOverride);
     setWinMode(metadata.winMode);
+    setMachineLevel(metadata.machineLevel);
+    setMachineTurn(metadata.machineTurn);
     setDialog(DIALOG_KEY.caroConfigDialog, open);
   }
 
@@ -54,21 +86,22 @@ function CaroConfigDialogLayout() {
 
   return (
     <Dialog open={dialog[DIALOG_KEY.caroConfigDialog]} onOpenChange={onOpenChange}>
-      <IconDialogTrigger label="Config" icon={Settings} />
+      <IconDialogTrigger label={actions.config} icon={Settings} />
       <DialogContent>
-        <DialogHeader>Caro config</DialogHeader>
+        <DialogHeader>{text.title}</DialogHeader>
         <form onSubmit={onSaveConfig} className="scroll-hidden max-h-[75vh] overflow-auto">
           <PlayModeConfig />
+          <MachineConfig />
           <GameTypeConfig />
           <WinTypeConfig />
           <BoardSizeConfig />
           <div className="mt-4 flex items-center justify-between">
-            <Button onClick={onNewGame}>New game</Button>
+            <Button onClick={onNewGame}>{actions.newGame}</Button>
             <div>
               <Button type="button" onClick={onCancel} variant="outline" className="mr-2">
-                Cancel
+                {actions.cancel}
               </Button>
-              <Button type="submit">Save</Button>
+              <Button type="submit">{actions.save}</Button>
             </div>
           </div>
         </form>

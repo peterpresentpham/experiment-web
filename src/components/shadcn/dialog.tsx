@@ -3,6 +3,8 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { XIcon } from 'lucide-react';
 import { ComponentProps } from 'react';
+import { useMessages } from 'src/i18n/client';
+import { commonMessages } from 'src/i18n/messages/common';
 import { cn } from 'src/lib/utils';
 
 function Dialog({ ...props }: ComponentProps<typeof DialogPrimitive.Root>) {
@@ -38,6 +40,7 @@ function DialogContent({
 }: ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
 }) {
+  const { ui } = useMessages(commonMessages);
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
@@ -56,7 +59,7 @@ function DialogContent({
             className="focus-visible:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 cursor-pointer rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-hidden focus-visible:ring-2 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
           >
             <XIcon />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{ui.close}</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content>

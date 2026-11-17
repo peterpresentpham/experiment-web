@@ -2,12 +2,15 @@ import { Activity } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import ViewProcessItem from 'src/components/process-ui/ProcessItem/ViewProcessItem';
 import { TProcess } from 'src/types/process.type';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 interface TProps {
   runningProcess: TProcess | undefined;
 }
 
 export default function RunningProcessView({ runningProcess }: TProps) {
+  const { core } = useMessages(processMessages);
   return (
     <div className="relative flex flex-1 items-center justify-center p-4">
       <AnimatePresence mode="popLayout">
@@ -36,7 +39,7 @@ export default function RunningProcessView({ runningProcess }: TProps) {
           >
             <Activity size={32} className="opacity-20" />
             <span className="text-xs font-medium tracking-wide uppercase opacity-50">
-              Core Idle
+              {core.idle}
             </span>
           </motion.div>
         )}

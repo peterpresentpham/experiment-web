@@ -8,8 +8,11 @@ import ExportImportData from './ExportImportData';
 import ProcessHeader from './ProcessHeader';
 import ProcessQueueView from './ProcessQueueView';
 import TimelineChart from './TimelineChart';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 function ProcessViewLayout() {
+  const text = useMessages(processMessages);
   const { processes, displayMode } = useProcessStore();
 
   return (
@@ -17,13 +20,13 @@ function ProcessViewLayout() {
       <ProcessHeader />
       {Object.values(processes).length == 0 ? (
         <ListEmpty
-          title="No processes created yet."
+          title={text.empty}
           rootprops={{ className: 'cols-span-2 flex-col mt-2' }}
           component={
             <div className="mt-2 flex items-center gap-2">
               <ExportImportData
                 isShowExport={false}
-                components={{ import: <Button>Import</Button> }}
+                components={{ import: <Button>{text.import}</Button> }}
               />
             </div>
           }

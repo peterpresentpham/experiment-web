@@ -11,8 +11,11 @@ import {
 } from 'src/types/process.type';
 import MainProcessList from './MainProcessList';
 import UpdateFooter from './UpdateFooter';
+import { useMessages } from 'src/i18n/client';
+import { processMessages } from 'src/i18n/messages/process';
 
 export default function UpdateProcessDialog(props: DialogProps) {
+  const { data: text } = useMessages(processMessages);
   const {
     status,
     processes,
@@ -92,15 +95,15 @@ export default function UpdateProcessDialog(props: DialogProps) {
           disabled={status != 'initial' && status != 'ready'}
           className="cursor-pointer"
         >
-          Data
+          {text.trigger}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl p-4">
-        <DialogHeader>Update Process</DialogHeader>
+        <DialogHeader>{text.title}</DialogHeader>
         <div className="flex items-center justify-between">
-          <p className="text-lg font-semibold">Processes</p>
+          <p className="text-lg font-semibold">{text.processes}</p>
           <Button variant="outline" size="sm" onClick={onCreateProcess} type="button">
-            + Add Process
+            {text.addProcess}
           </Button>
         </div>
         <MainProcessList data={data} setData={setData} />

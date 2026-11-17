@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
 import { NAV_ITEMS } from 'src/configs/navigation';
+import { useMessages } from 'src/i18n/client';
+import { commonMessages } from 'src/i18n/messages/common';
 import { cn } from 'src/lib/utils';
 import IconButton from '../buttons/IconButton';
 import {
@@ -26,6 +28,7 @@ function isActive(pathname: string, href: string) {
 
 export default function AppHeader({ actions }: TProps) {
   const pathname = usePathname();
+  const { header, nav } = useMessages(commonMessages);
 
   return (
     <header className="bg-background/80 fixed top-0 z-50 h-(--header-height) w-full border-b backdrop-blur-md">
@@ -33,13 +36,13 @@ export default function AppHeader({ actions }: TProps) {
         <div className="flex items-center gap-6">
           <Link
             href="/"
-            aria-label="Experiment Web home"
+            aria-label={header.homeLabel}
             className="flex items-center gap-2 text-lg font-semibold tracking-tight"
           >
             <span className="bg-primary size-2.5 rounded-full" aria-hidden />
             Experiment Web
           </Link>
-          <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+          <nav aria-label={header.mainNav} className="hidden items-center gap-1 md:flex">
             {NAV_ITEMS.map((item) => {
               const active = isActive(pathname, item.href);
 
@@ -55,7 +58,7 @@ export default function AppHeader({ actions }: TProps) {
                       : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                   )}
                 >
-                  {item.title}
+                  {nav[item.id].title}
                 </Link>
               );
             })}
@@ -65,15 +68,18 @@ export default function AppHeader({ actions }: TProps) {
           {actions}
           <Sheet>
             <SheetTrigger asChild>
-              <IconButton aria-label="Open menu" className="md:hidden">
+              <IconButton aria-label={header.openMenu} className="md:hidden">
                 <Menu size={20} />
               </IconButton>
             </SheetTrigger>
             <SheetContent>
-              <SheetTitle>Menu</SheetTitle>
-              <SheetDescription className="sr-only">Navigate between experiments</SheetDescription>
-              <nav aria-label="Mobile" className="flex flex-col gap-1">
-                {[{ title: 'Home', href: '/', icon: null }, ...NAV_ITEMS].map((item) => {
+              <SheetTitle>{header.menu}</SheetTitle>
+              <SheetDescription className="sr-only">{header.menuDescription}</SheetDescription>
+              <nav aria-label={header.mobileNav} className="flex flex-col gap-1">
+                {[
+                  { title: header.home, href: '/', icon: null },
+                  ...NAV_ITEMS.map((item) => ({ ...item, title: nav[item.id].title })),
+                ].map((item) => {
                   const active =
                     item.href === '/' ? pathname === '/' : isActive(pathname, item.href);
                   const Icon = item.icon;

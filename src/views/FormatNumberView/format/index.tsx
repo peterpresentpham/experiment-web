@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
 'use client';
 
 import { FN, RoundingMode } from '@peter-present/format-number';
@@ -12,8 +11,11 @@ import RoundTypeSelect from 'src/components/format-number/RoundTypeSelect';
 import { Input } from 'src/components/shadcn/input';
 import { Toggle } from 'src/components/shadcn/toggle';
 import { useDebounceValue } from 'src/hooks/useDebounce';
+import { useMessages } from 'src/i18n/client';
+import { formatNumberMessages } from 'src/i18n/messages/formatNumber';
 
 export default function FormatPage() {
+  const t = useMessages(formatNumberMessages);
   const [value, setValue] = useState('1234.567');
   const [debounceValue] = useDebounceValue(value, 500);
   const [rounding, setRounding] = useState<RoundingMode>('half');
@@ -64,9 +66,9 @@ export default function FormatPage() {
           </Link>
         </>
       }
-      description="Fluent API for performing multiple formatting operations in a readable chain."
+      description={t.fn.FN.description}
     >
-      <p className="my-4 text-lg font-bold">Params</p>
+      <p className="my-4 text-lg font-bold">{t.params}</p>
       <ArticleUL className="list-disc">
         <ArticleLI isFirst>
           <span>
@@ -76,44 +78,42 @@ export default function FormatPage() {
             </Link>
             )
           </span>
-          {': The initial value to format. Can be a number, string, or bigint.'}
+          {`: ${t.fn.FN.params.value}`}
         </ArticleLI>
       </ArticleUL>
 
-      <p className="my-4 text-lg font-bold">Methods</p>
+      <p className="my-4 text-lg font-bold">{t.methods}</p>
       <ArticleUL className="list-disc text-sm">
         <ArticleLI isFirst>
-          <code className="text-blue-400">.round(options)</code>: Sets rounding strategy and
-          precision.
+          <code className="text-blue-400">.round(options)</code>: {t.fnMethods.round}
         </ArticleLI>
         <ArticleLI>
-          <code className="text-blue-400">.compact()</code>: Formats the number into a short,
-          human-readable string (K, M, B).
+          <code className="text-blue-400">.compact()</code>: {t.fnMethods.compact}
         </ArticleLI>
         <ArticleLI>
-          <code className="text-blue-400">.prefix(symbol)</code>: Prepends a string (e.g., "$").
+          <code className="text-blue-400">.prefix(symbol)</code>: {t.fnMethods.prefix}
         </ArticleLI>
         <ArticleLI>
-          <code className="text-blue-400">.suffix(symbol)</code>: Appends a string (e.g., " units").
+          <code className="text-blue-400">.suffix(symbol)</code>: {t.fnMethods.suffix}
         </ArticleLI>
         <ArticleLI>
-          <code className="text-blue-400">.toNumber()</code>: Returns the final formatted string.
+          <code className="text-blue-400">.toNumber()</code>: {t.fnMethods.toNumber}
         </ArticleLI>
       </ArticleUL>
-      <p className="my-4 text-lg font-bold">Returns</p>
+      <p className="my-4 text-lg font-bold">{t.returns}</p>
       <p>
         (
         <Link href="/blog/format-number/types#FNType">
           <span className="font-semibold hover:underline">FNType</span>
         </Link>
-        ): A chainable object for further formatting.
+        ): {t.fn.FN.returns}
       </p>
-      <p className="my-4 text-lg font-bold">Example</p>
+      <p className="my-4 text-lg font-bold">{t.example}</p>
       <TitleBox
         title="value"
         value={
           <Input
-            placeholder="Number"
+            placeholder={t.numberPlaceholder}
             onChange={(event) => setValue(event.target.value)}
             value={value}
           />
@@ -144,7 +144,7 @@ export default function FormatPage() {
             variant="outline"
             className="mt-2"
           >
-            {isCompact ? 'ON' : 'OFF'}
+            {isCompact ? t.on : t.off}
           </Toggle>
         }
       />
@@ -179,7 +179,7 @@ export default function FormatPage() {
         <code className="block font-mono text-sm leading-relaxed whitespace-pre-wrap">
           {fnCode}
         </code>
-        <p>{`Result: ${result}`}</p>
+        <p>{t.result(result)}</p>
       </div>
     </ElementItem>
   );

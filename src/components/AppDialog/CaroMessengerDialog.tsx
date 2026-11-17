@@ -3,6 +3,8 @@ import IconDialogTrigger from 'src/components/AppDialog/components/IconDialogTri
 import { KeyboardEvent, MouseEvent, useEffect, useRef, useState } from 'react';
 import { beVietnamPro } from 'src/configs/constance';
 import { useCaroConnectionContext } from 'src/context/caro-connection.context';
+import { useMessages } from 'src/i18n/client';
+import { caroMessages } from 'src/i18n/messages/caro';
 import { cn } from 'src/lib/utils';
 import { createCaroMessage } from 'src/services/caro.utils';
 import { useCaroChat } from 'src/states/messenger.state';
@@ -17,6 +19,7 @@ export default function CaroMessengerDialog() {
     fn: { addChats },
   } = useCaroChat();
   const [message, setMessage] = useState('');
+  const { messenger: text } = useMessages(caroMessages);
 
   function _sendMessage(message: string) {
     if (peer && message.length > 0) {
@@ -45,16 +48,16 @@ export default function CaroMessengerDialog() {
 
   return connectionType == 'connected' ? (
     <Dialog>
-      <IconDialogTrigger label="Message" icon={MessageCircle} />
+      <IconDialogTrigger label={text.trigger} icon={MessageCircle} />
       <DialogContent className="flex h-3/4 flex-col">
-        <DialogHeader className="h-fit">Messenger</DialogHeader>
+        <DialogHeader className="h-fit">{text.title}</DialogHeader>
         <div className="flex h-[calc(100%-20px)] flex-col gap-4">
           <div ref={messagesEndRef} className="scroll-hidden flex-1 overflow-y-scroll">
             {chats.map((chat, index) => {
               if (chat.type == 'yourChat')
                 return (
                   <div key={index} className="relative mt-4 ml-4 flex justify-end">
-                    <div className="absolute -top-2 right-0 text-[8px]">you</div>
+                    <div className="absolute -top-2 right-0 text-[8px]">{text.you}</div>
                     <div className={cn('bg-secondary rounded-sm p-1', beVietnamPro.className)}>
                       {chat.message}
                     </div>
@@ -63,7 +66,7 @@ export default function CaroMessengerDialog() {
               else
                 return (
                   <div key={index} className="relative mt-4 mr-4 flex">
-                    <div className="absolute -top-2 text-[8px]">friend</div>
+                    <div className="absolute -top-2 text-[8px]">{text.friend}</div>
                     <div className={cn('bg-sidebar-ring rounded-sm p-1', beVietnamPro.className)}>
                       {chat.message}
                     </div>
@@ -73,14 +76,19 @@ export default function CaroMessengerDialog() {
           </div>
           <div className="relative">
             <Textarea
-              placeholder="Enter your message"
+              placeholder={text.placeholder}
               value={message}
               onChange={(event) => setMessage(event.target.value)}
               onKeyDown={handleKeyDown}
               className={cn(beVietnamPro.className, 'font-sans')}
               rows={1}
             />
-            <Send onClick={onSendClick} className="absolute top-2 right-2 cursor-pointer" />
+            <Send
+              role="button"
+              aria-label={text.send}
+              onClick={onSendClick}
+              className="absolute top-2 right-2 cursor-pointer"
+            />
           </div>
         </div>
       </DialogContent>

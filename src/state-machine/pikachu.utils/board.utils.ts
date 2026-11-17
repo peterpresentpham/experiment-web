@@ -1,7 +1,10 @@
 import { toast } from 'sonner';
+import { getDocumentLocale } from 'src/i18n/client';
+import { pikachuMessages } from 'src/i18n/messages/pikachu';
 import { getRandom, isPositionEqual } from 'src/services';
 import { soundtrack } from 'src/services/soundtrack';
 import PikachuService from 'src/services/pikachu';
+import { getRoundTransform } from 'src/services/pikachu/round.utils';
 import { usePikachuStore } from 'src/states/pikachu.state';
 import { TPosition, TSound } from 'src/types/global';
 import { TMatchResult, TPikachuContext } from 'src/types/pikachu.type';
@@ -54,19 +57,10 @@ export function resolveMove(context: TPikachuContext, position: TPosition): TMov
 export function computeMatchResult(context: TPikachuContext): TMatchResult | undefined {
   if (!context.matchedPair) return undefined;
   const { board, metadata } = usePikachuStore.getState();
-  const {
-    numberOfRows,
-    numberOfColumns,
-    numberOfLines,
-    gameType,
-    roundList,
-    round,
-    randomRoundListIndex,
-  } = metadata;
+  const { numberOfRows, numberOfColumns, numberOfLines, gameType, roundList } = metadata;
   const nextBoard = board.map((row) => row.slice());
 
-  const transformType =
-    gameType != 'randomBoard' ? roundList[round - 1] : roundList[randomRoundListIndex];
+  const transformType = getRoundTransform(metadata);
   PikachuService.transform(
     { board: nextBoard, moves: context.matchedPair, numberOfRows, numberOfColumns },
     transformType
@@ -74,7 +68,7 @@ export function computeMatchResult(context: TPikachuContext): TMatchResult | und
 
   let randomCounter = context.randomCounter;
   let nextRandomIndex: number | undefined;
-  if (gameType == 'randomBoard') {
+  if (gameType == 'randomBoard' && roundList.length > 0) {
     if (randomCounter >= 5) {
       nextRandomIndex = getRandom(roundList.length);
       randomCounter = 1;
@@ -112,10 +106,10 @@ export function commitMatchResult(result: TMatchResult | undefined) {
 }
 
 export function notifyOutOfMove() {
-  toast.warning('Out of move, please change board');
+  toast.warning(pikachuMessages[getDocumentLocale()].outOfMove);
 }
 
 export function notifyWin() {
   soundtrack.play({ type: TSound.WIN });
-  toast.success('You win!!!');
+  toast.success(pikachuMessages[getDocumentLocale()].win);
 }

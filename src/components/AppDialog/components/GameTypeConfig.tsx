@@ -4,6 +4,8 @@ import AppTooltip from 'src/components/AppTooltip';
 import BaseInput from 'src/components/input/BaseInput';
 import { Button } from 'src/components/shadcn/button';
 import { useCaroConnectionContext } from 'src/context/caro-connection.context';
+import { useMessages } from 'src/i18n/client';
+import { caroMessages } from 'src/i18n/messages/caro';
 import { useCaroStore } from 'src/states/caro.state';
 import { useCaroConfigContext } from '../CaroConfigDialog/caroConfig.context';
 
@@ -12,9 +14,11 @@ export default function GameTypeConfig() {
     gameType,
     maxError,
     isOverride,
+    playMode,
     fn: { setGameType, setMaxError, setIsOverride },
   } = useCaroConfigContext();
   const { role, connectionType } = useCaroConnectionContext();
+  const { config: text } = useMessages(caroMessages);
   const {
     metadata: { preWinner },
   } = useCaroStore();
@@ -29,41 +33,41 @@ export default function GameTypeConfig() {
 
   return (
     <div className="mt-2 rounded-sm border p-2">
-      <p className="text-sm font-bold">Game type</p>
+      <p className="text-sm font-bold">{text.gameType}</p>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <Button
           disabled={canNotConfig}
           variant={gameType == 'normal' ? 'default' : 'outline'}
           onClick={() => setGameType('normal')}
         >
-          Normal
+          {text.normal}
         </Button>
         <Button
           disabled={canNotConfig}
           variant={gameType == 'blind' ? 'default' : 'outline'}
           onClick={() => setGameType('blind')}
         >
-          Blind
+          {text.blind}
         </Button>
         <Button
-          disabled={canNotConfig}
-          variant={isOverride ? 'default' : 'outline'}
+          disabled={canNotConfig || playMode == 'machine'}
+          variant={isOverride && playMode != 'machine' ? 'default' : 'outline'}
           onClick={() => setIsOverride((preValue) => !preValue)}
         >
-          Override
+          {text.override}
         </Button>
       </div>
       {gameType == 'blind' && (
         <div className="mt-6">
           <BaseInput
             name="maximum-errors"
-            placeholder="Maximum number of errors"
+            placeholder={text.maxErrors}
             type="number"
             value={maxError}
             onChange={(event) => setMaxError(parseInt(event.target.value))}
             icon={{
               end: (
-                <AppTooltip tooltipContent="The maximum number of errors that player can make in blind mode">
+                <AppTooltip tooltipContent={text.maxErrorsHint}>
                   <Info size={14} />
                 </AppTooltip>
               ),

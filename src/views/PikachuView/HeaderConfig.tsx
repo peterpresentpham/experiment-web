@@ -6,27 +6,31 @@ import PikachuInstructionDialog from 'src/components/AppDialog/PikachuInstructio
 import GameToolbar from 'src/components/games/GameToolbar';
 import { Badge } from 'src/components/shadcn/badge';
 import { Button } from 'src/components/shadcn/button';
-import { pikachuTransformConfig } from 'src/configs/pikachu.constance';
+import { useMessages } from 'src/i18n/client';
+import { commonMessages } from 'src/i18n/messages/common';
+import { pikachuMessages } from 'src/i18n/messages/pikachu';
+import { getRoundTransform } from 'src/services/pikachu/round.utils';
 import { usePikachuSend } from 'src/state-machine/pikachu.state-machine';
 import { usePikachuStore } from 'src/states/pikachu.state';
 import { TSound } from 'src/types/global';
 import { PikachuMachineEvent } from 'src/types/pikachu.type';
 
 export default function HeaderConfig(props: ComponentProps<'div'>) {
-  const {
-    metadata: { round, roundList, randomRoundListIndex, gameType },
-  } = usePikachuStore();
+  const { metadata } = usePikachuStore();
   const send = usePikachuSend();
+  const text = useMessages(pikachuMessages);
+  const { actions } = useMessages(commonMessages);
 
+  const transformTitle = text.transforms[getRoundTransform(metadata)];
   const roundLabel =
-    gameType != 'randomBoard'
-      ? `Round ${round} · ${pikachuTransformConfig[roundList[round - 1]].title}`
-      : `Type · ${pikachuTransformConfig[roundList[randomRoundListIndex]]?.title || '--'}`;
+    metadata.gameType != 'randomBoard'
+      ? text.round(metadata.round, transformTitle)
+      : text.randomType(transformTitle);
 
   return (
     <GameToolbar
       {...props}
-      title="Pikachu"
+      title={text.title}
       status={
         <Badge variant="secondary" role="status">
           {roundLabel}
@@ -45,7 +49,7 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
             variant="outline"
             onClick={() => send({ type: PikachuMachineEvent.SHOW_HINT })}
           >
-            Hint
+            {text.hint}
           </Button>
           <Button
             size="sm"
@@ -53,14 +57,14 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
             sound={TSound.SUCCESS}
             onClick={() => send({ type: PikachuMachineEvent.CHANGE })}
           >
-            Change board
+            {text.changeBoard}
           </Button>
           <Button
             size="sm"
             sound={TSound.SUCCESS}
             onClick={() => send({ type: PikachuMachineEvent.CREATE, mode: 'newGame' })}
           >
-            New game
+            {actions.newGame}
           </Button>
         </>
       }

@@ -245,7 +245,7 @@ input[type='number'] {
 }
 
 .card-copy-fog::after {
-  content: 'Copied!';
+  content: attr(data-copied-label);
   display: flex;
   align-items: center;
   justify-content: center;

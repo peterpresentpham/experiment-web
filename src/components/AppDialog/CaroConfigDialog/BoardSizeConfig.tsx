@@ -1,5 +1,7 @@
 import { TitleContainer } from 'src/components/box/TitleBox';
 import { Button } from 'src/components/shadcn/button';
+import { useMessages } from 'src/i18n/client';
+import { caroMessages } from 'src/i18n/messages/caro';
 import { useCaroConfigContext } from './caroConfig.context';
 
 export default function BoardSizeConfig() {
@@ -7,9 +9,10 @@ export default function BoardSizeConfig() {
     size,
     fn: { setSize },
   } = useCaroConfigContext();
+  const { config: text } = useMessages(caroMessages);
 
   return (
-    <TitleContainer className="mt-2" title="Caro board">
+    <TitleContainer className="mt-2" title={text.board}>
       <Button variant={size == 3 ? 'default' : 'outline'} onClick={() => setSize(3)}>
         3x3
       </Button>

@@ -24,7 +24,8 @@ export const BLOG_TOPICS: Array<TBlogTopic> = [
   },
   {
     title: 'Rubik 3x3',
-    description: '41 F2L cases with images and algorithms you can copy with a click.',
+    description:
+      'Học giải Rubik 3x3 theo 3 cấp độ: người mới, trung cấp, chuyên nghiệp. Đủ 57 OLL, 21 PLL, 41 F2L, có hình minh hoạ.',
     href: '/blog/rubik3x3',
   },
 ];

@@ -1,7 +1,6 @@
-import cloneDeep from 'lodash.clonedeep';
+import { resetRuntimeFields } from 'src/services/process.utils';
 import {
   TProcessDataObject,
-  ProcessStatusType,
   TProcessStoreStatus,
   TProcess,
   SchedulerModeType,
@@ -60,34 +59,22 @@ export const useProcessStore = create<
           },
           updateProcess: (pid: string, data: Partial<Omit<TProcess, 'pid'>>) => {
             set((state) => {
-              if (state.processes[pid]) {
-                if (data.beginAt == -1) data.beginAt = state.processes[pid].beginAt;
-                Object.assign(state.processes[pid], data);
-              }
+              const process = state.processes[pid];
+              if (!process) return;
+              // beginAt = -1 means "not set": keep the recorded start instead of wiping it.
+              const { beginAt, ...rest } = data;
+              Object.assign(process, rest);
+              if (beginAt !== undefined && beginAt !== -1) process.beginAt = beginAt;
             });
           },
           resetProcesses: () => {
             set((state) => {
-              const newProcesses = cloneDeep(state.processes);
-              let counter = 1;
-              for (const item of Object.values(newProcesses).sort(
+              const ordered = Object.values(state.processes).sort(
                 (a, b) => a.arrivalTime - b.arrivalTime
-              )) {
-                newProcesses[item.pid].index = counter++;
-                newProcesses[item.pid].runtime = 0;
-                newProcesses[item.pid].state = ProcessStatusType.NEW;
-                newProcesses[item.pid].currentBlockTaskIndex = 0;
-                newProcesses[item.pid].readyPriority = -1;
-                newProcesses[item.pid].waitingPriority = -1;
-                newProcesses[item.pid].beginAt = -1;
-                newProcesses[item.pid].endAt = -1;
-                if (newProcesses[item.pid].blockTasks) {
-                  newProcesses[item.pid].blockTasks = newProcesses[item.pid].blockTasks?.map(
-                    (task) => ({ ...task, runtime: 0 })
-                  );
-                }
-              }
-              state.processes = newProcesses;
+              );
+              ordered.forEach((process, i) => {
+                Object.assign(process, resetRuntimeFields(process), { index: i + 1 });
+              });
               state.status = 'ready';
             });
           },

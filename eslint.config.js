@@ -22,6 +22,7 @@ export default [
   js.configs.recommended,
   ...tseslint.configs.recommended,
   eslintPluginReact.configs.flat.recommended,
+  { settings: { react: { version: 'detect' } } },
   reactHooks.configs['recommended-latest'],
   reactRefresh.configs.vite,
   {
@@ -36,9 +37,6 @@ export default [
       globals: globals.browser,
     },
     settings: {
-      react: {
-        version: 'detect',
-      },
       'import/resolver': {
         typescript: {
           project: './tsconfig.json',

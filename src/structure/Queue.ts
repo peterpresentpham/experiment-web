@@ -33,21 +33,4 @@ export default class Queue<T> {
   size(): number {
     return this.tail - this.head;
   }
-
-  clear(): void {
-    this.items = [];
-    this.head = 0;
-    this.tail = 0;
-  }
-
-  clone(): Queue<T> {
-    const newQueue = new Queue<T>();
-    newQueue.items = this.items.slice(this.head, this.tail);
-    newQueue.tail = newQueue.items.length;
-    return newQueue;
-  }
-
-  toArray(): T[] {
-    return this.items.slice(this.head, this.tail);
-  }
 }

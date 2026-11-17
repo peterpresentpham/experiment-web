@@ -23,7 +23,7 @@ function ProcessViewLayout() {
             <div className="mt-2 flex items-center gap-2">
               <ExportImportData
                 isShowExport={false}
-                components={{ import: <Button className="">Import</Button> }}
+                components={{ import: <Button>Import</Button> }}
               />
             </div>
           }

@@ -54,16 +54,6 @@ export function isPositionEqual(position1: TPosition, position2: TPosition): boo
 }
 
 /**
- * Checks if a position exists in an array of positions.
- * @param position - The position to search for
- * @param positions - Array of positions to search in
- * @returns True if the position is found in the array
- */
-export function isPositionIncludes(position: TPosition, positions: Array<TPosition>): boolean {
-  return positions.some((p) => p[0] === position[0] && p[1] === position[1]);
-}
-
-/**
  * Delays execution for a specified number of milliseconds.
  * @param milliseconds - The number of milliseconds to wait
  */

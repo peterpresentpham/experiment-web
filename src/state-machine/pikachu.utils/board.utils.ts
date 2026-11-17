@@ -108,7 +108,6 @@ export function commitMatchResult(result: TMatchResult | undefined) {
     fn.setMetadata({ randomRoundListIndex: result.randomRoundListIndex });
   if (result.outcome == 'continue' && result.suggestion)
     fn.movePath(result.board, result.suggestion);
-  else if (result.outcome == 'outOfMove') fn.moveChangeBoard(result.board);
   else fn.move(result.board);
 }
 

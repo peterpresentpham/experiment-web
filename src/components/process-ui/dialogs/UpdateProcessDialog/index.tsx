@@ -99,7 +99,7 @@ export default function UpdateProcessDialog(props: DialogProps) {
         <DialogHeader>Update Process</DialogHeader>
         <div className="flex items-center justify-between">
           <p className="text-lg font-semibold">Processes</p>
-          <Button variant="outline" size="sm" className="" onClick={onCreateProcess} type="button">
+          <Button variant="outline" size="sm" onClick={onCreateProcess} type="button">
             + Add Process
           </Button>
         </div>

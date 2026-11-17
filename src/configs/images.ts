@@ -5,9 +5,6 @@ export const IMAGES = {
     pnpm: '/images/cli/pnpm.svg',
     yarn: '/images/cli/yarn.svg',
   },
-  rubik3x3: {
-    byId: (id: string) => `/images/rubik3x3/${id}.webp`,
-  },
   master: {
     appendix: {
       circomCompiler: '/images/master-thesis/appendix/circom-compiler.png',

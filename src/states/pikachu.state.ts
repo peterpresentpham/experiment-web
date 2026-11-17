@@ -26,7 +26,6 @@ type TPikachuStateType = {
     changeBoard: (board: number[][], path: TPosition[]) => void;
     move: (board: Array<Array<number>>) => void;
     movePath: (board: Array<Array<number>>, path: Array<TPosition>) => void;
-    moveChangeBoard: (board: Array<Array<number>>) => void;
     setMetadata: (metadata: Partial<TPikachuMetadataType>) => void;
   };
 };
@@ -43,7 +42,6 @@ export const usePikachuStore = create<
           numberOfColumns: 16,
           numberOfLines: 2,
           round: 1,
-          isSound: true,
           imgType: 'internal',
           roundList: pikachuRoundTransformations,
           randomRoundListIndex: -1,
@@ -79,11 +77,6 @@ export const usePikachuStore = create<
             set((state) => {
               state.board = board;
               state.suggestion = path;
-            });
-          },
-          moveChangeBoard: (board: Array<Array<number>>) => {
-            set((state) => {
-              state.board = board;
             });
           },
           setMetadata: (metadata: Partial<TPikachuMetadataType>) => {

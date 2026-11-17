@@ -30,10 +30,10 @@ export default function UpdateFooter({ onSave, onOpenChange }: TProps) {
         <span className="text-xs font-medium tracking-tight uppercase">Clear all</span>
       </Button>
       <div className="flex items-center gap-2">
-        <Button variant="outline" onClick={() => onOpenChange?.(false)} type="button" className="">
+        <Button variant="outline" onClick={() => onOpenChange?.(false)} type="button">
           Cancel
         </Button>
-        <Button onClick={onSave} type="button" className="">
+        <Button onClick={onSave} type="button">
           Save changes
         </Button>
       </div>

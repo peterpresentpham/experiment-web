@@ -57,7 +57,7 @@ export default function SettingDialog(props: DialogProps) {
                 key={item.id}
                 variant={localMode == item.id ? 'default' : 'outline'}
                 onClick={() => setLocalMode(item.id)}
-                className=""
+
                 disabled={item.coming}
               >
                 {item.name}
@@ -73,7 +73,7 @@ export default function SettingDialog(props: DialogProps) {
           type="number"
           min={1}
           max={5}
-          className=""
+
           onChange={(event) => {
             const value = parseInt(event.target.value);
             if (isNaN(value)) return;
@@ -86,9 +86,7 @@ export default function SettingDialog(props: DialogProps) {
           {displayMode}
         </Button>
         <DialogFooter className="mt-4 border-t pt-2">
-          <Button onClick={onSave} className="">
-            Save
-          </Button>
+          <Button onClick={onSave}>Save</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

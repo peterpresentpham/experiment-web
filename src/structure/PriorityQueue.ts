@@ -8,15 +8,6 @@ export class PriorityQueue<T> {
     this.compare = compare;
   }
 
-  fromArray(arr: T[]) {
-    this.heap = [...arr];
-    this.heap.sort(this.compare);
-  }
-
-  toArray() {
-    return [...this.heap];
-  }
-
   size() {
     return this.heap.length;
   }
@@ -74,12 +65,6 @@ export class PriorityQueue<T> {
       this.swap(index, smallest);
       index = smallest;
     }
-  }
-
-  clone(): PriorityQueue<T> {
-    const newQueue = new PriorityQueue<T>(this.compare);
-    newQueue.fromArray([...this.heap]);
-    return newQueue;
   }
 
   private swap(i: number, j: number) {

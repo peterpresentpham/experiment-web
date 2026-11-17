@@ -33,7 +33,7 @@ export const F2LConfig: ConfigType = [
     title: 'Group 4',
     data: [
       { id: '4.1', methods: ["U (R U' R') (F R' F' R)"] },
-      { id: '4.2', methods: ["U' (R F R' F') (R U R')"] },
+      { id: '4.2', methods: ["U' (R' F R F') (R U R')"] },
     ],
   },
   {

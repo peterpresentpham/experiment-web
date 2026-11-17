@@ -49,10 +49,10 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
     defaultValues: { arrivalTime: data.arrivalTime, executionTime: data.executionTime },
   });
 
+  const { reset } = form;
   useEffect(() => {
-    form.reset({ arrivalTime: data.arrivalTime, executionTime: data.executionTime });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.arrivalTime, data.executionTime]);
+    reset({ arrivalTime: data.arrivalTime, executionTime: data.executionTime });
+  }, [reset, data.arrivalTime, data.executionTime]);
 
   return (
     <div {...props} className="mt-2 border p-3">
@@ -80,7 +80,6 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
               >
                 <BaseInput
                   type="number"
-                  className=""
                   {...field}
                   onChange={(e) => {
                     const val = e.target.value === '' ? '' : Number(e.target.value);
@@ -103,7 +102,6 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
               >
                 <BaseInput
                   type="number"
-                  className=""
                   {...field}
                   onChange={(e) => {
                     const val = e.target.value === '' ? '' : Number(e.target.value);
@@ -126,7 +124,6 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
                   <div key={index} className="flex items-center gap-2">
                     <BaseInput
                       type="number"
-                      className=""
                       name={`blockTask-${index}-start`}
                       placeholder="Start"
                       value={item.arrivalTime}
@@ -138,7 +135,6 @@ export default function ChangeProcessItem({ data, events, props }: TProps) {
                     <BaseInput
                       name={`blockTask-${index}-duration`}
                       type="number"
-                      className=""
                       placeholder="Duration"
                       value={item.executionTime}
                       onChange={(event) => {

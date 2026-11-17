@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Download, Import } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 import AppTooltip from 'src/components/AppTooltip';
@@ -8,8 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTrigger } from 'src/componen
 import { Input } from 'src/components/shadcn/input';
 import { Label } from 'src/components/shadcn/label';
 import { exampleProcessData } from 'src/configs/example-process';
+import { parseImportedProcesses } from 'src/services/process.utils';
 import { useProcessStore } from 'src/states/process.state';
-import { TProcessDataObject, ProcessStatusType } from 'src/types/process.type';
 
 interface TProps {
   components?: {
@@ -53,49 +52,7 @@ export default function ExportImportData({ components, isShowExport = true }: TP
     reader.onload = (event) => {
       try {
         const json = JSON.parse(event.target?.result as string);
-
-        const result: TProcessDataObject = {};
-
-        if (Array.isArray(json)) {
-          json.forEach((item: Record<string, any>, index: number) => {
-            const pid = (item.pid as string) || crypto.randomUUID();
-            result[pid] = {
-              ...(item as any),
-              pid,
-              index: (item.index as number) ?? index + 1,
-              state: ProcessStatusType.NEW,
-              runtime: 0,
-              currentBlockTaskIndex: 0,
-              readyPriority: -1,
-              waitingPriority: -1,
-              beginAt: -1,
-              endAt: -1,
-              blockTasks: item.blockTasks?.map((task: any) => ({
-                ...task,
-                runtime: 0,
-              })),
-            };
-          });
-        } else if (typeof json === 'object' && json !== null) {
-          Object.entries(json).forEach(([key, item]: [string, any]) => {
-            result[key] = {
-              ...item,
-              pid: (item.pid as string) || key,
-              state: ProcessStatusType.NEW,
-              runtime: 0,
-              currentBlockTaskIndex: 0,
-              readyPriority: -1,
-              waitingPriority: -1,
-              beginAt: -1,
-              endAt: -1,
-              blockTasks: item.blockTasks?.map((task: any) => ({
-                ...task,
-                runtime: 0,
-              })),
-            };
-          });
-        }
-        fn.setProcesses(result);
+        fn.setProcesses(parseImportedProcesses(json));
         setOpen(false);
       } catch (error) {
         console.error(error);

@@ -52,10 +52,29 @@ export const caroMessages = defineMessages({
       notBlockByOpponent: 'Not blocked by opponent',
       board: 'Caro board',
       machineLevel: 'Machine level',
-      levels: { easy: 'Easy', medium: 'Medium', hard: 'Hard' },
+      levels: { easy: 'Easy', medium: 'Medium', hard: 'Hard', hell: 'Hell' },
+      hellHint: {
+        unknown: 'A self-learning neural network that keeps training on every game you play.',
+        ready: (games: number) =>
+          games == 0
+            ? 'A self-learning neural network; it trains on every game you play in this browser.'
+            : `A self-learning neural network, trained on ${games} of your ${games == 1 ? 'game' : 'games'} in this browser.`,
+        missing:
+          'The neural network has not been trained yet, so this level plays like Hard for now.',
+      },
       firstMove: 'First move',
       firstMoveYou: 'You',
       firstMoveMachine: 'Machine',
+      memory: 'Machine memory',
+      memoryCount: (count: number) =>
+        count == 0
+          ? 'No lessons yet: the machine learns from its losses and from games it nearly lost.'
+          : `Learned from its losses and close calls: ${count} ${count == 1 ? 'position' : 'positions'} it now plays differently.`,
+      memoryLearning: 'Analysing the last game…',
+      clearMemory: 'Clear memory',
+    },
+    learning: {
+      cleared: 'The machine forgot everything it learned.',
     },
     connection: {
       trigger: 'Connection',
@@ -177,10 +196,28 @@ export const caroMessages = defineMessages({
       notBlockByOpponent: 'Không tính chặn hai đầu',
       board: 'Bàn cờ',
       machineLevel: 'Mức độ của máy',
-      levels: { easy: 'Dễ', medium: 'Trung bình', hard: 'Khó' },
+      levels: { easy: 'Dễ', medium: 'Trung bình', hard: 'Khó', hell: 'Địa ngục' },
+      hellHint: {
+        unknown: 'Mạng neural tự học, tiếp tục huấn luyện sau mỗi ván bạn chơi.',
+        ready: (games: number) =>
+          games == 0
+            ? 'Mạng neural tự học: huấn luyện thêm sau mỗi ván bạn chơi trên trình duyệt này.'
+            : `Mạng neural tự học: đã huấn luyện thêm từ ${games} ván của bạn trên trình duyệt này.`,
+        missing: 'Mạng neural chưa được huấn luyện nên tạm thời mức này chơi như mức Khó.',
+      },
       firstMove: 'Đi trước',
       firstMoveYou: 'Bạn',
       firstMoveMachine: 'Máy',
+      memory: 'Trí nhớ của máy',
+      memoryCount: (count: number) =>
+        count == 0
+          ? 'Chưa có bài học nào: máy học từ các ván thua và cả những ván suýt thua.'
+          : `Đã rút kinh nghiệm từ các ván thua và suýt thua: ${count} thế cờ máy sẽ đánh khác đi.`,
+      memoryLearning: 'Đang phân tích ván vừa rồi…',
+      clearMemory: 'Xoá trí nhớ',
+    },
+    learning: {
+      cleared: 'Máy đã quên toàn bộ những gì đã học.',
     },
     connection: {
       trigger: 'Kết nối',

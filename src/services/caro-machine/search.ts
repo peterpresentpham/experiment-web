@@ -9,10 +9,31 @@ export type TSearchOptions = {
   beamWidth: number;
   /** Enables VCF/VCT at the root and VCF probes at the leaves. */
   useThreatSearch: boolean;
+  /** Node budgets for the root threat searches; larger when analysing a lost game. */
+  vcfBudget?: number;
+  vctBudget?: number;
+  /** Searches forced replies too, so the result carries a real score instead of returning at once. */
+  searchForced?: boolean;
+};
+
+export type TAnalysis = {
+  /** -1 when no playable move is left. */
+  move: number;
+  /** Positive is good for the side to move; see `isLosingScore` and `isWinningScore`. */
+  score: number;
 };
 
 const WIN_SCORE = 1_000_000_000;
 const WIN_BOUND = WIN_SCORE - 1_000;
+
+/** The side to move loses against best play, as far as the search could prove. */
+export function isLosingScore(score: number) {
+  return score <= -WIN_BOUND;
+}
+
+export function isWinningScore(score: number) {
+  return score >= WIN_BOUND;
+}
 // Keeps one huge threat from drowning the rest of the static evaluation.
 const EVAL_CELL_CAP = 50_000;
 const MAX_FORCED_PLY = 40;
@@ -220,33 +241,43 @@ function searchRoot(
   return { move: bestMove, score: alpha };
 }
 
-/** Picks a move for `side` with iterative-deepening alpha-beta, backed by threat search. */
-export function searchBestMove(board: MachineBoard, side: TStone, options: TSearchOptions) {
+/**
+ * Analyses the position for `side` with iterative-deepening alpha-beta, backed by threat search.
+ * Moves in `exclude` are never chosen: they are moves the machine has already lost with here.
+ */
+export function analyzePosition(
+  board: MachineBoard,
+  side: TStone,
+  options: TSearchOptions,
+  exclude?: ReadonlySet<number>
+): TAnalysis {
   const startedAt = performance.now();
   const deadline = startedAt + options.timeLimitMs;
-  const candidates = board.scoreCandidates(side);
-  if (candidates.length == 0) return -1;
+  const isAllowed = (index: number) => !exclude?.has(index);
+  const candidates = board.scoreCandidates(side).filter((candidate) => isAllowed(candidate.index));
+  if (candidates.length == 0) return { move: -1, score: -WIN_SCORE };
 
   const plan = planMoves(candidates, options.beamWidth + 6);
-  if (plan.kind != 'moves') return plan.index;
-  if (plan.isForced) return plan.moves[0].index;
+  if (plan.kind == 'win') return { move: plan.index, score: WIN_SCORE - plan.plies };
+  if (plan.kind == 'loss') return { move: plan.index, score: -(WIN_SCORE - 2) };
+  if (plan.isForced && !options.searchForced) return { move: plan.moves[0].index, score: 0 };
 
   if (options.useThreatSearch) {
     // A failed VCT costs the full budget, so it is kept small to leave time for alpha-beta.
     const vcf = findThreatWin(board, side, {
       mode: 'vcf',
       depth: 12,
-      budget: 20_000,
+      budget: options.vcfBudget ?? 20_000,
       deadline: startedAt + options.timeLimitMs * 0.1,
     });
-    if (vcf >= 0) return vcf;
+    if (vcf >= 0 && isAllowed(vcf)) return { move: vcf, score: WIN_SCORE - 20 };
     const vct = findThreatWin(board, side, {
       mode: 'vct',
       depth: 6,
-      budget: 6_000,
+      budget: options.vctBudget ?? 6_000,
       deadline: startedAt + options.timeLimitMs * 0.25,
     });
-    if (vct >= 0) return vct;
+    if (vct >= 0 && isAllowed(vct)) return { move: vct, score: WIN_SCORE - 40 };
   }
 
   const context: TSearchContext = {
@@ -280,6 +311,11 @@ export function searchBestMove(board: MachineBoard, side: TStone, options: TSear
   }
 
   // When every move loses against perfect play, the most natural-looking defence is preferred.
-  if (bestScore <= -WIN_BOUND) return heuristicMove;
-  return bestMove;
+  if (bestScore <= -WIN_BOUND) return { move: heuristicMove, score: bestScore };
+  return { move: bestMove, score: bestScore };
+}
+
+/** Picks a move for `side`; -1 when the board is full. */
+export function searchBestMove(board: MachineBoard, side: TStone, options: TSearchOptions) {
+  return analyzePosition(board, side, options).move;
 }

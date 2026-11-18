@@ -1,0 +1,6 @@
+allowBuilds:
+  # Native TensorFlow (~100 MB download) is only needed to train the caro "hell" model locally.
+  # Build it with `pnpm hell:setup` when training; see scripts/caro-hell/README.md. Keeps Vercel builds lean.
+  '@tensorflow/tfjs-node': false
+  core-js: false
+  esbuild: true

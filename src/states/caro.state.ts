@@ -30,7 +30,7 @@ const DEFAULT_METADATA: TCaroMetadataType = {
   gameType: 'normal',
   winMode: 'blockOpponent',
   isOverride: false,
-  size: 10,
+  size: 15,
   maxNumberOfBlindError: 5,
   preWinner: 0,
   machineLevel: 'hard',

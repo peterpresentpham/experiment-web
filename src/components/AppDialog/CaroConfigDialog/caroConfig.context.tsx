@@ -42,7 +42,7 @@ type TCaroConfigContextType = {
 };
 
 const caroConfigContextDefault: TCaroConfigContextType = {
-  size: 10,
+  size: 15,
   playMode: 'machine',
   gameType: 'normal',
   winMode: 'blockOpponent',

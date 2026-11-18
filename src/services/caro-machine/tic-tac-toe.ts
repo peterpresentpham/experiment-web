@@ -12,7 +12,7 @@ const LINES = [
 ];
 
 // Easy and medium look only two plies ahead (win or block), so forks still beat them.
-const DEPTH_BY_LEVEL: Record<TCaroMachineLevel, number> = { easy: 2, medium: 2, hard: 9 };
+const DEPTH_BY_LEVEL: Record<TCaroMachineLevel, number> = { easy: 2, medium: 2, hard: 9, hell: 9 };
 const EASY_RANDOM_RATE = 0.35;
 
 function isWinning(cells: Int8Array, stone: number) {

@@ -9,6 +9,7 @@ import IconButton from '../buttons/IconButton';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from '../shadcn/dialog';
 import LanguageConfig from './components/LanguageConfig';
 import SoundtrackConfig from './components/SoundtrackConfig';
+import ThemeConfig from './components/ThemeConfig';
 
 export default function GlobalConfigDialog() {
   const { dialog, setDialog } = useDialogStore();
@@ -28,6 +29,7 @@ export default function GlobalConfigDialog() {
         <DialogHeader>{settings.title}</DialogHeader>
         <div>
           <LanguageConfig />
+          <ThemeConfig />
           <SoundtrackConfig />
         </div>
       </DialogContent>

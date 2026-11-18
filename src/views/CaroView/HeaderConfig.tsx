@@ -12,6 +12,7 @@ import { useMessages } from 'src/i18n/client';
 import { caroMessages } from 'src/i18n/messages/caro';
 import { commonMessages } from 'src/i18n/messages/common';
 import { useCaroStore } from 'src/states/caro.state';
+import CaroModeBadge from './CaroModeBadge';
 
 export default function HeaderConfig(props: ComponentProps<'div'>) {
   const turn = useCaroStore((state) => state.turn);
@@ -31,7 +32,12 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
     <GameToolbar
       {...props}
       title={text.title}
-      status={<GameStatus text={playerText} turn={turn} isOver={isOver} />}
+      status={
+        <>
+          <CaroModeBadge />
+          <GameStatus text={playerText} turn={turn} isOver={isOver} />
+        </>
+      }
       tools={
         <>
           <CaroConfigDialog />

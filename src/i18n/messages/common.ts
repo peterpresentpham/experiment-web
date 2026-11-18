@@ -27,6 +27,9 @@ export const commonMessages = defineMessages<{
     open: string;
     title: string;
     language: string;
+    theme: string;
+    themes: { system: string; light: string; dark: string };
+    toggleTheme: string;
     sound: string;
     mute: string;
     unmute: string;
@@ -114,6 +117,9 @@ export const commonMessages = defineMessages<{
       open: 'Open settings',
       title: 'Settings',
       language: 'Language',
+      theme: 'Theme',
+      themes: { system: 'System', light: 'Light', dark: 'Dark' },
+      toggleTheme: 'Toggle dark mode',
       sound: 'Sound effects and background music',
       mute: 'Mute',
       unmute: 'Unmute',
@@ -203,6 +209,9 @@ export const commonMessages = defineMessages<{
       open: 'Mở cài đặt',
       title: 'Cài đặt',
       language: 'Ngôn ngữ',
+      theme: 'Giao diện',
+      themes: { system: 'Theo hệ thống', light: 'Sáng', dark: 'Tối' },
+      toggleTheme: 'Chuyển chế độ sáng/tối',
       sound: 'Hiệu ứng âm thanh và nhạc nền',
       mute: 'Tắt tiếng',
       unmute: 'Bật tiếng',

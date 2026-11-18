@@ -20,6 +20,13 @@ export const caroMessages = defineMessages({
       machineWins: 'Machine wins',
     },
     blindErrors: (player: number) => `Player ${player} errors`,
+    mode: {
+      machine: 'vs Machine',
+      offline: 'Two players',
+      online: 'Online',
+      notConnected: 'Not connected',
+      change: (summary: string) => `Play mode: ${summary}. Open caro settings`,
+    },
     cell: (row: number, column: number, piece?: string) =>
       `Row ${row}, column ${column}${piece ? `: ${piece}` : ''}`,
     config: {
@@ -138,6 +145,13 @@ export const caroMessages = defineMessages({
       machineWins: 'Máy thắng',
     },
     blindErrors: (player: number) => `Lỗi của người chơi ${player}`,
+    mode: {
+      machine: 'Đấu với máy',
+      offline: 'Hai người',
+      online: 'Online',
+      notConnected: 'Chưa kết nối',
+      change: (summary: string) => `Chế độ chơi: ${summary}. Mở cài đặt Caro`,
+    },
     cell: (row: number, column: number, piece?: string) =>
       `Hàng ${row}, cột ${column}${piece ? `: ${piece}` : ''}`,
     config: {

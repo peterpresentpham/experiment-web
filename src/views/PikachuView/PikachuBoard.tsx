@@ -62,7 +62,7 @@ export default function PikachuBoard({ size }: TProps) {
       {isOutOfMove && (
         <div
           role="status"
-          className="bg-foreground/60 text-background absolute inset-0 z-20 flex items-center justify-center rounded-xl text-center text-sm font-medium"
+          className="bg-foreground/60 text-background dark:text-foreground absolute inset-0 z-20 flex items-center justify-center rounded-xl text-center text-sm font-medium dark:bg-black/70"
         >
           {outOfMoveOverlay}
         </div>

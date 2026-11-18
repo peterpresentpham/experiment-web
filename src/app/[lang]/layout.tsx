@@ -9,6 +9,7 @@ import { LocaleProvider } from 'src/i18n/client';
 import { LOCALES } from 'src/i18n/config';
 import { commonMessages } from 'src/i18n/messages/common';
 import { getLocale, getMessages } from 'src/i18n/server';
+import { THEME_INIT_SCRIPT } from 'src/lib/theme';
 import { cn } from 'src/lib/utils';
 import 'src/styles/globals.css';
 
@@ -44,6 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = {
   themeColor: '#d9531e',
+  colorScheme: 'light dark',
 };
 
 type TProps = {
@@ -54,7 +56,11 @@ export default async function RootLayout({ children }: TProps) {
   const locale = await getLocale();
 
   return (
-    <html lang={locale}>
+    // The init script sets the theme class before hydration, so the attributes differ on purpose.
+    <html lang={locale} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className={cn(inter.variable, geistMono.variable, 'font-sans antialiased')}>
         <noscript>
           <iframe

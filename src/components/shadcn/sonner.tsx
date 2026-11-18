@@ -2,10 +2,14 @@
 
 import { CSSProperties } from 'react';
 import { Toaster as Sonner, ToasterProps } from 'sonner';
+import { useTheme } from 'src/hooks/useTheme';
 
 const Toaster = ({ ...props }: ToasterProps) => {
+  const { resolvedTheme } = useTheme();
+
   return (
     <Sonner
+      theme={resolvedTheme}
       className="toaster group"
       style={
         {

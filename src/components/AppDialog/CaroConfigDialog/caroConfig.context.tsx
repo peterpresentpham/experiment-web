@@ -43,12 +43,12 @@ type TCaroConfigContextType = {
 
 const caroConfigContextDefault: TCaroConfigContextType = {
   size: 10,
-  playMode: 'offline',
+  playMode: 'machine',
   gameType: 'normal',
   winMode: 'blockOpponent',
   isOverride: false,
   maxError: 5,
-  machineLevel: 'medium',
+  machineLevel: 'hard',
   machineTurn: 1,
   fn: {
     setSize: () => {},

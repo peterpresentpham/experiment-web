@@ -25,7 +25,9 @@ export const caroMessages = defineMessages({
       offline: 'Two players',
       online: 'Online',
       notConnected: 'Not connected',
-      change: (summary: string) => `Play mode: ${summary}. Open caro settings`,
+      label: 'Mode',
+      changeAction: 'Change',
+      change: (summary: string) => `Play mode: ${summary}. Change play mode`,
     },
     cell: (row: number, column: number, piece?: string) =>
       `Row ${row}, column ${column}${piece ? `: ${piece}` : ''}`,
@@ -169,7 +171,9 @@ export const caroMessages = defineMessages({
       offline: 'Hai người',
       online: 'Online',
       notConnected: 'Chưa kết nối',
-      change: (summary: string) => `Chế độ chơi: ${summary}. Mở cài đặt Caro`,
+      label: 'Chế độ',
+      changeAction: 'Đổi',
+      change: (summary: string) => `Chế độ chơi: ${summary}. Đổi chế độ chơi`,
     },
     cell: (row: number, column: number, piece?: string) =>
       `Hàng ${row}, cột ${column}${piece ? `: ${piece}` : ''}`,

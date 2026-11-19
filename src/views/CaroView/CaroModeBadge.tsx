@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, Globe, Users } from 'lucide-react';
+import { Bot, ChevronDown, Globe, Users } from 'lucide-react';
 import { DIALOG_KEY } from 'src/configs/constance';
 import { useCaroConnectionContext } from 'src/context/caro-connection.context';
 import { useMessages } from 'src/i18n/client';
@@ -11,7 +11,7 @@ import { useDialogStore } from 'src/states/dialog.state';
 
 const MODE_ICONS = { machine: Bot, offline: Users, online: Globe };
 
-// Shows the active play mode at a glance and opens the caro settings to change it.
+// The obvious place to see and change the play mode; opens the caro settings.
 export default function CaroModeBadge() {
   const { playMode, machineLevel, gameType, isOverride } = useCaroStore((state) => state.metadata);
   const { role, connectionType } = useCaroConnectionContext();
@@ -34,13 +34,17 @@ export default function CaroModeBadge() {
       title={mode.change(summary)}
       onClick={() => setDialog(DIALOG_KEY.caroConfigDialog, true)}
       className={cn(
-        'inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition-colors',
-        'hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring outline-none focus-visible:ring-[3px]',
-        playMode == 'machine' ? 'border-primary/40 text-primary' : 'text-muted-foreground'
+        'group bg-background inline-flex cursor-pointer items-center gap-2 rounded-lg border py-1.5 pr-2 pl-3 text-sm shadow-xs transition-colors',
+        'hover:border-primary/60 hover:bg-accent focus-visible:ring-ring outline-none focus-visible:ring-[3px]'
       )}
     >
-      <Icon size={15} aria-hidden />
-      {summary}
+      <Icon size={16} aria-hidden className="text-primary shrink-0" />
+      <span className="text-muted-foreground hidden sm:inline">{mode.label}:</span>
+      <span className="font-medium">{summary}</span>
+      <span className="bg-primary text-primary-foreground ml-1 inline-flex items-center gap-0.5 rounded-md px-2 py-0.5 text-xs font-semibold">
+        {mode.changeAction}
+        <ChevronDown size={14} aria-hidden />
+      </span>
     </button>
   );
 }

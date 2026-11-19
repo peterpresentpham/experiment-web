@@ -27,6 +27,7 @@ pnpm hell:run                         # half the cores, lowest CPU priority
 pnpm hell:run --threads 2 --rest 1    # gentle: 2 cores, rests as long as it works
 pnpm hell:run --hours 3               # stops by itself after 3 hours
 pnpm hell:run --until 07:30           # stops by itself at 07:30
+pnpm hell:run --patience 20           # give up only after 20 rounds in a row without progress
 pnpm hell:status                      # where it is, without running anything
 ```
 
@@ -49,8 +50,13 @@ scores ≥ 55% in its arena, so the deployed model never gets worse. Leave it ru
 evenings; `pnpm hell:status` shows how many rounds were accepted. `--rest 1` roughly doubles every
 time above.
 
+Stage 3 ends by itself once the network stops improving: after `--patience` rounds in a row
+(default 10) are rejected, the run stops and says so. Running it again stops straight away; pass a
+larger `--patience` to keep trying, or a bigger `--filters`/`--blocks` network (a fresh run) to go
+further.
+
 Useful options (see `scripts/caro-hell/run.ts`): `--teacher-games`, `--pretrain-steps`,
-`--games`, `--sims`, `--round-steps`, `--arena-games`, `--rounds N` (stop after round N), and
+`--games`, `--sims`, `--temperature-plies` (opening moves self-play picks at random, default 3), `--round-steps`, `--arena-games`, `--rounds N` (stop after round N), and
 `--filters 32 --blocks 4` (smaller, ~4× faster network; only when the run starts).
 
 ## 3. Measure

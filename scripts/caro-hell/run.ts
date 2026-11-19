@@ -44,6 +44,7 @@ import { trainOnGames } from './train';
  *   pnpm hell:run --threads 2 --rest 1    # gentle: 2 cores, pause as long as it works
  *   pnpm hell:run --hours 6               # stop by itself after 6 hours
  *   pnpm hell:run --until 07:30           # stop by itself at 07:30
+ *   pnpm hell:run --patience 20           # stop after 20 rounds in a row without progress
  *   pnpm hell:run --status                # print progress and exit
  *
  * Stages: teacher (hard engine self-play data) → pretrain (imitate it) → self-play rounds
@@ -95,8 +96,12 @@ const { values } = parseArgs({
     batch: { type: 'string', default: '128' },
     lr: { type: 'string', default: '1e-3' },
     rounds: { type: 'string', default: 'Infinity' },
+    // Stop once this many rounds in a row failed to beat the deployed network.
+    patience: { type: 'string', default: '10' },
     games: { type: 'string', default: '40' },
     sims: { type: 'string', default: '160' },
+    // Opening plies where self-play samples from the search instead of playing its best move.
+    'temperature-plies': { type: 'string', default: '3' },
     'round-steps': { type: 'string', default: '1000' },
     'round-lr': { type: 'string', default: '2e-4' },
     'arena-games': { type: 'string', default: '16' },
@@ -114,8 +119,10 @@ const config = {
   batch: parseNumber(values.batch, 128),
   lr: parseNumber(values.lr, 1e-3),
   rounds: parseNumber(values.rounds, Infinity),
+  patience: parseNumber(values.patience, 10),
   games: parseNumber(values.games, 40),
   sims: parseNumber(values.sims, 160),
+  temperaturePlies: parseNumber(values['temperature-plies'], 3),
   roundSteps: parseNumber(values['round-steps'], 1_000),
   roundLr: parseNumber(values['round-lr'], 2e-4),
   arenaGames: parseNumber(values['arena-games'], 16),
@@ -140,6 +147,14 @@ function parseDeadline() {
 const deadline = parseDeadline();
 let isStopping = false;
 const shouldStop = () => isStopping || Date.now() >= deadline;
+
+/** Rounds since the network last improved: the trailing run of rejected rounds. */
+function roundsWithoutProgress(state: TRunState) {
+  const lastAccepted = state.history.findLastIndex((item) => item.accepted);
+  return state.history.length - 1 - lastAccepted;
+}
+
+const hasPlateaued = (state: TRunState) => roundsWithoutProgress(state) >= config.patience;
 
 let stoppingSince = 0;
 function onSignal() {
@@ -221,6 +236,11 @@ function describe(state: TRunState) {
     const accepted = state.history.filter((item) => item.accepted).length;
     lines.push(
       `[status] stage 3/3 round ${state.round}: ${progress}; ${accepted}/${state.history.length} rounds improved the network`
+    );
+    lines.push(
+      hasPlateaued(state)
+        ? `[status] finished: no progress in the last ${roundsWithoutProgress(state)} rounds (raise --patience to keep going)`
+        : `[status] ${roundsWithoutProgress(state)}/${config.patience} rounds without progress (stops at ${config.patience})`
     );
     for (const item of state.history.slice(-5)) {
       lines.push(
@@ -358,7 +378,7 @@ async function runPretrain(state: TRunState) {
 async function runSelfPlay(state: TRunState) {
   const file = roundFile(state.round);
   const best = await loadModel(MODEL_DIR);
-  const player = abortable(selfPlayer(best, config.sims, 8));
+  const player = abortable(selfPlayer(best, config.sims, config.temperaturePlies));
   while (countGames(file) < config.games && !shouldStop()) {
     const startedAt = Date.now();
     const game = await playGame(
@@ -482,7 +502,12 @@ async function main() {
     if (state.stage == 'teacher') await runTeacher(state);
     else if (state.stage == 'pretrain') await runPretrain(state);
     else if (state.round > config.rounds) break;
-    else if (state.phase == 'play') await runSelfPlay(state);
+    else if (hasPlateaued(state)) {
+      console.log(
+        `[run] No progress in the last ${roundsWithoutProgress(state)} rounds: the network has stopped improving at this size. Raise --patience to keep trying.`
+      );
+      break;
+    } else if (state.phase == 'play') await runSelfPlay(state);
     else if (state.phase == 'train') await runRoundTraining(state);
     else await runArenaPhase(state);
   }

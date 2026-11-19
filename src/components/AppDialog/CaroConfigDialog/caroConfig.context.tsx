@@ -48,7 +48,7 @@ const caroConfigContextDefault: TCaroConfigContextType = {
   winMode: 'blockOpponent',
   isOverride: false,
   maxError: 5,
-  machineLevel: 'hard',
+  machineLevel: 'hell',
   machineTurn: 1,
   fn: {
     setSize: () => {},

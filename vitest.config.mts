@@ -7,6 +7,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    // Local training data and third-party engine checkouts (gitignored), not this app's tests.
+    exclude: ['**/node_modules/**', 'ml-data/**'],
     globals: true,
     setupFiles: ['./src/__tests__/setup.ts'],
   },

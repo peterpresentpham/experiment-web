@@ -29,5 +29,5 @@
     "tailwind.config.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "out", "dist", "nodejs-test", "coverage"]
+  "exclude": ["node_modules", "out", "dist", "nodejs-test", "coverage", "ml-data"]
 }

@@ -73,3 +73,18 @@ new base model. `ml-data/` stays local (gitignored); delete it to start over.
 
 Single-purpose tools also exist: `pnpm hell:generate` (teacher games only) and `pnpm hell:train`
 (one-off training on recorded games).
+
+## Tengen: the engine the hell level plays
+
+Since the network plateaued around "a bit stronger than Hard", the hell level plays
+[Tengen](https://github.com/SXKA/tengen) (GPL-3.0), a classical caro engine compiled to WebAssembly
+(`public/engines/tengen/`, with its NOTICE, licence and our patch). The network stays as the
+fallback when WebAssembly cannot run. The site sends cross-origin isolation headers
+(`next.config.ts`) so the engine can search on several threads; `src/services/caro-tengen/engine.ts`
+picks the thread count and measures the device to set the time per move.
+
+To measure engines natively against our players (engines built into `ml-data/engines/bin/`):
+
+```bash
+node --import tsx scripts/caro-hell/engine-match.ts --a tengen --b hell --mode block --games 20 --time 2000 --threads 1
+```

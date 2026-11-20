@@ -1,0 +1,33 @@
+diff --git a/crates/wasm/src/lib.rs b/crates/wasm/src/lib.rs
+index 3ddce0d..b6e2799 100644
+--- a/crates/wasm/src/lib.rs
++++ b/crates/wasm/src/lib.rs
+@@ -225,6 +225,28 @@ pub extern "C" fn tg_think(ms: f64, max_depth: i32) -> i32 {
+     })
+ }
+ 
++/// Search with Rapfi-style time management (patch for experiment-web): stop
++/// near `optimum_ms` when the best move is stable, keep going up to `hard_ms`
++/// while it keeps changing or the value falls. Returns the packed best move or -1.
++#[unsafe(no_mangle)]
++pub extern "C" fn tg_think_dynamic(optimum_ms: f64, hard_ms: f64, max_depth: i32) -> i32 {
++    with_game(-1, |g| {
++        if !g.five.is_empty() || g.board.is_full() {
++            return -1;
++        }
++        let mut limits = Limits {
++            soft_ms: Some(optimum_ms.max(1.0)),
++            hard_ms: Some(hard_ms.max(optimum_ms).max(1.0)),
++            dynamic: true,
++            ..Limits::default()
++        };
++        if max_depth > 0 {
++            limits.depth = Some(max_depth);
++        }
++        g.engine.search(&g.board, &limits, report).best_move.map_or(-1, pack)
++    })
++}
++
+ /// Number of stones played.
+ #[unsafe(no_mangle)]
+ pub extern "C" fn tg_ply() -> u32 {

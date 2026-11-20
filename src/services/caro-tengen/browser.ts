@@ -1,4 +1,5 @@
 import { loadTengen, TTengen, TTengenHelperSetup, tengenThreads } from './engine';
+import { parseOpeningBook, TOpeningBook, TOpeningBookFile } from './opening-book';
 
 /** Browser (worker) side of Tengen: loads the WebAssembly build from /engines/tengen once. */
 
@@ -45,4 +46,21 @@ export function getTengen() {
     return null;
   });
   return loading;
+}
+
+const BOOK_URL = '/models/caro-book/opening-block.json';
+let loadingBook: Promise<TOpeningBook> | undefined;
+
+/** The opening book, or an empty one when it cannot be fetched (the engine then searches). */
+export function getOpeningBook() {
+  loadingBook ??= fetch(BOOK_URL)
+    .then(async (response) => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return parseOpeningBook((await response.json()) as TOpeningBookFile);
+    })
+    .catch((error) => {
+      console.warn('[caro] opening book unavailable', error);
+      return new Map() as TOpeningBook;
+    });
+  return loadingBook;
 }

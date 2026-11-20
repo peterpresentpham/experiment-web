@@ -1,12 +1,13 @@
 import { TCaroMachineRequest } from '../caro-machine';
 import { MachineBoard } from '../caro-machine/board';
 import { lookupExperience, TExperienceBook, toStone } from '../caro-machine/experience';
-import { getTengen } from './browser';
+import { getOpeningBook, getTengen } from './browser';
+import { findBookMove } from './opening-book';
 
 /**
- * The hell level's first choice: lessons from earlier losses, then Tengen. Returns null when the
- * engine is unavailable or picks a move the book says lost before, so the caller falls back to
- * the network, which can search around those moves.
+ * The hell level's first choice: lessons from earlier losses, then the opening book, then Tengen.
+ * Returns null when the engine is unavailable or picks a move the experience book says lost
+ * before, so the caller falls back to the network, which can search around those moves.
  */
 export async function findTengenMove(
   request: Omit<TCaroMachineRequest, 'level'>,
@@ -20,6 +21,10 @@ export async function findTengenMove(
 
   const learned = lookupExperience(book, board, toStone(turn));
   if (learned?.best != undefined && board.cells[learned.best] == 0) return learned.best;
+
+  // A book move that lost here before is skipped, like any other.
+  const bookMove = findBookMove(await getOpeningBook(), request);
+  if (bookMove != undefined && !learned?.avoid.has(bookMove)) return bookMove;
 
   const engine = await getTengen();
   if (!engine) return null;
@@ -36,5 +41,6 @@ export async function findTengenMove(
 
 /** Starts loading the engine (and measuring this device) before the first move. */
 export async function warmUpTengen() {
+  void getOpeningBook();
   return (await getTengen()) != null;
 }

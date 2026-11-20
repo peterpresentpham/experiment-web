@@ -88,3 +88,25 @@ To measure engines natively against our players (engines built into `ml-data/eng
 ```bash
 node --import tsx scripts/caro-hell/engine-match.ts --a tengen --b hell --mode block --games 20 --time 2000 --threads 1
 ```
+
+### Measuring Tengen changes
+
+Under the blocked-ends rule the side that moves first wins almost every engine game from a
+near-empty board (80/80 in a test), so plain matches cannot tell two builds apart. Use:
+
+- **SPRT from balanced openings** (`openings/caro-15.txt`, `openings/caro-20.txt`: 400 openings
+  each that Tengen, thinking 2 s, judges close to even; made with `tengen-tune openings`):
+
+  ```bash
+  sh scripts/caro-hell/tengen-sprt.sh "ml-data/engines/tengen/target/release/pbrain-tengen --weights new.txt"
+  ```
+
+- **Defence when moving second** (the hell level's usual situation): the defender always moves
+  second against Tengen with more time, whose first moves are random cells near the stones.
+
+  ```bash
+  node --import tsx scripts/caro-hell/defense-match.ts --defender tengen-book --defender-time 1000 --attacker-time 4000 --size 15 --games 40
+  ```
+
+`tengen-book` is Tengen behind the opening book (`opening-book.ts` builds it into
+`public/models/caro-book/`). The plan for further work is in `docs/plans/caro-tengen-roadmap.md`.

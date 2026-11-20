@@ -6,7 +6,7 @@ export type TPlayMode = 'offline' | 'online' | 'machine';
 export type TCaroMachineLevel = 'easy' | 'medium' | 'hard' | 'hell';
 export type TCaroGame = 'normal' | 'blind';
 export type TCaroWinMode = 'blockOpponent' | 'non-blockOpponent';
-export type TCaroSizeBoard = 3 | 10 | 15;
+export type TCaroSizeBoard = 3 | 10 | 15 | 20;
 export type TChat = 'yourChat' | 'friendChat';
 
 export type TCaroWin = 'leftDiagonal' | 'rightDiagonal' | 'vertical' | 'horizontal';

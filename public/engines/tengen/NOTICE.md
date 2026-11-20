@@ -6,8 +6,13 @@ later (see `LICENSE` in this folder).
 
 - Source: https://github.com/SXKA/tengen
 - Commit: `dc6f96c09b8870740b1aa413e231585e935788e2`
-- Changes: `experiment-web.patch` in this folder (adds `tg_think_dynamic`, Rapfi-style time
-  management for the WebAssembly build).
+- Changes: `experiment-web.patch` in this folder:
+  - adds `tg_think_dynamic`, Rapfi-style time management for the WebAssembly build;
+  - adds `crates/engine/src/weights-freestyle-caro.txt`, evaluation weights for the caro rule
+    (Piskvork rule 8, five blocked at both ends does not win). They are the freestyle weights
+    refined with `tengen-tune fit-local --l2 1e-4` on 40,000 self-play games under that rule, and
+    scored +10.8 ± 8.8 Elo against them in 3,100 games at 100 ms a move. Other rules keep the
+    original weights.
 
 Build (Rust stable with the `wasm32-unknown-unknown` target and the `rust-src` component), from
 the Tengen checkout with the patch applied:

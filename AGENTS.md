@@ -1,397 +1,115 @@
 # AGENTS.md
 
-## Framework and Environment
+Rules for working in this repo. For what is where (stack, domains, directories), see
+`docs/project-context.md`.
 
-This project uses:
+## Priority
 
-- Next.js 16.x (App Router)
-- React 19
-- TypeScript (`strict: true`)
-- Tailwind CSS v4
-- Zustand
-- React Context
-- XState
-- Vitest
-- Testing Library
+When rules conflict:
 
-All code must follow current Next.js App Router conventions.
+1. The existing architecture of the feature you are changing
+2. This document
+3. Your own preference (lowest)
 
-Do not introduce:
-
-- Pages Router patterns
-- legacy data fetching APIs
-- outdated Next.js conventions
-
-Routes must live under:
-
-```txt
-src/app/
-```
+Consistency beats theoretical improvements.
 
 ---
 
-# Priority Order
+## Architecture
 
-When rules conflict, follow this order:
-
-1. Existing project architecture
-2. Existing feature/module conventions
-3. Rules in this document
-4. Personal preference
-
-Prefer consistency over theoretical improvements.
-
----
-
-# Project Structure
-
-The repository contains multiple independent domains:
-
-- Caro
-- Pikachu
-- Blog (master thesis web book, @peter-present/format-number docs; routes under /blog)
-- Process/State Machine Simulator
-- Utility Tools
-
-Do not merge unrelated domains into shared abstractions.
-
-Only extract shared code when real reuse exists.
+- App Router only: no Pages Router, no legacy data-fetching APIs.
+- Domains (caro, pikachu, blog, process) are independent: do not merge them into shared
+  abstractions. Extract shared code only when it is already reused.
+- Keep route files in `src/app/` thin; compose pages in `src/views/`.
+- `src/components/` holds reusable UI only, no business logic.
+- Game rules, state transitions, queues and data transformations go in `src/services/` (pure
+  functions), `src/state-machine/` (XState) or `src/structure/`, never in JSX.
+- Do not edit `public/engines/`: rebuild the engines as their `NOTICE.md` says.
+- Never import from `ml-data/` in app code.
 
 ---
 
-# Directory Responsibilities
+## Code Rules
 
-## Routing
+**Components**
 
-```txt
-src/app/
-```
+- One primary component per file, one responsibility.
+- Over ~200 lines or doing several jobs: extract hooks, subcomponents or logic into `services/`.
+- Server Components by default; add `'use client'` only for hooks, browser APIs or interactivity.
 
-Responsibilities:
+**State**
 
-- routes
-- layouts
-- metadata
-- providers
-- guards
+- Extend the pattern the feature already uses (Zustand stays Zustand, XState stays XState). Ask
+  before introducing another one.
 
-Keep route files thin.
+**TypeScript**
 
----
+- Reuse types in `src/types/` (or the domain's type file) before adding new ones.
+- Names: types start with `T` (`TCaroWinMode`, `TTurn`); component props are `type TProps`.
+- Do not rename stable types for style.
 
-## Views
+**Imports**
 
-```txt
-src/views/
-```
+- Use the `src/...` alias, not deep relative paths (`../../../`).
 
-Responsibilities:
+**Styling**
 
-- page composition
-- page-level UI
+- Tailwind first, with existing design tokens and shadcn components.
+- Avoid arbitrary values (`w-[37px]`) when a token or utility exists.
 
-Move large UI trees here instead of route files.
+**Text (i18n)**
 
----
+- No hard-coded UI text. Add every string to `src/i18n/messages/<domain>.ts` in **both `en` and
+  `vi`**.
 
-## Components
+**Comments**
 
-```txt
-src/components/
-```
-
-Responsibilities:
-
-- reusable UI
-- reusable visual primitives
-
-Avoid business logic.
+- English only: comments, JSDoc/TSDoc, TODO/FIXME and notes. No Vietnamese or mixed language.
+- Explain intent, constraints, business rules and non-obvious decisions; do not repeat the code.
 
 ---
 
-## Services
+## Changes
 
-```txt
-src/services/
-```
+Make the smallest change that solves the problem, fits the existing architecture, preserves
+behavior and stays easy to maintain.
 
-Responsibilities:
-
-- pure business logic
-- calculations
-- transformations
-- helpers
-
-Prefer pure functions.
+- No module rewrites, large abstractions or architecture changes unless asked.
+- Refactor only when it clearly improves maintainability, reuse or readability.
+- When business logic changes, update or add tests in `src/__tests__/<domain>/` (Vitest for logic,
+  Testing Library for UI).
 
 ---
 
-## State Machine
+## Validation
 
-```txt
-src/state-machine/
-```
+Before finishing:
 
-Responsibilities:
+| When                                            | Run                                              |
+| ----------------------------------------------- | ------------------------------------------------ |
+| Always                                          | The related tests: `pnpm test <path or pattern>` |
+| Any `.ts`/`.tsx` change                         | `pnpm exec tsc --noEmit` and `pnpm eslint`       |
+| Config, routes, workers or dependencies changed | `pnpm build`                                     |
 
-- XState machines
-- transition logic
-- process simulation logic
-
-Do not move machine logic into React components.
+Report failures as they are; do not claim a check you did not run.
 
 ---
 
-## State
+## Dev Server
 
-```txt
-src/states/
-src/context/
-src/hooks/
-```
-
-Responsibilities:
-
-- client state
-- providers
-- reusable hooks
-
-Follow the existing pattern used by the feature.
+- Run the dev server on port **3007** (`pnpm dev`).
+- Never use ports 3000/3001 and never kill all `next dev` processes: other projects run there.
+- Stop any server you started when you are done.
 
 ---
 
-# Component Rules
-
-Components should:
-
-- have a single responsibility
-- stay focused
-- be easy to test
-
-Prefer:
-
-```txt
-1 file
-1 primary component
-```
-
-If a component becomes too large:
-
-- extract hooks
-- extract subcomponents
-- extract business logic
-
----
-
-# React Rules
-
-Use Client Components only when required.
-
-Add:
-
-```ts
-'use client';
-```
-
-only when using:
-
-- browser APIs
-- React hooks
-- interactivity
-
-Default to Server Components.
-
----
-
-# Business Logic Rules
-
-Keep logic outside render paths whenever possible.
-
-Examples:
-
-- board game rules
-- state transitions
-- queue logic
-- data transformations
-
-These belong in:
-
-```txt
-services/
-state-machine/
-structure/
-```
-
-not inside JSX.
-
----
-
-# TypeScript Rules
-
-## Shared Types
-
-Shared types belong in:
-
-```txt
-src/types/
-```
-
-or a clearly scoped domain type file.
-
-Reuse existing types before creating new ones.
-
----
-
-## Naming
-
-Prefer existing project conventions.
-
-Examples:
-
-```ts
-TConversation;
-TProcessItem;
-```
-
-Component props:
-
-```ts
-type TProps = {};
-```
-
-Do not rename stable types purely for style reasons.
-
----
-
-# Import Rules
-
-Prefer path aliases:
-
-```ts
-import { X } from 'src/...';
-```
-
-Avoid deep relative imports:
-
-```ts
-../../../
-```
-
-when an alias already exists.
-
----
-
-# Styling Rules
-
-Use Tailwind first.
-
-Prefer:
-
-- design system utilities
-- shared UI primitives
-- existing shadcn components
-
-Avoid arbitrary values unless necessary.
-
----
-
-# State Management Rules
-
-Match the architecture already used by the feature.
-
-Examples:
-
-- Zustand area → extend Zustand
-- XState area → extend XState
-
-Do not introduce a second pattern without a strong reason.
-
----
-
-# Comment Standards
-
-All comments must be written in English.
-
-Never introduce:
-
-- Vietnamese comments
-- mixed-language comments
-
-Comments should explain:
-
-- intent
-- constraints
-- business rules
-- non-obvious decisions
-
-Avoid comments that merely repeat the code.
-
----
-
-# Refactoring Rules
-
-Prefer minimal, local changes.
-
-Do not:
-
-- rewrite entire modules
-- introduce large abstractions
-- change architecture without requirement
-
-Refactor only when it clearly improves:
-
-- maintainability
-- reuse
-- readability
-
-while preserving behavior.
-
----
-
-# Testing Rules
-
-When changing business logic:
-
-- update tests
-- add tests when missing
-
-Prefer:
-
-- Vitest for logic
-- Testing Library for UI behavior
-
----
-
-# Validation Checklist
-
-Before completing work:
-
-1. Run the narrowest relevant test.
-2. Run linting if affected.
-3. Run build validation when changes are broad.
-
-Typical commands:
-
-```bash
-npm run test -- <pattern>
-npm run eslint
-npm run build
-```
-
----
-
-# Golden Rule
-
-Make the smallest change that:
-
-- solves the problem
-- matches the existing architecture
-- preserves current behavior
-- remains easy to maintain
-
-# Mandatory Rule
-
-- All source code comments, documentation comments (JSDoc/TSDoc), TODOs, FIXMEs, and notes must be written in English.
+## Git
+
+- Never commit unless the user explicitly asks in that message. A plan step or "go ahead" is not
+  a request to commit.
+- The same goes for branching to commit, amending, rebasing and pushing. Never force-push or
+  rewrite pushed history.
+- When work is done, summarise what changed and how it was checked, then ask whether to commit.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

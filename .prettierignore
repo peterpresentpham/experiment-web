@@ -22,3 +22,8 @@ yarn-error.log
 CNAME
 /resources
 /.next
+/ml-data
+/public/engines
+pnpm-lock.yaml
+package-lock.json
+/public/models

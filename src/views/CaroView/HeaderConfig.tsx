@@ -47,20 +47,22 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
         </>
       }
       actions={
-        !isOver ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={undo}
-            disabled={stepCount <= 1 || shouldDisableBoard}
-          >
-            {actions.undo}
-          </Button>
-        ) : (
-          <Button size="sm" onClick={() => reset()}>
+        <>
+          {!isOver && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={undo}
+              disabled={stepCount <= 1 || shouldDisableBoard}
+            >
+              {actions.undo}
+            </Button>
+          )}
+          {/* Always reachable; highlighted once the game is over. */}
+          <Button size="sm" variant={isOver ? 'default' : 'outline'} onClick={() => reset()}>
             {actions.newGame}
           </Button>
-        )
+        </>
       }
     >
       {gameType == 'blind' && (

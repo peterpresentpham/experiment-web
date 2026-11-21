@@ -20,6 +20,8 @@ type TExports = {
   tg_play(x: number, y: number): number;
   tg_think(ms: number, depth: number): number;
   tg_think_dynamic(optimumMs: number, hardMs: number, depth: number): number;
+  tg_set_variety(margin: number, seed: number): void;
+  tg_exclude(x: number, y: number): number;
 };
 
 export type TTengenSource = {
@@ -44,6 +46,27 @@ export type TTengenRequest = {
   size: number;
   winMode: TCaroWinMode;
   turn: TTurn;
+  /** Locations not to play unless nothing else is left, e.g. moves that lost here before. */
+  exclude?: Iterable<number>;
+};
+
+/**
+ * While fewer than `TENGEN_VARIETY_PLIES` stones are down, Tengen plays a random move among those
+ * scoring within `TENGEN_VARIETY` evaluation units (200 per logistic unit, so about ±2.5% win
+ * rate) of the best, so a player cannot win by replaying an opening that won before. Forced wins
+ * and losses are never varied. Measured in self-play: varying every move cost about 50 Elo, these
+ * settings stay within a few.
+ */
+export const TENGEN_VARIETY = 20;
+export const TENGEN_VARIETY_PLIES = 20;
+
+export type TTengenOptions = {
+  /** See `TENGEN_VARIETY`; 0 always plays the best move. */
+  variety?: number;
+  /** See `TENGEN_VARIETY_PLIES`. */
+  varietyPlies?: number;
+  /** Seeds the random choice (not 0). */
+  seed?: number;
 };
 
 /** Piskvork rule numbers: freestyle, and "freestyle caro" (a five blocked at both ends does not win). */
@@ -134,7 +157,11 @@ export type TTengen = {
   think: (request: TTengenRequest, timing?: TTengenTiming) => number;
 };
 
-export async function loadTengen(source: TTengenSource, threads: number): Promise<TTengen> {
+export async function loadTengen(
+  source: TTengenSource,
+  threads: number,
+  options: TTengenOptions = {}
+): Promise<TTengen> {
   const useThreads = threads > 1 && source.spawnHelper != undefined;
   const module = await source.compile(useThreads ? 'tengen-mt.wasm' : 'tengen.wasm');
   // The threaded module imports its memory, shared so helpers can join; 256 MB holds the hash
@@ -175,6 +202,10 @@ export async function loadTengen(source: TTengenSource, threads: number): Promis
   const elapsedMs = performance.now() - startedAt;
   const nodesPerSecond = elapsedMs > 0 ? (lastInfo.nodes / elapsedMs) * 1_000 : 0;
   const timing = tengenTiming(nodesPerSecond);
+  // Seeded after the calibration, which must measure a plain search.
+  const variety = options.variety ?? TENGEN_VARIETY;
+  const varietyPlies = options.varietyPlies ?? TENGEN_VARIETY_PLIES;
+  engine.tg_set_variety(0, options.seed ?? 1 + Math.random() * 2 ** 32);
 
   function think(request: TTengenRequest, moveTiming = timing) {
     const order = tengenMoveOrder(request.steps, request.turn);
@@ -185,6 +216,9 @@ export async function loadTengen(source: TTengenSource, threads: number): Promis
       if (engine.tg_play(location % request.size, Math.floor(location / request.size)) < 0)
         throw new Error('tengen: illegal position');
     }
+    engine.tg_set_variety(order.length < varietyPlies ? variety : 0, 0);
+    for (const location of request.exclude ?? [])
+      engine.tg_exclude(location % request.size, Math.floor(location / request.size));
     const packed = engine.tg_think_dynamic(moveTiming.optimumMs, moveTiming.hardMs, 0);
     if (packed < 0) return -1;
     return (packed >> 8) * request.size + (packed & 0xff);

@@ -1,3 +1,265 @@
+diff --git a/crates/engine/src/search.rs b/crates/engine/src/search.rs
+index 700a9a7..09d1440 100644
+--- a/crates/engine/src/search.rs
++++ b/crates/engine/src/search.rs
+@@ -116,6 +116,14 @@ pub struct Limits {
+     /// Treat `soft_ms` as Rapfi's optimum time: stop earlier when the best
+     /// move is stable, later when it keeps changing or the value falls.
+     pub dynamic: bool,
++    /// Root moves not to play, unless nothing else is left (moves that lost
++    /// this position before).
++    pub exclude: Vec<Pos>,
++    /// Play a random move among those within this many evaluation units of
++    /// the best (0: always the best), so games do not repeat. The main
++    /// thread checks every root move that fails low against the margin too,
++    /// at the same depth; mate scores are never varied.
++    pub variety: Value,
+ }
+ 
+ impl Limits {
+@@ -233,8 +241,11 @@ pub struct Engine {
+     /// and that move's value, carried to the next move of the game.
+     time_reduction: f64,
+     last_value: Option<Value>,
++    /// Random state for [`Limits::variety`] (xorshift, never 0).
++    rng: u64,
+ }
+ 
++
+ impl Engine {
+     /// An engine with a `hash_mb` megabyte table and one thread.
+     pub fn new(hash_mb: usize) -> Engine {
+@@ -245,9 +256,25 @@ impl Engine {
+             stop: Arc::new(AtomicBool::new(false)),
+             time_reduction: 1.0,
+             last_value: None,
++            rng: 0x9e37_79b9_7f4a_7c15,
++        }
++    }
++
++    /// Seed the random choice of [`Limits::variety`].
++    pub fn set_seed(&mut self, seed: u64) {
++        self.rng = seed ^ 0x9e37_79b9_7f4a_7c15;
++        if self.rng == 0 {
++            self.rng = 1;
+         }
+     }
+ 
++    fn random(&mut self) -> u64 {
++        self.rng ^= self.rng << 13;
++        self.rng ^= self.rng >> 7;
++        self.rng ^= self.rng << 17;
++        self.rng
++    }
++
+     /// Search threads. Native builds need the `threads` feature; WebAssembly
+     /// builds with atomics need the host to run [`pool::helper`] in as many
+     /// extra threads.
+@@ -298,6 +325,7 @@ impl Engine {
+             limits: limits.clone(),
+             prev_time: (self.time_reduction, self.last_value),
+             next_time: AtomicU64::new(1f64.to_bits()),
++            seed: self.random(),
+         });
+ 
+         #[cfg(feature = "threads")]
+@@ -445,6 +473,8 @@ struct Shared {
+     /// (set by the main thread) the new reduction, as `f64` bits.
+     prev_time: (f64, Option<Value>),
+     next_time: AtomicU64,
++    /// Picks among near-equal root moves ([`Limits::variety`]).
++    seed: u64,
+ }
+ 
+ impl Shared {
+@@ -458,8 +488,14 @@ struct RootMove {
+     pos: Pos,
+     value: Value,
+     pv: Vec<Pos>,
++    /// Within [`Limits::variety`] of the best in the current iteration.
++    near: bool,
+ }
+ 
++/// Only the first this many root moves, in the order searched, are checked
++/// for [`Limits::variety`].
++const VARIETY_CANDIDATES: usize = 6;
++
+ /// Late move reduction table, indexed by depth and move number.
+ fn reductions() -> &'static [[u8; 64]; 64] {
+     static TABLE: OnceLock<[[u8; 64]; 64]> = OnceLock::new();
+@@ -708,7 +744,13 @@ impl<'a> Worker<'a> {
+                 list.retain(|m| self.board.is_legal(m.pos));
+                 Some(plies)
+             }
+-            Gen::Moves { .. } => None,
++            Gen::Moves { .. } => {
++                let exclude = &self.shared.limits.exclude;
++                if !exclude.is_empty() && list.iter().any(|m| !exclude.contains(&m.pos)) {
++                    list.retain(|m| !exclude.contains(&m.pos));
++                }
++                None
++            }
+         };
+         if list.is_empty() {
+             return SearchResult {
+@@ -736,6 +778,7 @@ impl<'a> Worker<'a> {
+                 pos: m.pos,
+                 value: -INFINITE,
+                 pv: vec![m.pos],
++                near: false,
+             })
+             .collect();
+ 
+@@ -744,6 +787,9 @@ impl<'a> Worker<'a> {
+         let mut completed = 0;
+         let mut value: Value = 0;
+         let mut best = self.root_moves[0].clone();
++        // Root moves within the variety margin of `best`, as of the last
++        // completed iteration.
++        let mut near: Vec<Pos> = Vec::new();
+         // Rapfi's time control: how much the best move has changed lately,
+         // and the depth at which it last changed.
+         let mut total_changes = 0.0f64;
+@@ -798,12 +844,14 @@ impl<'a> Worker<'a> {
+                 {
+                     best = self.root_moves[0].clone();
+                     value = best.value;
++                    near.clear();
+                 }
+                 break;
+             }
+             value = v;
+             best = self.root_moves[0].clone();
+             completed = search_depth;
++            near = self.root_moves[1..].iter().filter(|m| m.near).map(|m| m.pos).collect();
+ 
+             if !self.is_main() {
+                 continue;
+@@ -851,6 +899,13 @@ impl<'a> Worker<'a> {
+             self.shared.next_time.store(time_reduction.to_bits(), Relaxed);
+         }
+         self.poll();
++        if self.is_main() && limits.variety > 0 && value.abs() < MATE_BOUND && !near.is_empty() {
++            let pick = (self.shared.seed % (near.len() as u64 + 1)) as usize;
++            if pick > 0 {
++                best.pv = vec![near[pick - 1]];
++                best.pos = near[pick - 1];
++            }
++        }
+         SearchResult {
+             best_move: Some(best.pos),
+             value,
+@@ -862,6 +917,12 @@ impl<'a> Worker<'a> {
+ 
+     fn search_root(&mut self, mut alpha: Value, beta: Value, depth: i32) -> Value {
+         let mut best = -INFINITE;
++        let margin = if self.is_main() { self.shared.limits.variety } else { 0 };
++        // The move that last raised alpha, whose value is therefore exact.
++        let mut best_index = None;
++        for m in &mut self.root_moves {
++            m.near = false;
++        }
+         for i in 0..self.root_moves.len() {
+             let pos = self.root_moves[i].pos;
+             let us = self.board.side_to_move();
+@@ -886,13 +947,33 @@ impl<'a> Worker<'a> {
+                 }
+                 v
+             };
++            // Variety: does a move that failed low still come within the
++            // margin of the best? Checked at the full depth.
++            let near = margin > 0
++                && i > 0
++                && i < VARIETY_CANDIDATES
++                && v <= alpha
++                && alpha.abs() < MATE_BOUND
++                && !self.stopped()
++                && self.within(alpha - margin, depth - 1);
+             self.board.undo();
+             if self.stopped() {
+                 break;
+             }
+             if i > 0 && v > alpha {
+                 self.best_changes += 1;
++                // A new best: earlier near moves were compared with a lower
++                // value. Only the old best's value is exact, so only it may
++                // stay near.
++                let old = alpha;
++                for (j, m) in self.root_moves[..i].iter_mut().enumerate() {
++                    m.near = best_index == Some(j) && margin > 0 && old.abs() < MATE_BOUND && old >= v - margin;
++                }
++            }
++            if v > alpha {
++                best_index = Some(i);
+             }
++            self.root_moves[i].near = near;
+             let rm = &mut self.root_moves[i];
+             if i == 0 || v > alpha {
+                 rm.value = v;
+@@ -915,6 +996,15 @@ impl<'a> Worker<'a> {
+         best
+     }
+ 
++    /// Whether the root move just played scores above `bound`: a reduced
++    /// null-window search first, confirmed at `depth`.
++    fn within(&mut self, bound: Value, depth: i32) -> bool {
++        let reduced = (depth - 2).max(1);
++        -self.search::<false>(-bound - 1, -bound, reduced, 1, true) > bound
++            && !self.stopped()
++            && -self.search::<false>(-bound - 1, -bound, depth, 1, false) > bound
++    }
++
+     fn update_pv(&mut self, ply: usize, pos: Pos) {
+         let (head, tail) = self.pv.split_at_mut(ply + 1);
+         let line = &mut head[ply];
+@@ -1573,6 +1663,47 @@ mod tests {
+         assert_eq!(a.value, b.value);
+     }
+ 
++    #[test]
++    fn excluded_root_moves_are_not_played() {
++        let board = board_with(&[(7, 7), (8, 8), (7, 8), (6, 6)]);
++        let first = best(&board, 6).best_move.unwrap();
++        let limits = Limits {
++            exclude: vec![first],
++            ..Limits::depth(6)
++        };
++        let other = Engine::new(16).search(&board, &limits, |_| {});
++        assert_ne!(other.best_move, Some(first));
++    }
++
++    #[test]
++    fn variety_varies_quiet_openings_but_not_forced_wins() {
++        let board = board_with(&[(7, 7), (8, 8), (7, 8), (6, 6)]);
++        let base = best(&board, 6);
++        let limits = Limits {
++            variety: 60,
++            ..Limits::depth(6)
++        };
++        let mut moves = std::collections::HashSet::new();
++        for seed in 0..12 {
++            let mut engine = Engine::new(16);
++            engine.set_seed(seed);
++            let result = engine.search(&board, &limits, |_| {});
++            assert!(result.value >= base.value - 60 - 40, "{} vs {}", result.value, base.value);
++            moves.insert(result.best_move.unwrap());
++        }
++        assert!(moves.len() >= 2, "always {moves:?}");
++
++        // A won position is never traded for an alternative.
++        let win = board_with(&[(7, 7), (0, 0), (8, 7), (0, 2), (9, 7), (0, 4), (11, 8), (0, 6), (11, 9), (14, 14)]);
++        let expected = best(&win, 6);
++        assert!(expected.value >= MATE_BOUND);
++        for seed in 0..6 {
++            let mut engine = Engine::new(16);
++            engine.set_seed(seed);
++            assert_eq!(engine.search(&win, &limits, |_| {}).best_move, expected.best_move);
++        }
++    }
++
+     #[cfg(feature = "threads")]
+     #[test]
+     fn lazy_smp_finds_the_same_win() {
 diff --git a/crates/engine/src/weights-freestyle-caro.txt b/crates/engine/src/weights-freestyle-caro.txt
 new file mode 100644
 index 0000000..a1e7378
@@ -12,14 +274,143 @@ index 0000000..a1e7378
 +policy_opp 7 8 15 11 26 33 44 47 100 139 132 1848 8686 9 15 11 26 33 45 47 100 140 133 1849 8686 22 18 33 40 51 54 107 147 139 1856 8693 14 29 36 47 50 103 143 135 1852 8689 36 43 54 63 118 159 166 1870 8707 48 61 69 125 164 173 1877 8714 73 81 137 177 184 1888 8725 80 136 175 183 1888 8725 163 203 261 1783 8620 243 301 1822 8660 1507 1707 8545 1907 8745 8857 9 15 11 26 33 45 47 100 141 133 1849 8686 23 19 34 40 52 54 107 147 140 1856 8694 15 30 36 48 50 103 143 136 1852 8690 36 43 54 63 119 159 166 1870 8708 50 61 70 125 165 173 1877 8714 73 81 137 177 184 1889 8727 80 136 176 183 1888 8725 163 204 262 1783 8621 243 301 1823 8660 1508 1708 8545 1907 8745 8857 29 25 41 47 59 61 115 154 146 1862 8700 21 37 43 55 57 110 150 142 1858 8696 43 49 61 70 126 165 174 1877 8715 56 68 76 132 172 179 1884 8722 79 89 144 184 192 1895 8733 87 143 183 190 1894 8732 170 210 268 1789 8627 249 308 1830 8667 1514 1714 8551 1915 8752 8865 17 32 39 51 53 106 146 138 1854 8692 39 45 57 66 122 161 170 1873 8711 52 64 72 128 168 175 1880 8718 75 85 140 180 188 1891 8729 83 138 179 186 1890 8728 166 206 264 1785 8623 245 304 1826 8663 1510 1710 8547 1911 8748 8861 57 64 75 85 140 180 188 1891 8729 70 82 90 146 186 194 1898 8736 94 103 159 198 206 1909 8747 101 157 197 204 1909 8747 184 225 282 1804 8642 264 323 1844 8681 1529 1729 8566 1929 8766 8879 77 89 97 153 193 200 1905 8742 100 109 164 205 212 1916 8754 108 164 204 211 1915 8752 191 231 289 1810 8648 270 328 1851 8688 1535 1736 8573 1935 8773 8885 112 121 177 216 224 1928 8766 119 175 215 223 1927 8765 203 243 301 1822 8660 282 341 1862 8699 1547 1747 8584 1947 8784 8897 119 174 214 222 1926 8763 202 242 300 1821 8659 281 339 1861 8698 1546 1746 8583 1946 8784 8896 97 137 195 1716 8554 176 235 1756 8593 1441 1641 8478 1842 8679 8792 217 274 1796 8634 1481 1681 8519 1881 8719 8831 1366 1565 8403 1766 8604 8716 1966 8803 8916 9028 9 16 12 28 33 46 48 101 141 133 1850 8688 23 19 34 41 52 55 108 147 140 1856 8694 15 30 37 48 51 104 143 136 1852 8690 36 43 55 64 120 159 167 1870 8708 50 61 70 125 166 173 1877 8715 73 82 138 177 185 1889 8727 80 136 176 184 1888 8726 164 204 262 1783 8621 243 302 1823 8660 1508 1708 8545 1908 8745 8858 29 25 41 47 59 62 115 154 147 1864 8701 21 37 43 55 58 111 150 143 1860 8697 44 49 62 71 126 165 174 1878 8715 56 68 77 133 172 180 1884 8722 80 89 145 184 192 1896 8733 88 144 183 191 1894 8732 171 210 268 1790 8627 251 308 1830 8668 1514 1715 8553 1915 8752 8865 17 33 39 51 54 107 146 139 1856 8693 40 45 58 67 122 161 170 1874 8711 52 64 73 129 168 176 1880 8718 76 85 141 180 188 1892 8729 84 140 179 187 1890 8728 167 206 264 1786 8623 247 304 1826 8664 1510 1711 8549 1911 8748 8861 58 64 76 85 141 180 188 1892 8729 71 82 92 147 187 195 1898 8736 95 103 159 198 206 1911 8748 102 158 197 205 1909 8747 185 225 283 1805 8642 265 323 1844 8682 1529 1729 8567 1929 8766 8879 77 89 97 153 193 200 1905 8743 100 110 166 205 213 1916 8754 108 164 204 211 1915 8753 191 231 289 1811 8649 271 329 1851 8688 1535 1736 8573 1936 8773 8886 113 121 177 216 225 1929 8766 121 176 216 224 1927 8765 204 243 301 1823 8660 283 341 1862 8700 1547 1747 8585 1948 8785 8898 119 174 215 222 1926 8764 202 242 300 1821 8659 281 340 1861 8698 1546 1746 8583 1947 8784 8897 98 137 195 1717 8554 177 235 1757 8595 1441 1641 8479 1842 8679 8792 217 275 1797 8634 1481 1682 8519 1881 8719 8831 1366 1567 8404 1766 8604 8716 1966 8804 8916 9029 36 32 47 54 65 68 121 161 154 1870 8707 28 43 50 61 64 117 157 150 1866 8703 50 57 69 77 133 173 180 1884 8721 63 75 84 139 179 187 1891 8728 87 95 151 191 198 1903 8740 94 150 189 198 1902 8739 178 217 276 1797 8634 257 315 1836 8674 1522 1721 8559 1921 8759 8871 24 39 46 57 60 113 153 146 1862 8699 46 53 65 73 129 169 176 1880 8717 59 71 80 135 175 183 1887 8724 83 91 147 187 194 1899 8736 90 146 185 194 1898 8735 174 213 272 1793 8630 253 311 1832 8670 1518 1717 8555 1917 8755 8867 65 71 83 91 147 187 195 1899 8736 77 90 98 154 193 201 1906 8743 101 110 165 206 213 1917 8754 109 165 204 212 1916 8753 192 231 290 1811 8648 271 329 1851 8689 1536 1735 8573 1936 8774 8886 84 95 105 161 200 208 1911 8749 108 116 172 211 220 1924 8761 116 171 210 219 1922 8760 199 238 296 1818 8655 278 336 1857 8695 1542 1742 8580 1942 8779 8892 120 128 184 224 231 1935 8772 127 183 222 230 1935 8772 210 250 308 1830 8667 290 348 1869 8707 1554 1754 8592 1954 8792 8904 126 182 221 229 1933 8771 209 249 306 1829 8666 289 347 1868 8706 1553 1753 8591 1953 8790 8903 105 144 203 1724 8561 184 242 1763 8601 1449 1648 8486 1848 8686 8798 223 282 1803 8640 1488 1688 8525 1889 8726 8839 1373 1573 8410 1773 8610 8723 1973 8811 8923 9036 20 35 42 53 56 109 149 142 1858 8695 42 49 61 69 125 165 172 1876 8713 55 67 76 131 171 179 1883 8720 79 87 143 183 190 1895 8732 86 142 181 190 1894 8731 170 209 268 1789 8626 249 307 1828 8666 1514 1713 8551 1913 8751 8863 61 67 79 87 143 183 191 1895 8732 73 86 94 150 189 197 1902 8739 97 106 161 202 209 1913 8750 105 161 200 208 1912 8749 188 227 286 1807 8644 267 325 1847 8685 1532 1731 8569 1932 8770 8882 80 91 101 157 196 204 1907 8745 104 112 168 207 216 1920 8757 112 167 206 215 1918 8756 195 234 292 1814 8651 274 332 1853 8691 1538 1738 8576 1938 8775 8888 116 124 180 220 227 1931 8768 123 179 218 226 1931 8768 206 246 304 1826 8663 286 344 1865 8703 1550 1750 8588 1950 8788 8900 122 178 217 225 1929 8767 205 245 302 1825 8662 285 343 1864 8702 1549 1749 8587 1949 8786 8899 101 140 199 1720 8557 180 238 1759 8597 1445 1644 8482 1844 8682 8794 219 278 1799 8636 1484 1684 8521 1885 8722 8835 1369 1569 8406 1769 8606 8719 1969 8807 8919 9032 79 86 97 106 161 202 209 1913 8750 91 104 112 168 207 216 1920 8757 116 124 180 220 227 1931 8768 123 179 218 226 1931 8768 206 246 304 1826 8663 286 344 1865 8703 1551 1750 8588 1950 8788 8900 99 110 119 175 214 222 1926 8764 122 131 186 226 234 1938 8775 130 186 225 233 1936 8774 213 252 310 1832 8669 293 350 1872 8710 1556 1757 8595 1957 8794 8907 134 142 198 238 245 1950 8787 141 197 236 245 1949 8786 225 264 323 1844 8681 304 362 1883 8721 1569 1768 8606 1968 8806 8918 141 196 236 244 1947 8785 224 263 321 1843 8680 303 361 1882 8720 1567 1767 8605 1968 8805 8918 119 158 217 1738 8575 198 256 1777 8615 1463 1662 8500 1863 8701 8813 238 296 1818 8655 1502 1703 8540 1903 8740 8853 1387 1587 8424 1788 8625 8738 1987 8825 8937 9050 106 116 125 181 221 228 1932 8770 128 137 193 232 241 1944 8782 136 191 232 239 1943 8781 219 259 317 1838 8676 298 357 1878 8715 1563 1763 8600 1964 8801 8914 141 149 205 244 252 1956 8793 148 204 243 251 1955 8793 231 271 328 1851 8688 311 369 1890 8728 1575 1775 8613 1975 8812 8925 146 202 242 249 1954 8792 229 270 328 1849 8687 309 368 1889 8726 1574 1774 8611 1974 8811 8924 126 165 223 1745 8582 205 263 1784 8622 1469 1669 8507 1869 8706 8819 244 302 1824 8661 1509 1709 8546 1909 8747 8859 1394 1594 8431 1793 8631 8743 1994 8832 8944 9057 152 161 216 257 264 1968 8805 160 215 255 263 1967 8804 243 282 341 1862 8699 322 380 1902 8740 1587 1786 8624 1987 8825 8937 159 215 254 262 1965 8803 242 281 339 1861 8698 322 379 1901 8739 1585 1786 8624 1986 8823 8936 137 176 235 1757 8594 217 274 1796 8634 1481 1681 8519 1881 8719 8831 256 315 1836 8673 1521 1721 8558 1921 8758 8871 1406 1606 8443 1806 8643 8756 2005 8843 8955 9068 157 213 253 260 1964 8802 240 280 338 1860 8698 320 378 1900 8737 1584 1785 8622 1985 8822 8935 136 176 233 1756 8593 216 274 1795 8633 1479 1680 8518 1880 8717 8830 255 313 1835 8672 1520 1720 8557 1919 8757 8869 1405 1605 8442 1804 8642 8754 2004 8842 8954 9067 31 71 129 1651 8488 111 169 1690 8528 1376 1575 8413 1775 8613 8725 150 209 1730 8567 1415 1615 8452 1815 8652 8765 1300 1500 8337 1700 8537 8650 1900 8738 8850 8963 190 248 1769 8607 1455 1654 8492 1855 8693 8805 1340 1539 8377 1740 8578 8690 1940 8777 8890 9002 1225 1424 8262 1624 8462 8574 1825 8662 8775 8887 2025 8862 8975 9087 9200
 +window 0 0 0 0 0 0 0 0
 +policy_cross 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-diff --git a/crates/wasm/src/lib.rs b/crates/wasm/src/lib.rs
-index 3ddce0d..b6e2799 100644
---- a/crates/wasm/src/lib.rs
-+++ b/crates/wasm/src/lib.rs
-@@ -225,6 +225,28 @@ pub extern "C" fn tg_think(ms: f64, max_depth: i32) -> i32 {
-     })
+diff --git a/crates/piskvork/src/main.rs b/crates/piskvork/src/main.rs
+index a0909b7..944754b 100644
+--- a/crates/piskvork/src/main.rs
++++ b/crates/piskvork/src/main.rs
+@@ -7,6 +7,9 @@
+ //! Also runs `pbrain-tengen bench [depth]` to print the benchmark node count.
+ //! `--weights FILE` replaces the built-in evaluation weights, and
+ //! `--params name=value,...` changes search parameters (both for tuning).
++//! `--variety MARGIN[,PLIES]` plays a random move among those within
++//! `MARGIN` evaluation units of the best (seeded from the clock), only while
++//! fewer than `PLIES` stones are on the board (all game without it).
+ 
+ use std::collections::VecDeque;
+ use std::io::{self, BufRead, Write};
+@@ -66,9 +69,15 @@ struct Brain {
+     rule: Rule,
  }
  
++/// `--variety`: see [`Limits::variety`].
++static VARIETY: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
++static VARIETY_PLIES: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(usize::MAX);
++
+ impl Brain {
+     fn new() -> Brain {
+         let mut engine = Engine::new(256);
++        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
++        engine.set_seed(now.map_or(1, |d| d.as_nanos() as u64) ^ std::process::id() as u64);
+         engine.set_threads(std::thread::available_parallelism().map_or(1, |n| n.get()));
+         Brain {
+             engine,
+@@ -98,7 +107,14 @@ impl Brain {
+         } else {
+             100.0
+         };
+-        Limits::for_clock(left, turn, empty, board.ply())
++        Limits {
++            variety: if board.ply() < VARIETY_PLIES.load(std::sync::atomic::Ordering::Relaxed) {
++                VARIETY.load(std::sync::atomic::Ordering::Relaxed)
++            } else {
++                0
++            },
++            ..Limits::for_clock(left, turn, empty, board.ply())
++        }
+     }
+ 
+     fn apply_info(&mut self, key: &str, value: &str) {
+@@ -471,6 +487,19 @@ fn main() {
+         }
+         args.drain(i..(i + 2).min(args.len()));
+     }
++    if let Some(i) = args.iter().position(|a| a == "--variety") {
++        let text = args.get(i + 1).cloned().unwrap_or_default();
++        let (margin, plies) = text.split_once(',').unwrap_or((&text, ""));
++        let Ok(margin) = margin.parse::<i32>() else {
++            eprintln!("--variety needs a margin in evaluation units");
++            std::process::exit(2);
++        };
++        VARIETY.store(margin.max(0), std::sync::atomic::Ordering::Relaxed);
++        if let Ok(plies) = plies.parse::<usize>() {
++            VARIETY_PLIES.store(plies, std::sync::atomic::Ordering::Relaxed);
++        }
++        args.drain(i..(i + 2).min(args.len()));
++    }
+     match args.first().map(String::as_str) {
+         Some("bench") => {
+             let depth = args.get(1).and_then(|d| d.parse().ok()).unwrap_or(7);
+diff --git a/crates/wasm/src/lib.rs b/crates/wasm/src/lib.rs
+index 3ddce0d..2b67db1 100644
+--- a/crates/wasm/src/lib.rs
++++ b/crates/wasm/src/lib.rs
+@@ -61,6 +61,19 @@ struct Game {
+     engine: Engine,
+     /// Cells of the five that ended the game, if it has ended that way.
+     five: Vec<Pos>,
++    /// Moves the next searches must not play (see [`tg_exclude`]).
++    exclude: Vec<Pos>,
++}
++
++/// Margin of [`tg_set_variety`], kept across games.
++static VARIETY: std::sync::atomic::AtomicI32 = std::sync::atomic::AtomicI32::new(0);
++
++fn limits_for(g: &Game, limits: Limits) -> Limits {
++    Limits {
++        exclude: g.exclude.clone(),
++        variety: VARIETY.load(std::sync::atomic::Ordering::Relaxed),
++        ..limits
++    }
+ }
+ 
+ static GAME: Mutex<Option<Game>> = Mutex::new(None);
+@@ -122,10 +135,37 @@ pub extern "C" fn tg_new(size: u32, rule: u32) -> i32 {
+         board: Board::with_rule(size as usize, Rule::from_piskvork(rule)),
+         engine,
+         five: Vec::new(),
++        exclude: Vec::new(),
+     });
+     0
+ }
+ 
++/// Play a random move among those within `margin` evaluation units of the
++/// best (0: always the best), so games do not repeat; a non-zero `seed`
++/// reseeds the choice. Applies to every later search, across games (patch
++/// for experiment-web).
++#[unsafe(no_mangle)]
++pub extern "C" fn tg_set_variety(margin: i32, seed: f64) {
++    VARIETY.store(margin.max(0), std::sync::atomic::Ordering::Relaxed);
++    if seed != 0.0 {
++        with_game((), |g| g.engine.set_seed(seed.to_bits()));
++    }
++}
++
++/// Do not play (`x`, `y`) in this position unless every other move is
++/// excluded too, e.g. a move that lost here before. Cleared by [`tg_new`].
++/// Returns 0, or -1 off the board (patch for experiment-web).
++#[unsafe(no_mangle)]
++pub extern "C" fn tg_exclude(x: u32, y: u32) -> i32 {
++    with_game(-1, |g| match cell(&g.board, x, y) {
++        Some(pos) => {
++            g.exclude.push(pos);
++            0
++        }
++        None => -1,
++    })
++}
++
+ /// Use `threads` search threads. With more than one, the host must have
+ /// started `threads - 1` helpers with [`tg_helper`]; builds without shared
+ /// memory always search with one.
+@@ -221,6 +261,30 @@ pub extern "C" fn tg_think(ms: f64, max_depth: i32) -> i32 {
+         if max_depth > 0 {
+             limits.depth = Some(max_depth);
+         }
++        let limits = limits_for(g, limits);
++        g.engine.search(&g.board, &limits, report).best_move.map_or(-1, pack)
++    })
++}
++
 +/// Search with Rapfi-style time management (patch for experiment-web): stop
 +/// near `optimum_ms` when the best move is stable, keep going up to `hard_ms`
 +/// while it keeps changing or the value falls. Returns the packed best move or -1.
@@ -38,10 +429,7 @@ index 3ddce0d..b6e2799 100644
 +        if max_depth > 0 {
 +            limits.depth = Some(max_depth);
 +        }
-+        g.engine.search(&g.board, &limits, report).best_move.map_or(-1, pack)
-+    })
-+}
-+
- /// Number of stones played.
- #[unsafe(no_mangle)]
- pub extern "C" fn tg_ply() -> u32 {
++        let limits = limits_for(g, limits);
+         g.engine.search(&g.board, &limits, report).best_move.map_or(-1, pack)
+     })
+ }

@@ -62,6 +62,26 @@ describe('tengenMoveOrder', () => {
   });
 });
 
+describe('Tengen variety', () => {
+  it('varies its reply in a quiet opening', async () => {
+    const varied = await loadTengen(
+      { compile: async (file) => WebAssembly.compile(readFileSync(join(WASM_DIR, file))) },
+      1,
+      { variety: 60, seed: 7 }
+    );
+    const steps = { 112: 0, 128: 1, 113: 0 } as const;
+    const moves = new Set<number>();
+    for (let i = 0; i < 10; i++)
+      moves.add(
+        varied.think(
+          { steps, size: 15, winMode: 'blockOpponent', turn: 1 },
+          { optimumMs: 100, hardMs: 200 }
+        )
+      );
+    expect(moves.size).toBeGreaterThan(1);
+  });
+});
+
 describe('Tengen engine (single-threaded WebAssembly build)', () => {
   let engine: TTengen;
   const fast = { optimumMs: 100, hardMs: 200 };
@@ -98,6 +118,23 @@ describe('Tengen engine (single-threaded WebAssembly build)', () => {
     const steps = { 108: 1, 109: 0, 110: 0, 111: 0, 112: 0, 114: 1, 20: 1, 40: 1 } as const;
     const move = engine.think({ steps, size: 15, winMode: 'non-blockOpponent', turn: 0 }, fast);
     expect(move).toBe(113);
+  });
+
+  it('does not play excluded moves', () => {
+    const request = { steps: { 112: 0 }, size: 15, winMode: 'blockOpponent', turn: 1 } as const;
+    const first = engine.think(request, fast);
+    const second = engine.think({ ...request, exclude: [first] }, fast);
+    expect(second).toBeGreaterThanOrEqual(0);
+    expect(second).not.toBe(first);
+  });
+
+  it('still takes a win that varying could miss', () => {
+    // Turn 0's open four on row 7, columns 4-7: only 108 and 113 win.
+    const steps = { 109: 0, 110: 0, 111: 0, 112: 0, 20: 1, 40: 1, 60: 1, 200: 1 } as const;
+    for (let i = 0; i < 4; i++) {
+      const move = engine.think({ steps, size: 15, winMode: 'blockOpponent', turn: 0 }, fast);
+      expect([108, 113]).toContain(move);
+    }
   });
 
   it('plays on a 10x10 board', () => {

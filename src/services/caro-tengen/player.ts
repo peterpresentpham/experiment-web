@@ -5,9 +5,9 @@ import { getOpeningBook, getTengen } from './browser';
 import { findBookMove } from './opening-book';
 
 /**
- * The hell level's first choice: lessons from earlier losses, then the opening book, then Tengen.
- * Returns null when the engine is unavailable or picks a move the experience book says lost
- * before, so the caller falls back to the network, which can search around those moves.
+ * The hell level's first choice: lessons from earlier losses, then the opening book, then Tengen,
+ * which searches around the moves that lost here before. Returns null when the engine is
+ * unavailable or every move it could play lost before, so the caller falls back to the network.
  */
 export async function findTengenMove(
   request: Omit<TCaroMachineRequest, 'level'>,
@@ -30,7 +30,7 @@ export async function findTengenMove(
   if (!engine) return null;
   let move: number;
   try {
-    move = engine.think({ steps, size, winMode, turn });
+    move = engine.think({ steps, size, winMode, turn, exclude: learned?.avoid });
   } catch (error) {
     console.error('[caro] Tengen failed on this position', error);
     return null;

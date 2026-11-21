@@ -8,6 +8,10 @@ later (see `LICENSE` in this folder).
 - Commit: `dc6f96c09b8870740b1aa413e231585e935788e2`
 - Changes: `experiment-web.patch` in this folder:
   - adds `tg_think_dynamic`, Rapfi-style time management for the WebAssembly build;
+  - adds `Limits::exclude` and `tg_exclude`, root moves not to play (moves that lost before),
+    and `Limits::variety`, `tg_set_variety` and `pbrain-tengen --variety MARGIN[,PLIES]`: a random move
+    among those within the margin of the best (the main thread tests every root move that fails
+    low against the margin, at the same depth), so games do not repeat;
   - adds `crates/engine/src/weights-freestyle-caro.txt`, evaluation weights for the caro rule
     (Piskvork rule 8, five blocked at both ends does not win). They are the freestyle weights
     refined with `tengen-tune fit-local --l2 1e-4` on 40,000 self-play games under that rule, and

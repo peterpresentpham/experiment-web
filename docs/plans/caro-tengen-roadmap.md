@@ -125,15 +125,13 @@ Con số kỳ vọng chỉ là ước tính; mỗi bước được giữ lại 
 - Tự đánh bằng trọng số mới → refine nhẹ lại → SPRT; dừng khi không còn tiến bộ.
 - Thử các chế độ khác: `fit-threat`, `fit-policy`, `fit-window`, cùng ràng buộc mạnh.
 - Tự đánh từ khai cuộc cân bằng để dữ liệu ít lệch về bên đi trước.
-- **Vòng 2, trạng thái 2026-11-20 23:22: tạm dừng ở bước SPRT.** Script:
-  `ml-data/engines/tune/iter2/run.sh` (chạy lại là tiếp tục; phần đã xong được giữ).
-  - Đã xong: tự đánh 40.000 ván bằng `weights-freestyle-caro.txt` (`iter2/games-1..8.txt`).
-  - Đã xong: fit-local trên 80.000 ván (vòng 1 + vòng 2). Validation 0,099330 → 0,098994 với
-    `l2 1e-4` (`iter2/weights-1e-4.txt`). `l2 3e-4` không đổi được trọng số nào nên bỏ qua.
-  - Đang dở: SPRT `weights-1e-4` với bản hiện tại. Lúc dừng: 400 ván, +18,3 ± 30,6 Elo, chưa kết
-    luận. Chạy lại sẽ bắt đầu SPRT từ đầu (khoảng 25–45 phút).
-  - Nếu thắng: chép vào `crates/engine/src/weights-freestyle-caro.txt`, build lại WASM, cập nhật
-    `experiment-web.patch` và `NOTICE.md`, test, thử trên trình duyệt.
+- **Vòng 2 (2026-11-21): không cải thiện, giữ trọng số vòng 1.** Tự đánh 40.000 ván bằng
+  `weights-freestyle-caro.txt`, fit-local trên 80.000 ván (vòng 1 + 2): validation 0,099330 →
+  0,098994 với `l2 1e-4`; `l2 3e-4` không đổi gì. SPRT [0, 10] từ khai cuộc cân bằng: 2.810 ván,
+  +1219 =334 −1257, **−4,7 ± 11,4 Elo**, LLR −2,85 (gần mức bác bỏ). Dữ liệu và log:
+  `ml-data/engines/tune/iter2/`.
+- Kết luận: fit-local trên bảng mẫu hình đã bão hòa; lần lặp thêm không đáng công. Muốn đánh giá
+  tốt hơn cần mô hình khác (bước 6).
 
 ## 5. VCT
 
@@ -167,9 +165,48 @@ Con số kỳ vọng chỉ là ước tính; mỗi bước được giữ lại 
 - Vòng lặp train → SPRT → sinh dữ liệu bằng bản mới. Rủi ro: công sức lớn, WASM nặng hơn, NPS
   giảm.
 
+### Bản thử (2026-11-21, tạm dừng)
+
+- Code (chỉ trong `ml-data`, chưa vào patch):
+  - `crates/engine/src/nnue.rs`: mỗi ô trống gần quân nhìn 4 đường × 8 ô (trống / mình / đối thủ /
+    ngoài bàn), mỗi hình đường có vector 32 chiều học được → cắt [0, 1] → cộng trên bàn → lớp ẩn
+    16 → **hiệu chỉnh cộng thêm** vào đánh giá cổ điển (lớp ra khởi tạo 0 = đúng bản hiện tại).
+    Hiệu chỉnh = điểm theo góc nhìn bên đi − điểm theo góc nhìn đối thủ (phản đối xứng).
+  - `pbrain-tengen --nnue FILE`; `tengen-nnue samples | train | inspect`
+    (`crates/arena/src/bin/nnue.rs`).
+- Pipeline có checkpoint: `ml-data/engines/nnue/run.sh` — dừng lúc nào cũng được, chạy lại là
+  tiếp tục: mẫu theo từng shard (`samples/*.bin`), train lưu `train.ckpt` sau mỗi epoch và
+  `net.nnue` tốt nhất, trận 4× thời gian và SPRT bỏ qua khi đã có kết quả. Mỗi phiên bản ở thư mục
+  riêng (`RUN=v3`).
+- Kết quả:
+  - v1 (nhãn = kết quả ván): validation 0,0993 → 0,0729 nhưng SPRT **−131 Elo**; cho 4× thời gian
+    vẫn chỉ +75 (NPS giảm ~4×). Mạng học được bên nào đi trước và không đối xứng (lệch ngưỡng cắt
+    tỉa của search).
+  - v2 (phản đối xứng, nhãn = kết quả ván): validation 0,0669 nhưng 4× thời gian **−165 Elo**.
+    Nhãn kết quả ván dạy mạng "dấu hiệu của bên thua" (bên thua thường phải chặn) thay vì nước tốt.
+  - v3: nhãn = 0,75 × điểm search 20k node + 0,25 × kết quả ván. Validation 0,0205 → 0,0122.
+    Cùng thời gian SPRT **≈ −220 Elo** (dừng sau 110 ván); 4× thời gian **−31 ± 36**.
+  - Mốc so sánh: bản cổ điển được 4× thời gian là **+118 ± 45** (`nnue/baseline-4x.log`). Vì NNUE
+    chậm ~4×, trận 4× gần như cùng số node: v3 vẫn kém cổ điển ~150 Elo ở cùng số node, tức
+    đánh giá của mạng còn tệ hơn đánh giá cổ điển, chưa đáng làm tối ưu tốc độ.
+
+- Code VCT + NNUE đã gỡ khỏi `ml-data/engines/tengen` (để patch gửi lên web gọn) và lưu ở
+  `ml-data/engines/experiments/nnue-vct/experiments.patch` (diff từ commit gốc của Tengen, gồm cả
+  phần đã có trong `experiment-web.patch`). Dùng lại: `git checkout . && git apply` patch đó.
+
 ## 7. Chống học thuộc đường thắng
 
 - Chọn ngẫu nhiên giữa các nước có điểm gần bằng nhau (trong sách, và ở gốc search khi chênh
   lệch rất nhỏ).
+- Đã làm (2026-11-21): `Limits::variety` / `tg_set_variety` / `pbrain-tengen --variety MARGIN[,PLIES]`.
+  Luồng chính của search thử thêm 6 nước gốc đầu tiên bị fail-low với cửa sổ hạ xuống `MARGIN`
+  (search rút gọn trước, xác nhận ở cùng độ sâu); nước nào lọt vào biên thì có thể được chọn ngẫu
+  nhiên. Không áp dụng khi điểm là thắng/thua chắc. App dùng biên 20, chỉ khi dưới 20 quân.
+  - Đo (100 ms, `ml-data/engines/variety/`): chia thời gian cho search phụ sau search chính
+    −40 Elo; kiểm tra mọi nước gốc ở cả ván −54; giới hạn 6 nước + 20 quân đầu **−2,0 ± 9,4**
+    (4000 ván, SPRT [−10, 0] chưa kết luận, LLR 1,30) → chấp nhận.
+- Nước từng làm thua (sổ kinh nghiệm trên máy người chơi) được gửi cho Tengen để tránh
+  (`Limits::exclude` / `tg_exclude`) thay vì chuyển sang mạng cũ yếu hơn.
+- Chưa làm: sách khai cuộc vẫn một nước mỗi thế (3 nước đầu của máy cố định).
 - Sổ kinh nghiệm chung: gửi ván máy thua về server (API + nơi lưu, ví dụ Vercel KV/Postgres),
   phân tích định kỳ, đưa vào sách khi deploy.

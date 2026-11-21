@@ -210,3 +210,45 @@ Con số kỳ vọng chỉ là ước tính; mỗi bước được giữ lại 
 - Chưa làm: sách khai cuộc vẫn một nước mỗi thế (3 nước đầu của máy cố định).
 - Sổ kinh nghiệm chung: gửi ván máy thua về server (API + nơi lưu, ví dụ Vercel KV/Postgres),
   phân tích định kỳ, đưa vào sách khi deploy.
+
+## 8. Rapfi + NNUE (2026-11-21)
+
+- Luật **không chặn hai đầu**: cấp Địa ngục chạy Rapfi (GPL-3.0) với mạng mix9svq freestyle, bản
+  WebAssembly (`public/engines/rapfi/`, xem `NOTICE.md`): nhiều luồng khi có cross-origin
+  isolation, 1 luồng khi không; 2 giây mỗi nước. Không chạy được thì quay về Tengen.
+- Đo native trước khi dùng: Rapfi 1 luồng vs Tengen, 300 ms/nước, khai cuộc cân bằng: 88 thắng,
+  1 hoà, 11 thua (**+354 ± 107 Elo**).
+- Rapfi không có biến hoá ngẫu nhiên như Tengen (bước 7); bản nhiều luồng tự nhiên ít lặp lại hơn.
+  Nước từng thua vẫn được tránh (`YXBLOCK`).
+- Luật **chặn hai đầu**: Rapfi chưa có luật này. Muốn dùng phải thêm luật vào Rapfi (C++), sinh
+  dữ liệu tự đánh và huấn luyện mạng mới bằng `ml-data/engines/rapfi/Trainer`.
+- Rapfi **chỉ đánh giá cổ điển** (bỏ NNUE) vs Tengen, luật không chặn, 300 ms/nước: 42 thắng, 2 hoà,
+  16 thua (**+161 ± 96 Elo**, `ml-data/engines/rapfi-classical/`). Riêng search của Rapfi đã hơn
+  Tengen, nên thêm luật chặn hai đầu vào Rapfi có thể có lợi ngay cả trước khi có mạng riêng.
+
+## 9. Rapfi cho luật chặn hai đầu (2026-11-21)
+
+- Thêm luật `CARO` vào Rapfi (`INFO rule 8`, patch ở `public/engines/rapfi/experiment-web.patch`):
+  năm quân trở lên thắng trừ khi hai ô ngay ngoài dãy đều là quân đối thủ; mép bàn không chặn.
+  Bảng mẫu hình khớp với luật của app trên toàn bộ 264.992 đường 11 ô (kiểm tra độc lập; cùng bộ
+  kiểm tra chạy trên bảng standard thì lệch 21.116). Benchmark các luật cũ giữ nguyên số node.
+- Chưa có mạng riêng: bảng đánh giá cổ điển và tham số search chép từ freestyle.
+- Rapfi-caro vs Tengen, luật chặn, 300 ms/nước, 100 ván: 65 thắng, 4 hoà, 31 thua
+  (**+123 ± 65 Elo**, `ml-data/engines/rapfi-caro/`). App dùng Rapfi cho cả hai luật, Tengen là
+  dự phòng.
+- Lưu ý: trọng tài của arena (Tengen rule 8) cho dãy từ 6 quân bị chặn hai đầu là thắng, app thì
+  không; trường hợp này rất hiếm.
+- Tiếp theo (giai đoạn 2): `pbrain-rapfi selfplay` sinh dữ liệu (đã mã hoá luật caro = 3 trong
+  định dạng dữ liệu), thêm luật vào Trainer, huấn luyện mix9 cho caro.
+
+### Giai đoạn 2: mạng NNUE cho luật chặn (đang chạy, 2026-11-21)
+
+- Pipeline trong `ml-data/engines/rapfi-train/` (`run.sh`, dừng/chạy lại được ở từng bước):
+  tự đánh (`selfplay.sh`: 64 shard × 400 ván, 50k node/nước, multipv 4; bàn 20×20 một nửa,
+  15×15 ba phần tám, 10×10 một phần tám) → huấn luyện mix9s trên GPU Mac (MPS) → xuất mix9svq
+  (`export_caro.py`: codebook 65.536 bằng k-means thay cho lớp VQ cần pykeops/CUDA) → 200 ván với
+  Rapfi cổ điển. Vòng N tự đánh bằng mạng của vòng N−1.
+- Sửa thêm trong Rapfi: tên luật Caro khi in (`iohelper.cpp`) và lỗi kiểu tham số `balance1-node`
+  trên macOS (`argutils.cpp`). Trainer: luật caro (mã 3 trong dữ liệu, bit 8 trong file mạng),
+  patch ở `ml-data/engines/rapfi-train/trainer.patch`.
+- Đã thử trọn quy trình trên dữ liệu nhỏ: mạng xuất ra khớp ArchHash của engine và nạp được.

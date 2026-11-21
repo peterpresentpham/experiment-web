@@ -110,6 +110,8 @@ Report failures as they are; do not claim a check you did not run.
 - The same goes for branching to commit, amending, rebasing and pushing. Never force-push or
   rewrite pushed history.
 - When work is done, summarise what changed and how it was checked, then ask whether to commit.
+- When asked to commit, put all current changes in a single commit; do not split them into several
+  unless the user asks for that.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

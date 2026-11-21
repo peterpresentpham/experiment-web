@@ -6,7 +6,7 @@ import {
   TExperienceEntry,
   TGameRecord,
 } from 'src/services/caro-machine/experience';
-import { TCaroMachineLevel } from 'src/types/caro.type';
+import { TCaroMachineLevel, TCaroWinMode } from 'src/types/caro.type';
 
 export type TExperienceEntries = Array<[string, TExperienceEntry]>;
 
@@ -23,8 +23,8 @@ export type TCaroMachineWorkerRequest =
       /** Recent hell games, replayed while fine-tuning the network. */
       replay: Array<THellGame>;
     }
-  /** Hell level: load the network before the first move. */
-  | { type: 'warm-up'; epoch: number }
+  /** Hell level: load the engine for this rule (or the network) before the first move. */
+  | { type: 'warm-up'; epoch: number; winMode: TCaroWinMode }
   /** Hell level: the learner saved new weights, drop the cached network. */
   | { type: 'reload-model' };
 
@@ -77,7 +77,7 @@ async function handle(message: TCaroMachineWorkerRequest) {
     }
     reply({ type: 'learned', entries, hellGame });
   } else if (message.type == 'warm-up') {
-    if (await (await loadTengen()).warmUpTengen()) {
+    if (await (await loadTengen()).warmUpTengen(message.winMode)) {
       reply({ type: 'hell-status', available: true });
       return;
     }

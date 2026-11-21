@@ -76,11 +76,11 @@ export default function useCaroMachine({ isOver, move }: TParams) {
     };
   }, [isMachineMode]);
 
-  // Fetches TensorFlow.js and the network as soon as the hell level is picked.
+  // Loads the hell level's engine for this rule as soon as the level is picked.
   useEffect(() => {
     const worker = workerRef.current;
-    if (isHell && worker) post(worker, { type: 'warm-up', epoch });
-  }, [isHell, epoch]);
+    if (isHell && worker) post(worker, { type: 'warm-up', epoch, winMode });
+  }, [isHell, epoch, winMode]);
 
   useEffect(() => {
     const worker = workerRef.current;

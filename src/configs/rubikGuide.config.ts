@@ -18,7 +18,14 @@ export type CubeImage = {
   caption?: string;
 };
 
-export type AlgType = { name: string; alg: string; note?: string; image?: CubeImage };
+export type AlgType = {
+  name: string;
+  alg: string;
+  note?: string;
+  image?: CubeImage;
+  /** Pieces coloured in the 3D player (defaults to the picture's mask). */
+  mask?: MaskName;
+};
 
 /** Moves shown as pictures: the state right after doing the move on a solved cube. */
 export const NOTATION_IMAGES: Array<string> = [
@@ -39,6 +46,8 @@ export const NOTATION_IMAGES: Array<string> = [
 export type GuideStep = {
   title: string;
   goal: string;
+  /** How to hold the cube for this step. */
+  hold: string;
   images?: Array<CubeImage>;
   tips: Array<string>;
   algs?: Array<AlgType>;
@@ -47,57 +56,85 @@ export type GuideStep = {
 // Doing the white cross puts the white edges on the bottom; F2 R2 B2 L2 lifts them
 // back up around the yellow centre, which is exactly the "daisy".
 const DAISY = 'F2 R2 B2 L2';
+const SEXY = "R U R' U'";
+const EDGE_CYCLE = "R U' R U R U R U' R' U' R2";
+const CORNER_CYCLE = "U R U' L' U R' U' L";
 
 /**
  * Language-independent part of the beginner steps: pictures and algorithms. The text of each
  * step (title, goal, captions, tips, algorithm names) comes from `GUIDE_TEXT`, in the same order.
  */
-const BEGINNER_SHAPE: Array<{ images?: Array<Omit<CubeImage, 'caption'>>; algs?: Array<string> }> =
-  [
-    {
-      images: [
-        { kind: 'iso', setup: DAISY, mask: 'cross' },
-        { kind: 'iso', view: 'z2', mask: 'cross' },
-      ],
-    },
-    { images: [{ kind: 'iso', view: 'z2', mask: 'firstLayer' }], algs: ["R U R' U'"] },
-    {
-      images: [
-        { kind: 'iso', alg: "U R U' R' U' F' U F", mask: 'f2l' },
-        { kind: 'iso', alg: "U' L' U L U F U' F'", mask: 'f2l' },
-        { kind: 'iso', mask: 'f2l' },
-      ],
-      algs: ["U R U' R' U' F' U F", "U' L' U L U F U' F'"],
-    },
-    {
-      images: [
-        { kind: 'top', alg: "F R U R' U' F' f R U R' U' f'", mask: 'eo' },
-        { kind: 'top', alg: "F U R U' R' F'", mask: 'eo' },
-        { kind: 'top', alg: "F R U R' U' F'", mask: 'eo' },
-        { kind: 'top', mask: 'eo' },
-      ],
-      algs: ["F R U R' U' F'", "F U R U' R' F'"],
-    },
-    {
-      images: [{ kind: 'top', alg: "R U' R U R U R U' R' U' R2", mask: 'llEdges', arrows: true }],
-      algs: ["R U' R U R U R U' R' U' R2"],
-    },
-    {
-      images: [{ kind: 'top', alg: "U R U' L' U R' U' L", mask: 'llCorners', arrows: true }],
-      algs: ["U R U' L' U R' U' L"],
-    },
-    {
-      images: [
-        {
-          kind: 'iso',
-          alg: "R' D' R D R' D' R D U R' D' R D R' D' R D R' D' R D R' D' R D U'",
-          mask: 'none',
-        },
-        { kind: 'iso' },
-      ],
-      algs: ["R' D' R D"],
-    },
-  ];
+const BEGINNER_SHAPE: Array<{
+  images?: Array<Omit<CubeImage, 'caption'>>;
+  algs?: Array<string>;
+  /** Pieces coloured when the step's algorithms play in 3D. */
+  mask?: MaskName;
+}> = [
+  {
+    images: [
+      { kind: 'iso', setup: DAISY, mask: 'cross' },
+      { kind: 'iso', view: 'z2', mask: 'cross' },
+    ],
+  },
+  {
+    // The corner above its slot, solved by the sexy move done 1, 3 or 5 times.
+    images: [
+      { kind: 'iso', alg: SEXY, mask: 'firstLayer' },
+      { kind: 'iso', alg: `${SEXY} ${SEXY} ${SEXY}`, mask: 'firstLayer' },
+      { kind: 'iso', alg: `${SEXY} ${SEXY} ${SEXY} ${SEXY} ${SEXY}`, mask: 'firstLayer' },
+      { kind: 'iso', view: 'z2', mask: 'firstLayer' },
+    ],
+    algs: [SEXY],
+    mask: 'firstLayer',
+  },
+  {
+    images: [
+      { kind: 'iso', alg: "U R U' R' U' F' U F", mask: 'f2l' },
+      { kind: 'iso', alg: "U' L' U L U F U' F'", mask: 'f2l' },
+      { kind: 'iso', mask: 'f2l' },
+    ],
+    algs: ["U R U' R' U' F' U F", "U' L' U L U F U' F'"],
+    mask: 'f2l',
+  },
+  {
+    images: [
+      { kind: 'top', alg: "F R U R' U' F' f R U R' U' f'", mask: 'eo' },
+      { kind: 'top', alg: "F U R U' R' F'", mask: 'eo' },
+      { kind: 'top', alg: "F R U R' U' F'", mask: 'eo' },
+      { kind: 'top', mask: 'eo' },
+    ],
+    algs: ["F R U R' U' F'", "F U R U' R' F'"],
+    mask: 'eo',
+  },
+  {
+    images: [
+      { kind: 'top', alg: EDGE_CYCLE, mask: 'llEdges', arrows: true },
+      { kind: 'top', alg: `${EDGE_CYCLE} ${EDGE_CYCLE}`, mask: 'llEdges', arrows: true },
+    ],
+    algs: [EDGE_CYCLE],
+    mask: 'llEdges',
+  },
+  {
+    images: [
+      { kind: 'top', alg: CORNER_CYCLE, mask: 'llCorners', arrows: true },
+      { kind: 'top', alg: `${CORNER_CYCLE} ${CORNER_CYCLE}`, mask: 'llCorners', arrows: true },
+    ],
+    algs: [CORNER_CYCLE],
+    mask: 'llCorners',
+  },
+  {
+    images: [
+      {
+        kind: 'iso',
+        alg: "R' D' R D R' D' R D U R' D' R D R' D' R D R' D' R D R' D' R D U'",
+        mask: 'none',
+      },
+      { kind: 'iso' },
+    ],
+    algs: ["R' D' R D"],
+    mask: 'none',
+  },
+];
 
 const F2L_BASIC_ALGS = ["U R U' R'", "R U R'", "U' L' U L", "F' U' F"];
 
@@ -119,6 +156,7 @@ const PLL_2LOOK_IDS = ['Aa', 'Ab', 'Y', 'Ua', 'Ub', 'H', 'Z'];
 type TStepText = {
   title: string;
   goal: string;
+  hold: string;
   captions: Array<string>;
   tips: Array<string>;
   algNames: Array<string>;
@@ -180,6 +218,7 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Step 1: White cross',
         goal: 'Place the 4 white edges around the white centre. The other colour of each edge must match the centre next to it.',
+        hold: 'Yellow centre on top while you build the daisy. At the end of this step, flip the cube once: white on the bottom, yellow on top, for every later step.',
         captions: [
           'Daisy: white edges around the yellow centre',
           'Goal: white cross, edges match centres',
@@ -195,11 +234,17 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Step 2: Four white corners (first layer done)',
         goal: 'Put the 4 corners that have white into place, finishing the first layer.',
-        captions: ['Goal: complete first layer (white face shown)'],
+        hold: 'White on the bottom, yellow on top. The empty spot for the corner is at front-right-bottom, and the corner sits right above it (front-right-top).',
+        captions: [
+          'White facing right: 1 time',
+          'White facing up: 3 times',
+          'White facing front: 5 times',
+          'Goal: complete first layer (white face shown)',
+        ],
         tips: [
           'Find a corner with white in the top layer. Read its other 2 colours (for example green and orange).',
           'Turn U so that corner sits right above its spot: the spot between the 2 centres of those colours. Hold the cube so that spot is at front-right-bottom.',
-          "Repeat R U R' U' until the corner drops in with white facing down (1, 3 or 5 times).",
+          "Repeat R U R' U' until the corner drops in with white facing down: 1 time if white faces right, 3 times if it faces up, 5 times if it faces front (see the pictures).",
           "A white corner stuck in the wrong place in the bottom layer: put it at front-right, do R U R' U' once to bring it up, then continue as above.",
         ],
         algNames: ['Sexy move (repeat until the corner is in)'],
@@ -207,6 +252,7 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Step 3: Middle layer',
         goal: 'Place the 4 middle-layer edges (the edges without yellow).',
+        hold: 'White on the bottom, yellow on top. The edge to place is in the top layer at the front, its front colour matching the front centre.',
         captions: [
           'Edge going to the right',
           'Edge going to the left',
@@ -222,6 +268,7 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Step 4: Yellow cross',
         goal: 'Turn the 4 yellow edges to face up. Ignore the corners for now.',
+        hold: 'Yellow on top. Look down at the yellow face and turn only U until the shape matches the picture.',
         captions: [
           'Dot',
           'L shape (placed at back-left)',
@@ -239,7 +286,11 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Step 5: Match the yellow edges',
         goal: 'Swap the yellow edges so their side colours match the centres.',
-        captions: ['Three edges cycle along the arrows'],
+        hold: 'Yellow on top. The one edge that already matches its centre is at the back.',
+        captions: [
+          '1 time: the other 3 edges cycle along the arrows',
+          'Cycling the other way: 2 times',
+        ],
         tips: [
           'Turn U and count how many edges match their centres. You can always turn it so at least 1 edge matches.',
           'Exactly 1 edge matches: hold that edge at the back and do the algorithm. The other 3 cycle; do it a second time if they cycled the wrong way.',
@@ -250,7 +301,11 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Step 6: Place the yellow corners',
         goal: 'Move the 4 yellow corners to their correct spots. They may still be twisted; that is fine.',
-        captions: ['Front-right corner in place, the other 3 cycle'],
+        hold: 'Yellow on top. A corner that is already in place is at front-right-top.',
+        captions: [
+          'Front-right corner in place, the other 3 cycle: 1 time',
+          'Cycling the other way: 2 times',
+        ],
         tips: [
           'A corner is "in place" when its 3 colours match the 3 centres around it, whichever way it is twisted.',
           'Find a corner in place and hold it at front-right-top. Do the algorithm (once or twice) until all 4 corners are in place.',
@@ -261,9 +316,10 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Step 7: Twist the yellow corners, done',
         goal: 'Twist each corner until its yellow faces up.',
+        hold: 'Yellow on top, and keep this grip for the whole step. The corner to twist is at front-right-top; only U brings the next one there.',
         captions: ['Two corners to twist', 'Solved!'],
         tips: [
-          'Keep yellow on top. Put an unsolved corner at front-right-top.',
+          'Put a corner whose yellow does not face up yet at front-right-top.',
           "Repeat R' D' R D (2 or 4 times) until that corner's yellow faces up.",
           'IMPORTANT: do not rotate the whole cube. Only turn U to bring the next corner to front-right-top. The bottom will look scrambled; do not panic, it comes back once the last corner is done.',
           'All 4 corners done: one last U turn solves the cube.',
@@ -355,6 +411,7 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Bước 1: Dấu cộng trắng',
         goal: 'Ghép 4 cạnh trắng quanh tâm trắng. Màu còn lại của mỗi cạnh phải trùng với tâm bên cạnh.',
+        hold: 'Tâm vàng ở trên trong lúc làm bông hoa. Cuối bước này lật khối một lần: trắng xuống dưới, vàng lên trên, và giữ như vậy cho mọi bước sau.',
         captions: [
           'Bông hoa (daisy): cạnh trắng quanh tâm vàng',
           'Mục tiêu: dấu cộng trắng, cạnh khớp tâm',
@@ -370,11 +427,17 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Bước 2: Bốn góc trắng (xong tầng 1)',
         goal: 'Đặt 4 góc có màu trắng vào đúng chỗ, hoàn thành tầng thứ nhất.',
-        captions: ['Mục tiêu: tầng 1 hoàn chỉnh (nhìn mặt trắng)'],
+        hold: 'Trắng ở dưới, vàng ở trên. Chỗ trống của góc ở trước-phải-dưới, góc nằm ngay phía trên nó (trước-phải-trên).',
+        captions: [
+          'Trắng nhìn sang phải: 1 lần',
+          'Trắng nhìn lên: 3 lần',
+          'Trắng nhìn ra trước: 5 lần',
+          'Mục tiêu: tầng 1 hoàn chỉnh (nhìn mặt trắng)',
+        ],
         tips: [
           'Tìm một góc có màu trắng ở tầng trên. Đọc 2 màu còn lại của nó (ví dụ xanh lá và cam).',
           'Xoay U để góc đó nằm ngay phía trên chỗ của nó: chỗ nằm giữa 2 tâm cùng màu. Cầm khối sao cho chỗ đó ở góc trước-phải-dưới.',
-          "Lặp lại R U R' U' cho đến khi góc vào đúng và mặt trắng hướng xuống (1, 3 hoặc 5 lần).",
+          "Lặp lại R U R' U' cho đến khi góc vào đúng và mặt trắng hướng xuống: 1 lần nếu trắng nhìn sang phải, 3 lần nếu trắng nhìn lên, 5 lần nếu trắng nhìn ra trước (xem hình).",
           "Góc trắng bị kẹt sai chỗ ở tầng dưới: đặt nó ở trước-phải, làm R U R' U' một lần để đưa nó lên rồi làm lại như trên.",
         ],
         algNames: ['Sexy move (lặp lại đến khi góc vào)'],
@@ -382,6 +445,7 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Bước 3: Tầng giữa',
         goal: 'Đặt 4 cạnh tầng giữa (các cạnh không có màu vàng).',
+        hold: 'Trắng ở dưới, vàng ở trên. Cạnh cần đặt nằm ở tầng trên, mặt trước, màu mặt trước của nó trùng tâm trước.',
         captions: [
           'Cạnh cần đưa sang phải',
           'Cạnh cần đưa sang trái',
@@ -397,6 +461,7 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Bước 4: Dấu cộng vàng',
         goal: 'Làm 4 cạnh vàng hướng lên trên. Chưa cần quan tâm đến góc.',
+        hold: 'Vàng ở trên. Nhìn xuống mặt vàng, chỉ xoay U cho đến khi hình giống như hình mẫu.',
         captions: [
           'Chấm',
           'Chữ L (đặt ở trên-trái)',
@@ -414,7 +479,11 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Bước 5: Khớp màu cạnh vàng',
         goal: 'Đổi chỗ các cạnh vàng sao cho màu bên của chúng trùng với tâm.',
-        captions: ['Ba cạnh xoay vòng theo mũi tên'],
+        hold: 'Vàng ở trên. Cạnh duy nhất đã khớp tâm nằm ở phía sau.',
+        captions: [
+          '1 lần: 3 cạnh còn lại xoay vòng theo mũi tên',
+          'Xoay vòng chiều ngược lại: 2 lần',
+        ],
         tips: [
           'Xoay U và đếm có bao nhiêu cạnh khớp tâm. Luôn có cách xoay để ít nhất 1 cạnh khớp.',
           'Nếu đúng 1 cạnh khớp: để cạnh đó ở phía sau, làm công thức. 3 cạnh còn lại xoay vòng; làm lại lần 2 nếu vòng sai chiều.',
@@ -425,7 +494,11 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Bước 6: Đặt góc vàng đúng chỗ',
         goal: 'Đưa 4 góc vàng về đúng vị trí. Góc có thể đang bị xoay sai chiều, chưa sao.',
-        captions: ['Góc trước-phải đúng chỗ, 3 góc còn lại xoay vòng'],
+        hold: 'Vàng ở trên. Một góc đã đúng chỗ nằm ở trước-phải-trên.',
+        captions: [
+          'Góc trước-phải đúng chỗ, 3 góc còn lại xoay vòng: 1 lần',
+          'Xoay vòng chiều ngược lại: 2 lần',
+        ],
         tips: [
           'Góc "đúng chỗ" là góc có 3 màu trùng với 3 tâm xung quanh nó, dù nó đang xoay hướng nào.',
           'Tìm một góc đúng chỗ, cầm sao cho nó ở trước-phải-trên. Làm công thức (1 hoặc 2 lần) đến khi cả 4 góc đúng chỗ.',
@@ -436,9 +509,10 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
       {
         title: 'Bước 7: Xoay góc vàng, hoàn thành',
         goal: 'Xoay từng góc cho mặt vàng hướng lên.',
+        hold: 'Vàng ở trên và giữ nguyên cách cầm suốt bước này. Góc cần xoay ở trước-phải-trên; chỉ xoay U để đưa góc tiếp theo vào đó.',
         captions: ['Hai góc cần xoay', 'Hoàn thành!'],
         tips: [
-          'Lật khối: mặt vàng vẫn ở trên. Đặt một góc chưa đúng chiều ở trước-phải-trên.',
+          'Đặt một góc có mặt vàng chưa hướng lên ở trước-phải-trên.',
           "Lặp lại R' D' R D (2 hoặc 4 lần) cho đến khi mặt vàng của góc đó hướng lên.",
           'QUAN TRỌNG: không xoay cả khối. Chỉ xoay U để đưa góc kế tiếp vào trước-phải-trên. Phần dưới sẽ trông như bị phá, đừng hoảng, nó sẽ tự hồi lại khi xong góc cuối.',
           'Xong cả 4 góc: xoay U lần cuối để hoàn thành khối.',
@@ -503,9 +577,10 @@ function buildGuide(text: TGuideText) {
     return {
       title: step.title,
       goal: step.goal,
+      hold: step.hold,
       tips: step.tips,
       images: shape.images?.map((image, i) => ({ ...image, caption: step.captions[i] })),
-      algs: shape.algs?.map((alg, i) => ({ name: step.algNames[i], alg })),
+      algs: shape.algs?.map((alg, i) => ({ name: step.algNames[i], alg, mask: shape.mask })),
     };
   });
   const f2lBasic: Array<AlgType> = F2L_BASIC_ALGS.map((alg, i) => ({

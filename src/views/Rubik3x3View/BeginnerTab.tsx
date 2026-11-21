@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { RUBIK_GUIDE, NOTATION_IMAGES } from 'src/configs/rubikGuide.config';
 import { defineMessages } from 'src/i18n/define';
 import { getLocale } from 'src/i18n/server';
+import BeginnerCompare from './BeginnerCompare';
 import { AlgRow, Bullets, Callout, CubePicture, H2, H3, P } from './parts';
 
 const TEXT = defineMessages<{
@@ -19,6 +20,7 @@ const TEXT = defineMessages<{
   gripTips: Array<string>;
   steps: string;
   goal: string;
+  hold: string;
   tips: string;
   tipList: Array<string>;
   nextTitle: string;
@@ -58,6 +60,7 @@ const TEXT = defineMessages<{
     ],
     steps: 'The 7 steps',
     goal: 'Goal:',
+    hold: 'How to hold it:',
     tips: 'Tips and common mistakes',
     tipList: [
       'Always check the centre colours before placing a piece. The white-red edge belongs between the white and red centres, nowhere else.',
@@ -104,6 +107,7 @@ const TEXT = defineMessages<{
     ],
     steps: '7 bước giải',
     goal: 'Mục tiêu:',
+    hold: 'Cách cầm:',
     tips: 'Mẹo và lỗi hay gặp',
     tipList: [
       'Luôn kiểm tra màu tâm trước khi đặt mảnh. Cạnh trắng-đỏ phải nằm giữa tâm trắng và tâm đỏ, không phải chỗ khác.',
@@ -178,6 +182,9 @@ export default async function BeginnerTab() {
           <P>
             <strong>{t.goal}</strong> {step.goal}
           </P>
+          <P>
+            <strong>{t.hold}</strong> {step.hold}
+          </P>
           {step.images && (
             <div className="mt-3 flex flex-wrap gap-6">
               {step.images.map((img, i) => (
@@ -191,6 +198,8 @@ export default async function BeginnerTab() {
           ))}
         </section>
       ))}
+
+      <BeginnerCompare />
 
       <H2 id="beginner-tips">{t.tips}</H2>
       <Bullets items={t.tipList} />

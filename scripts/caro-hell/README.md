@@ -73,3 +73,40 @@ new base model. `ml-data/` stays local (gitignored); delete it to start over.
 
 Single-purpose tools also exist: `pnpm hell:generate` (teacher games only) and `pnpm hell:train`
 (one-off training on recorded games).
+
+## Tengen: the engine the hell level plays
+
+Since the network plateaued around "a bit stronger than Hard", the hell level plays
+[Tengen](https://github.com/SXKA/tengen) (GPL-3.0), a classical caro engine compiled to WebAssembly
+(`public/engines/tengen/`, with its NOTICE, licence and our patch). The network stays as the
+fallback when WebAssembly cannot run. The site sends cross-origin isolation headers
+(`next.config.ts`) so the engine can search on several threads; `src/services/caro-tengen/engine.ts`
+picks the thread count and measures the device to set the time per move.
+
+To measure engines natively against our players (engines built into `ml-data/engines/bin/`):
+
+```bash
+node --import tsx scripts/caro-hell/engine-match.ts --a tengen --b hell --mode block --games 20 --time 2000 --threads 1
+```
+
+### Measuring Tengen changes
+
+Under the blocked-ends rule the side that moves first wins almost every engine game from a
+near-empty board (80/80 in a test), so plain matches cannot tell two builds apart. Use:
+
+- **SPRT from balanced openings** (`openings/caro-15.txt`, `openings/caro-20.txt`: 400 openings
+  each that Tengen, thinking 2 s, judges close to even; made with `tengen-tune openings`):
+
+  ```bash
+  sh scripts/caro-hell/tengen-sprt.sh "ml-data/engines/tengen/target/release/pbrain-tengen --weights new.txt"
+  ```
+
+- **Defence when moving second** (the hell level's usual situation): the defender always moves
+  second against Tengen with more time, whose first moves are random cells near the stones.
+
+  ```bash
+  node --import tsx scripts/caro-hell/defense-match.ts --defender tengen-book --defender-time 1000 --attacker-time 4000 --size 15 --games 40
+  ```
+
+`tengen-book` is Tengen behind the opening book (`opening-book.ts` builds it into
+`public/models/caro-book/`). The plan for further work is in `docs/plans/caro-tengen-roadmap.md`.

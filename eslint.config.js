@@ -13,6 +13,7 @@ export default [
       'dist',
       '.next',
       'coverage',
+      'ml-data/**',
       'public/**',
       'next-env.d.ts',
       'signaling-server.mjs',

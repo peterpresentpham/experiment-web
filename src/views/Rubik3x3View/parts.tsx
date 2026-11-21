@@ -5,6 +5,7 @@ import CubeTop from 'src/components/rubik/CubeTop';
 import { AlgType, CubeImage } from 'src/configs/rubikGuide.config';
 import { applyAlg, caseFromAlg, solvedCube } from 'src/lib/cube/cube';
 import { cn } from 'src/lib/utils';
+import Alg3DToggle from './Alg3DToggle';
 
 export function H2({ id, children }: { id?: string; children: ReactNode }) {
   return (
@@ -85,7 +86,7 @@ export function AlgText({ alg, main = true }: { alg: string; main?: boolean }) {
   );
 }
 
-export function AlgRow({ name, alg, note, image }: AlgType) {
+export function AlgRow({ name, alg, note, image, mask }: AlgType) {
   return (
     <div className="mt-4 flex items-center gap-4">
       {image && <CubePicture image={image} size={image.kind === 'iso' ? 90 : 80} />}
@@ -95,6 +96,7 @@ export function AlgRow({ name, alg, note, image }: AlgType) {
           <AlgText alg={alg} />
         </div>
         {note && <p className="text-muted-foreground mt-1 text-sm">{note}</p>}
+        <Alg3DToggle alg={alg} mask={mask ?? image?.mask} />
       </div>
     </div>
   );

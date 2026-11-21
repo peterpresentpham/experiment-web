@@ -1,0 +1,984 @@
+diff --git a/Rapfi/CMakeLists.txt b/Rapfi/CMakeLists.txt
+index 7661be3..4b63264 100644
+--- a/Rapfi/CMakeLists.txt
++++ b/Rapfi/CMakeLists.txt
+@@ -350,7 +350,10 @@ endif()
+ 
+ if(EMSCRIPTEN)
+     message(STATUS "Setting up build for Emscripten.")
+-    set(NETWORKS_DIR "${CMAKE_SOURCE_DIR}/../Networks")
++    # experiment-web: allow another set of preloaded networks.
++    if(NOT NETWORKS_DIR)
++        set(NETWORKS_DIR "${CMAKE_SOURCE_DIR}/../Networks")
++    endif()
+ 
+     if(NOT NO_COMMAND_MODULES)
+         message(FATAL_ERROR
+diff --git a/Rapfi/command/argutils.cpp b/Rapfi/command/argutils.cpp
+index d1599d5..43d79d1 100644
+--- a/Rapfi/command/argutils.cpp
++++ b/Rapfi/command/argutils.cpp
+@@ -43,6 +43,9 @@ Rule Command::parseRule(std::string_view ruleStr)
+     else if (ruleStr == "renju" || ruleStr == "Renju" || ruleStr == "r" || ruleStr == "R"
+              || ruleStr == "2" || ruleStr == "4")
+         return Rule::RENJU;
++    else if (ruleStr == "caro" || ruleStr == "Caro" || ruleStr == "c" || ruleStr == "C"
++             || ruleStr == "8")
++        return Rule::CARO;
+     else
+         throw std::invalid_argument("unknown rule " + std::string(ruleStr));
+ }
+@@ -128,7 +131,7 @@ void Command::addPlayOptions(cxxopts::Options &options)
+     options.add_options("play-general")                                                      //
+         ("s,boardsize", "Board size in [5,22]", cxxopts::value<int>()->default_value("15"))  //
+         ("r,rule",
+-         "One of [freestyle, standard, renju] rule",
++         "One of [freestyle, standard, renju, caro] rule",
+          cxxopts::value<std::string>()->default_value("freestyle"))  //
+         ("t,thread",
+          "Number of search threads to use for searching balanced moves",
+@@ -183,11 +186,11 @@ Opening::OpeningGenConfig Command::parseOpengenConfig(const cxxopts::ParseResult
+     cfg.maxMoves      = result["max-move"].as<int>();
+     cfg.localSizeMin  = result["min-area-size"].as<int>();
+     cfg.localSizeMax  = result["max-area-size"].as<int>();
+-    cfg.balance1Nodes = result["balance1-node"].as<size_t>();
++    cfg.balance1Nodes = result["balance1-node"].as<uint64_t>();
+     cfg.balance1FastCheckNodes =
+         static_cast<uint64_t>(result["balance1-fast-check-ratio"].as<double>() * cfg.balance1Nodes);
+     cfg.balance1FastCheckWindow = Value(result["balance1-fast-check-window"].as<int>());
+-    cfg.balance2Nodes           = result["balance2-node"].as<size_t>();
++    cfg.balance2Nodes           = result["balance2-node"].as<uint64_t>();
+     cfg.balanceWindow           = Value(result["balance-window"].as<int>());
+ 
+     if (cfg.minMoves <= 0 || cfg.maxMoves < cfg.minMoves)
+diff --git a/Rapfi/command/database.cpp b/Rapfi/command/database.cpp
+index 88361fe..5320ad4 100644
+--- a/Rapfi/command/database.cpp
++++ b/Rapfi/command/database.cpp
+@@ -117,6 +117,8 @@ DBKey parseDBKey(std::string keyStr)
+         rule = STANDARD;
+     else if (keyParts[0] == "r")
+         rule = RENJU;
++    else if (keyParts[0] == "c")
++        rule = CARO;
+     else
+         throw std::invalid_argument("invalid rule " + std::string(keyParts[0]));
+ 
+diff --git a/Rapfi/command/gomocup.cpp b/Rapfi/command/gomocup.cpp
+index bfa92cc..d41a2dc 100644
+--- a/Rapfi/command/gomocup.cpp
++++ b/Rapfi/command/gomocup.cpp
+@@ -232,6 +232,7 @@ void getOption()
+         case 4: options.rule = {Rule::RENJU, GameRule::FREEOPEN}; break;
+         case 5: options.rule = {Rule::FREESTYLE, GameRule::SWAP1}; break;
+         case 6: options.rule = {Rule::FREESTYLE, GameRule::SWAP2}; break;
++        case 8: options.rule = {Rule::CARO, GameRule::FREEOPEN}; break;  // as Tengen numbers it
+         default:
+             ERRORL("Unknown rule id: " << val << ". Rule is reset to freestyle...");
+             options.rule = {Rule::FREESTYLE, GameRule::FREEOPEN};
+diff --git a/Rapfi/config.cpp b/Rapfi/config.cpp
+index 2a58fac..7e47a4a 100644
+--- a/Rapfi/config.cpp
++++ b/Rapfi/config.cpp
+@@ -61,7 +61,10 @@ constexpr uint32_t I(uint32_t y, uint32_t x)
+ constexpr std::array<char, 8> ClassicalModelExtensionMagic =
+     {'R', 'F', 'C', 'L', 'M', 'O', 'D', '1'};
+ constexpr uint32_t ClassicalModelCompactP3Version       = 8;
+-constexpr uint32_t ModelPolicyTableCount                = RULE_NB + 1;
++// Tables stored in a classical model file: freestyle, standard, renju black and renju white.
++// The caro table (experiment-web) is not stored; it starts as a copy of freestyle's.
++constexpr uint32_t ModelTableCount                      = 4;
++constexpr uint32_t ModelPolicyTableCount                = ModelTableCount;
+ constexpr uint32_t ModelPolicyContextCount              = Evaluation::PolicyStoredContextCount;
+ constexpr uint32_t ModelBlendComponentCount             = 0;
+ constexpr uint32_t PolicyCrossPatternCount              = Evaluation::PolicyStoredPatternCount;
+@@ -81,6 +84,16 @@ static_assert(sizeof(StoredPolicyCrossTables) == ClassicalModelCompactP3PayloadB
+ 
+ namespace Evaluation {
+ 
++/// Copy the freestyle classical tables into the caro table, which no model file holds.
++void copyFreestyleTablesToCaro()
++{
++    const int caro = tableIndex(CARO, BLACK);
++    std::memcpy(EVALS[caro], EVALS[FREESTYLE], sizeof(EVALS[caro]));
++    std::memcpy(EVALS_THREAT[caro], EVALS_THREAT[FREESTYLE], sizeof(EVALS_THREAT[caro]));
++    std::memcpy(P4SCORES[caro], P4SCORES[FREESTYLE], sizeof(P4SCORES[caro]));
++    installPolicyCross(caro, storedPolicyCross(FREESTYLE));
++}
++
+ // Classical evaluation and score tables
+ // Note that Renju has asymmetry eval and score
+ 
+@@ -490,6 +503,7 @@ void Config::readModel(const cpptoml::table &t, PendingConfig &pending)
+                                                            value;
+                                                    });
+             });
++        Evaluation::copyFreestyleTablesToCaro();
+     }
+ 
+     // Read scalingFactor
+@@ -514,6 +528,7 @@ void Config::readModel(const cpptoml::table &t, PendingConfig &pending)
+         pending.valueReadouts[readoutIndex].knotsActive = true;
+     };
+     readReadoutKnots("value_readout_knots", FREESTYLE);
++    readReadoutKnots("value_readout_knots", Evaluation::tableIndex(CARO, BLACK));
+     readReadoutKnots("value_readout_knots_standard", STANDARD);
+     readReadoutKnots("value_readout_knots_renju_black", Evaluation::tableIndex(RENJU, BLACK));
+     readReadoutKnots("value_readout_knots_renju_white", Evaluation::tableIndex(RENJU, WHITE));
+@@ -811,9 +826,9 @@ bool Config::loadModel(std::istream &inStream)
+         return false;
+ 
+     double scalingFactorF64;
+-    Eval   evals[RULE_NB + 1][PCODE_NB];
+-    Eval   evalsThreat[RULE_NB + 1][THREAT_NB];
+-    Score  scores[RULE_NB + 1][PCODE_NB][2];
++    Eval   evals[ModelTableCount][PCODE_NB];
++    Eval   evalsThreat[ModelTableCount][THREAT_NB];
++    Score  scores[ModelTableCount][PCODE_NB][2];
+     in->read(reinterpret_cast<char *>(&scalingFactorF64), sizeof(scalingFactorF64));
+     in->read(reinterpret_cast<char *>(evals), sizeof(evals));
+     in->read(reinterpret_cast<char *>(evalsThreat), sizeof(evalsThreat));
+@@ -849,12 +864,16 @@ bool Config::loadModel(std::istream &inStream)
+ 
+     if (in->peek() != std::ios::traits_type::eof() || in->bad())
+         return false;
+-    std::memcpy(Evaluation::EVALS, evals, sizeof(Evaluation::EVALS));
+-    std::memcpy(Evaluation::EVALS_THREAT, evalsThreat, sizeof(Evaluation::EVALS_THREAT));
+-    std::memcpy(Evaluation::P4SCORES, scores, sizeof(Evaluation::P4SCORES));
++    static_assert(sizeof(evals) <= sizeof(Evaluation::EVALS));
++    static_assert(sizeof(evalsThreat) <= sizeof(Evaluation::EVALS_THREAT));
++    static_assert(sizeof(scores) <= sizeof(Evaluation::P4SCORES));
++    std::memcpy(Evaluation::EVALS, evals, sizeof(evals));
++    std::memcpy(Evaluation::EVALS_THREAT, evalsThreat, sizeof(evalsThreat));
++    std::memcpy(Evaluation::P4SCORES, scores, sizeof(scores));
+     Evaluation::setScalingFactor(scalingFactor);
+     for (size_t table = 0; table < ModelPolicyTableCount; table++)
+         Evaluation::installPolicyCross(table, policyCross[table]);
++    Evaluation::copyFreestyleTablesToCaro();
+     return true;
+ }
+ 
+@@ -866,12 +885,13 @@ void Config::exportModel(std::ostream &outStream)
+ 
+     double scalingFactorF64 = Evaluation::ScalingFactor;
+     out->write(reinterpret_cast<char *>(&scalingFactorF64), sizeof(scalingFactorF64));
+-    out->write(reinterpret_cast<char *>(Evaluation::EVALS), sizeof(Evaluation::EVALS));
++    out->write(reinterpret_cast<char *>(Evaluation::EVALS),
++               ModelTableCount * sizeof(Evaluation::EVALS[0]));
+     out->write(reinterpret_cast<char *>(Evaluation::EVALS_THREAT),
+-               sizeof(Evaluation::EVALS_THREAT));
++               ModelTableCount * sizeof(Evaluation::EVALS_THREAT[0]));
+ 
+     Score scores[PCODE_NB][2];
+-    for (int rule = 0; rule < RULE_NB + 1; rule++) {
++    for (uint32_t rule = 0; rule < ModelTableCount; rule++) {
+         // Get score table out of P4SCORES
+         for (size_t pcode = 0; pcode < PCODE_NB; pcode++) {
+             scores[pcode][0] = (Score)Evaluation::P4SCORES[rule][pcode][0];
+diff --git a/Rapfi/core/iohelper.cpp b/Rapfi/core/iohelper.cpp
+index 6626ec6..e33547f 100644
+--- a/Rapfi/core/iohelper.cpp
++++ b/Rapfi/core/iohelper.cpp
+@@ -19,6 +19,7 @@
+ #include "iohelper.h"
+ 
+ #include <cassert>
++#include <iterator>
+ #include <mutex>
+ 
+ // -------------------------------------------------
+@@ -151,7 +152,8 @@ std::ostream &operator<<(std::ostream &out, Rule rule)
+ {
+     assert(rule >= FREESTYLE && rule < RULE_NB);
+ 
+-    static const char *const Names[] = {"Freestyle", "Standard", "Renju"};
++    static const char *const Names[] = {"Freestyle", "Standard", "Renju", "Caro"};
++    static_assert(std::size(Names) == RULE_NB);
+     return out << Names[rule];
+ }
+ 
+diff --git a/Rapfi/core/types.h b/Rapfi/core/types.h
+index a9a0103..71b5b9a 100644
+--- a/Rapfi/core/types.h
++++ b/Rapfi/core/types.h
+@@ -259,6 +259,8 @@ enum Rule : uint8_t {
+     FREESTYLE,  ///< Free Gomoku: five or more in a row wins; no other restrictions.
+     STANDARD,   ///< Standard Gomoku: exactly five wins (overlines do not).
+     RENJU,      ///< Renju: black is forbidden from 3-3, 4-4, and overlines; white unrestricted.
++    CARO,       ///< Caro (experiment-web): five or more in a row wins unless both ends of the
++                ///< run are blocked by opponent stones; the board edge does not block.
+     RULE_NB
+ };
+ 
+diff --git a/Rapfi/database/dbstorage.h b/Rapfi/database/dbstorage.h
+index 5b4aa67..9f2ea2f 100644
+--- a/Rapfi/database/dbstorage.h
++++ b/Rapfi/database/dbstorage.h
+@@ -165,6 +165,7 @@ struct DBKey
+         case Rule::FREESTYLE: os << 'f'; break;
+         case Rule::STANDARD: os << 's'; break;
+         case Rule::RENJU: os << 'r'; break;
++        case Rule::CARO: os << 'c'; break;
+         default: os << '?'; break;
+         }
+         os << '-' << int(key.boardWidth) << '-' << int(key.boardHeight) << '-';
+diff --git a/Rapfi/eval/classicalpolicy.h b/Rapfi/eval/classicalpolicy.h
+index 6476288..a731a55 100644
+--- a/Rapfi/eval/classicalpolicy.h
++++ b/Rapfi/eval/classicalpolicy.h
+@@ -103,6 +103,7 @@ inline constexpr int ClassicalPolicyBlendWeights[RULE_NB + 1][ClassicalPolicyBle
+         {292, 265, 14, 16},
+         {271, 247, 17, 6},
+         {289, 272, 16, 40},
++        {235, 264, -25, 121},  // caro: freestyle's weights
+ };
+ 
+ inline const int *classicalPolicyBlendWeights(Rule rule, Color sideToMove)
+diff --git a/Rapfi/eval/eval.cpp b/Rapfi/eval/eval.cpp
+index bdf0464..b55e5b0 100644
+--- a/Rapfi/eval/eval.cpp
++++ b/Rapfi/eval/eval.cpp
+@@ -101,6 +101,7 @@ ClassicalMarginTables makeClassicalMarginTables()
+         tables[FREESTYLE][index] = computeClassicalEvalMargin<FREESTYLE>(Value(value));
+         tables[STANDARD][index]  = computeClassicalEvalMargin<STANDARD>(Value(value));
+         tables[RENJU][index]     = computeClassicalEvalMargin<RENJU>(Value(value));
++        tables[CARO][index]      = computeClassicalEvalMargin<CARO>(Value(value));
+     }
+     return tables;
+ }
+@@ -201,6 +202,7 @@ const int ClassicalValueBlendWeights[RULE_NB + 1][ClassicalValueBlend::COMPONENT
+     {155, 116, 268},
+     {137, 122, 263},
+     {138, 125, 261},
++    {149, 106, 267},  // caro: freestyle's weights
+ };
+ 
+ namespace {
+@@ -257,6 +259,7 @@ Value evaluate(const Board &board, Value alpha, Value beta)
+ template Value evaluate<FREESTYLE>(const Board &, Value, Value);
+ template Value evaluate<STANDARD>(const Board &, Value, Value);
+ template Value evaluate<RENJU>(const Board &, Value, Value);
++template Value evaluate<CARO>(const Board &, Value, Value);
+ 
+ /// A safe but slower version of evaluate().
+ /// Similar to evaluate(), but can be called for all board states.
+@@ -268,6 +271,7 @@ Value evaluate(const Board &board, Rule rule)
+         case Rule::FREESTYLE: return evaluate<Rule::FREESTYLE>(board);
+         case Rule::STANDARD: return evaluate<Rule::STANDARD>(board);
+         case Rule::RENJU: return evaluate<Rule::RENJU>(board);
++        case Rule::CARO: return evaluate<Rule::CARO>(board);
+         }
+     }
+     else {
+@@ -281,6 +285,7 @@ Value evaluate(const Board &board, Rule rule)
+         case Rule::FREESTYLE: currentThreat = evaluateThreat<Rule::FREESTYLE>(st, self); break;
+         case Rule::STANDARD: currentThreat = evaluateThreat<Rule::STANDARD>(st, self); break;
+         case Rule::RENJU: currentThreat = evaluateThreat<Rule::RENJU>(st, self); break;
++        case Rule::CARO: currentThreat = evaluateThreat<Rule::CARO>(st, self); break;
+         }
+ 
+         Value eval =
+diff --git a/Rapfi/eval/evalconfig.h b/Rapfi/eval/evalconfig.h
+index 2b4fd01..c8faee6 100644
+--- a/Rapfi/eval/evalconfig.h
++++ b/Rapfi/eval/evalconfig.h
+@@ -39,9 +39,9 @@ class Evaluator;  // forward declaration (eval/evaluator.h)
+ /// the gomocup INFO handlers assign the draw fields directly.
+ struct EvaluatorConfig
+ {
+-    float marginWinLossScale[RULE_NB]    = {1.22f, 0.86f, 1.24f};
+-    float marginWinLossExponent[RULE_NB] = {3.04f, 3.44f, 2.56f};
+-    float marginScale[RULE_NB]           = {351.0f, 379.2f, 389.4f};
++    float marginWinLossScale[RULE_NB]    = {1.22f, 0.86f, 1.24f, 1.22f};
++    float marginWinLossExponent[RULE_NB] = {3.04f, 3.44f, 2.56f, 3.04f};
++    float marginScale[RULE_NB]           = {351.0f, 379.2f, 389.4f, 351.0f};
+     float drawBlackWinRate               = 0.5f;
+     float drawRatio                      = 1.0f;
+ };
+diff --git a/Rapfi/eval/onnxevaluator.cpp b/Rapfi/eval/onnxevaluator.cpp
+index 45689f0..8bb2125 100644
+--- a/Rapfi/eval/onnxevaluator.cpp
++++ b/Rapfi/eval/onnxevaluator.cpp
+@@ -152,6 +152,7 @@ public:
+         case FREESTYLE: return modelRuleMask & 0x1;
+         case STANDARD: return modelRuleMask & 0x2;
+         case RENJU: return modelRuleMask & 0x4;
++        case CARO: return modelRuleMask & 0x8;
+         default: return false;
+         }
+     }
+diff --git a/Rapfi/eval/scoretables.h b/Rapfi/eval/scoretables.h
+index 225b239..9e592e2 100644
+--- a/Rapfi/eval/scoretables.h
++++ b/Rapfi/eval/scoretables.h
+@@ -97,10 +97,13 @@ extern Eval          EVALS[RULE_NB + 1][PCODE_NB];
+ extern Eval          EVALS_THREAT[RULE_NB + 1][THREAT_NB];
+ extern MoveScorePair P4SCORES[RULE_NB + 1][PCODE_NB];
+ 
++/// Copy the freestyle classical tables into the caro table, which no model file holds.
++void copyFreestyleTablesToCaro();
++
+ /// Get table index for rule and color.
+ constexpr int tableIndex(Rule r, Color c)
+ {
+-    return r + (r == Rule::RENJU ? c : 0);
++    return r == Rule::CARO ? int(RULE_NB) : r + (r == Rule::RENJU ? c : 0);
+ }
+ 
+ /// Lookup eval table with color and pcode of rule R.
+diff --git a/Rapfi/eval/weightloader.h b/Rapfi/eval/weightloader.h
+index 1eaedbb..d47a159 100644
+--- a/Rapfi/eval/weightloader.h
++++ b/Rapfi/eval/weightloader.h
+@@ -169,6 +169,8 @@ private:
+             rules.push_back(STANDARD);
+         if (ruleMask & 0x4)
+             rules.push_back(RENJU);
++        if (ruleMask & 0x8)
++            rules.push_back(CARO);
+         return rules;
+     }
+ 
+diff --git a/Rapfi/game/board.cpp b/Rapfi/game/board.cpp
+index 611ae26..5ed2337 100644
+--- a/Rapfi/game/board.cpp
++++ b/Rapfi/game/board.cpp
+@@ -208,6 +208,7 @@ void Board::newGame()
+ template void Board::newGame<FREESTYLE>();
+ template void Board::newGame<STANDARD>();
+ template void Board::newGame<RENJU>();
++template void Board::newGame<CARO>();
+ 
+ template <Rule R, Board::MoveType MT>
+ void Board::move(Pos pos)
+@@ -390,6 +391,8 @@ template void Board::move<STANDARD, Board::MoveType::NORMAL>(Pos pos);
+ template void Board::move<STANDARD, Board::MoveType::NO_EVAL>(Pos pos);
+ template void Board::move<RENJU, Board::MoveType::NORMAL>(Pos pos);
+ template void Board::move<RENJU, Board::MoveType::NO_EVAL>(Pos pos);
++template void Board::move<CARO, Board::MoveType::NORMAL>(Pos pos);
++template void Board::move<CARO, Board::MoveType::NO_EVAL>(Pos pos);
+ 
+ template <Rule R, Board::MoveType MT>
+ void Board::undo()
+@@ -470,6 +473,8 @@ template void Board::undo<STANDARD, Board::MoveType::NORMAL>();
+ template void Board::undo<STANDARD, Board::MoveType::NO_EVAL>();
+ template void Board::undo<RENJU, Board::MoveType::NORMAL>();
+ template void Board::undo<RENJU, Board::MoveType::NO_EVAL>();
++template void Board::undo<CARO, Board::MoveType::NORMAL>();
++template void Board::undo<CARO, Board::MoveType::NO_EVAL>();
+ 
+ bool Board::checkForbiddenPoint(Pos pos) const
+ {
+diff --git a/Rapfi/game/board.h b/Rapfi/game/board.h
+index b95dd27..d00a711 100644
+--- a/Rapfi/game/board.h
++++ b/Rapfi/game/board.h
+@@ -544,6 +544,7 @@ inline void Board::newGame(Rule rule)
+     case FREESTYLE: return newGame<FREESTYLE>();
+     case STANDARD: return newGame<STANDARD>();
+     case RENJU: return newGame<RENJU>();
++    case CARO: return newGame<CARO>();
+     default: assert(false && "invalid rule");
+     }
+ }
+@@ -554,6 +555,7 @@ inline void Board::move(Rule rule, Pos pos)
+     case FREESTYLE: return move<FREESTYLE>(pos);
+     case STANDARD: return move<STANDARD>(pos);
+     case RENJU: return move<RENJU>(pos);
++    case CARO: return move<CARO>(pos);
+     default: assert(false && "invalid rule");
+     }
+ }
+@@ -564,6 +566,7 @@ inline void Board::undo(Rule rule)
+     case FREESTYLE: return undo<FREESTYLE>();
+     case STANDARD: return undo<STANDARD>();
+     case RENJU: return undo<RENJU>();
++    case CARO: return undo<CARO>();
+     default: assert(false && "invalid rule");
+     }
+ }
+diff --git a/Rapfi/game/movegen.cpp b/Rapfi/game/movegen.cpp
+index 196f41f..645cf14 100644
+--- a/Rapfi/game/movegen.cpp
++++ b/Rapfi/game/movegen.cpp
+@@ -781,6 +781,11 @@ ScoredMove *generate<DEFEND_B4F3 | RULE_RENJU>(const Board &board, ScoredMove *m
+     return generateB4F3Defence<RENJU>(board, moveList);
+ }
+ 
++ScoredMove *generateCaroB4F3Defence(const Board &board, ScoredMove *moveList)
++{
++    return generateB4F3Defence<CARO>(board, moveList);
++}
++
+ bool validateOpponentCMove(const Board &board)
+ {
+     // If threat is caused by White, it must be real threat
+diff --git a/Rapfi/game/movegen.h b/Rapfi/game/movegen.h
+index 1e5560c..3573c5d 100644
+--- a/Rapfi/game/movegen.h
++++ b/Rapfi/game/movegen.h
+@@ -112,6 +112,10 @@ ScoredMove *generateNeighbors(const Board     &board,
+                               const Direction *neighbors,
+                               size_t           numNeighbors);
+ 
++/// DEFEND_B4F3 moves under the caro rule. The GenType rule selector has only two bits, so caro
++/// has its own entry point instead of a RULE_* value.
++ScoredMove *generateCaroB4F3Defence(const Board &board, ScoredMove *moveList);
++
+ /// Check whether the opponent's C_BLOCK4_FLEX3 move is a genuine threat under Renju (a black
+ /// flex-three follow-up may be forbidden, making the move only a pseudo-threat).
+ /// @return True if the threat is real, otherwise false.
+diff --git a/Rapfi/game/pattern.cpp b/Rapfi/game/pattern.cpp
+index b328ed9..3d5ed5f 100644
+--- a/Rapfi/game/pattern.cpp
++++ b/Rapfi/game/pattern.cpp
+@@ -23,6 +23,7 @@
+ 
+ #include <array>
+ #include <cassert>
++#include <memory>
+ #include <tuple>
+ 
+ namespace {
+@@ -31,8 +32,18 @@ using PatternConfig::DenseHalfCnt;
+ using PatternConfig::DenseKeyCnt;
+ using PatternConfig::HalfLineLen;
+ 
+-/// One cell's state from the perspective of the side whose pattern is being computed.
+-enum ColorFlag { SELF, OPPO, EMPT };
++/// One cell's state from the perspective of the side whose pattern is being computed. WALL (off
++/// the board, or past the examined line) is only used under caro, where it stops a run like an
++/// opponent stone but does not block a five; the other rules read it as OPPO.
++enum ColorFlag { SELF, OPPO, EMPT, WALL };
++
++/// Number of distinct cell flags a rule's lines use.
++template <Rule R>
++constexpr int FlagCnt = R == Rule::CARO ? 4 : 3;
++
++/// What a cell past the board or the examined line reads as.
++template <Rule R>
++constexpr ColorFlag OuterFlag = R == Rule::CARO ? WALL : OPPO;
+ 
+ /// Length of the line examined to classify a pattern: the center cell plus both half-lines
+ /// (e.g. OOOO_OOOO for freestyle).
+@@ -49,9 +60,10 @@ struct Line : std::array<ColorFlag, LineLen<R>>
+     explicit Line(uint64_t key, Color self);
+ };
+ 
+-/// Memo table for the (Line -> Pattern) dynamic program, indexed by the line's base-3 encoding.
++/// Memo table for the (Line -> Pattern) dynamic program, indexed by the line's base-FlagCnt
++/// encoding. Large (4 MiB under caro), so it is allocated on the heap.
+ template <Rule R>
+-struct PatternMemo : std::array<Pattern, power(3, LineLen<R>)>
++struct PatternMemo : std::array<Pattern, power(uint64_t(FlagCnt<R>), LineLen<R>)>
+ {
+     static constexpr Pattern NilPat = Pattern(0xff);  ///< Sentinel for a not-yet-computed entry.
+ 
+@@ -105,11 +117,13 @@ static_assert(PATTERN4_NB <= (1 << (16 - PCODE_BITS)), "Pattern4 must fit in the
+ alignas(64) Pattern2x PATTERN2x[DenseKeyCnt<FREESTYLE>];
+ alignas(64) Pattern2x PATTERN2xStandard[DenseKeyCnt<STANDARD>];
+ alignas(64) Pattern2x PATTERN2xRenju[DenseKeyCnt<RENJU>];
++alignas(64) Pattern2x PATTERN2xCaro[DenseKeyCnt<CARO>];
+ alignas(64) PCodeP4 PCODE[PATTERN_NB][PATTERN_NB][PATTERN_NB][PATTERN_NB];
+ alignas(64) PCodeP4 PCODERenjuBlack[PATTERN_NB][PATTERN_NB][PATTERN_NB][PATTERN_NB];
+ alignas(64) uint8_t DEFENCE[DenseKeyCnt<FREESTYLE>][2];
+ alignas(64) uint8_t DEFENCEStandard[DenseKeyCnt<STANDARD>][2];
+ alignas(64) uint8_t DEFENCERenju[DenseKeyCnt<RENJU>][2];
++alignas(64) uint8_t DEFENCECaro[DenseKeyCnt<CARO>][2];
+ 
+ // Populate every lookup table before main() runs.
+ [[maybe_unused]] static const bool init = []() {
+@@ -119,10 +133,12 @@ alignas(64) uint8_t DEFENCERenju[DenseKeyCnt<RENJU>][2];
+     fillPattern2xLUT<FREESTYLE>(PATTERN2x);
+     fillPattern2xLUT<STANDARD>(PATTERN2xStandard);
+     fillPattern2xLUT<RENJU>(PATTERN2xRenju);
++    fillPattern2xLUT<CARO>(PATTERN2xCaro);
+ 
+     fillDefenceLUT<FREESTYLE>(DEFENCE);
+     fillDefenceLUT<STANDARD>(DEFENCEStandard);
+     fillDefenceLUT<RENJU>(DEFENCERenju);
++    fillDefenceLUT<CARO>(DEFENCECaro);
+     return true;
+ }();
+ 
+@@ -153,6 +169,8 @@ Line<R>::Line(uint64_t key, Color self)
+ 
+         if (i == Mid)
+             (*this)[i] = SELF;
++        else if (!c[BLACK] && !c[WHITE])
++            (*this)[i] = OuterFlag<R>;
+         else
+             (*this)[i] = c[BLACK] && c[WHITE] ? EMPT : c[~self] ? SELF : OPPO;
+     }
+@@ -165,7 +183,7 @@ Pattern &PatternMemo<R>::get(const Line<R> &line)
+     // 3^LineLen).
+     uint32_t code = 0;
+     for (int i = 0; i < LineLen<R>; i++) {
+-        code = code * 3 + uint32_t(line[i]);
++        code = code * FlagCnt<R> + uint32_t(line[i]);
+     }
+     return (*this)[code];
+ }
+@@ -182,7 +200,7 @@ constexpr std::tuple<int, int, int, int> countLine(const Line<R> &line)
+     for (int i = Mid - 1; i >= 0; i--) {
+         if (line[i] == SELF)
+             realLen += realLenInc;
+-        else if (line[i] == OPPO)
++        else if (line[i] == OPPO || line[i] == WALL)
+             break;
+         else
+             realLenInc = 0;
+@@ -196,7 +214,7 @@ constexpr std::tuple<int, int, int, int> countLine(const Line<R> &line)
+     for (int i = Mid + 1; i < LineLen<R>; i++) {
+         if (line[i] == SELF)
+             realLen += realLenInc;
+-        else if (line[i] == OPPO)
++        else if (line[i] == OPPO || line[i] == WALL)
+             break;
+         else
+             realLenInc = 0;
+@@ -216,11 +234,26 @@ constexpr Line<R> shiftLine(const Line<R> &line, int i)
+     Line<R> shiftedLine;
+     for (int j = 0; j < Len; j++) {
+         int idx        = j + i - Len / 2;
+-        shiftedLine[j] = idx >= 0 && idx < Len ? line[idx] : OPPO;
++        shiftedLine[j] = idx >= 0 && idx < Len ? line[idx] : OuterFlag<R>;
+     }
+     return shiftedLine;
+ }
+ 
++/// Caro: whether both cells just past the run of self stones through the center hold opponent
++/// stones. The board edge, and cells past the examined line, do not block (the latter only matters
++/// for overlines reaching the end of the line, where the guess is the optimistic one).
++template <Rule R>
++constexpr bool isCaroBlocked(const Line<R> &line)
++{
++    constexpr int Mid = LineLen<R> / 2;
++    int           lo = Mid, hi = Mid;
++    while (lo > 0 && line[lo - 1] == SELF)
++        lo--;
++    while (hi < LineLen<R> - 1 && line[hi + 1] == SELF)
++        hi++;
++    return lo > 0 && line[lo - 1] == OPPO && hi < LineLen<R> - 1 && line[hi + 1] == OPPO;
++}
++
+ template <Rule R, Color Side>
+ constexpr Pattern getPattern(PatternMemo<R> &patMemo, const Line<R> &line)
+ {
+@@ -262,6 +295,8 @@ constexpr Pattern getPattern(PatternMemo<R> &patMemo, const Line<R> &line)
+ 
+     if (CheckOverline && realLen >= 6)
+         p = OL;
++    else if (R == Rule::CARO && realLen >= 5)
++        p = isCaroBlocked<R>(line) ? DEAD : F5;
+     else if (realLen >= 5)
+         p = F5;
+     else if (fullLen < 5)
+@@ -372,8 +407,9 @@ uint32_t denseFusedIndex(uint64_t key)
+ template <Rule R>
+ void fillPattern2xLUT(Pattern2x table[DenseKeyCnt<R>])
+ {
+-    constexpr int  H = HalfLineLen<R>;
+-    PatternMemo<R> memoBlack, memoWhite;
++    constexpr int H         = HalfLineLen<R>;
++    auto          memoBlack = std::make_unique<PatternMemo<R>>();
++    auto          memoWhite = std::make_unique<PatternMemo<R>>();
+ 
+     // Dense codes and valid center-removed keys are one-to-one.
+     for (int lo = 0; lo < DenseHalfCnt<R>; lo++) {
+@@ -384,8 +420,8 @@ void fillPattern2xLUT(Pattern2x table[DenseKeyCnt<R>])
+             assert(idx == denseFusedIndex<R>(key));
+ 
+             Line<R> lineBlack(key, BLACK), lineWhite(key, WHITE);
+-            table[idx].patBlack = getPattern<R, BLACK>(memoBlack, lineBlack);
+-            table[idx].patWhite = getPattern<R, WHITE>(memoWhite, lineWhite);
++            table[idx].patBlack = getPattern<R, BLACK>(*memoBlack, lineBlack);
++            table[idx].patWhite = getPattern<R, WHITE>(*memoWhite, lineWhite);
+         }
+     }
+ }
+diff --git a/Rapfi/game/pattern.h b/Rapfi/game/pattern.h
+index 9983178..2e6903b 100644
+--- a/Rapfi/game/pattern.h
++++ b/Rapfi/game/pattern.h
+@@ -49,7 +49,8 @@ static_assert(sizeof(Pattern2x) == sizeof(uint8_t));
+ namespace PatternConfig {
+ 
+ /// Number of cells on each side of the center cell in a line. Freestyle only cares about five in
+-/// a row (4 neighbours suffice); standard and renju must also detect overlines, needing 5.
++/// a row (4 neighbours suffice); standard and renju must also detect overlines, and caro whether
++/// the cell past each end of a five is an opponent stone, needing 5.
+ template <Rule R>
+ constexpr int HalfLineLen = R == Rule::FREESTYLE ? 4 : 5;
+ 
+@@ -66,6 +67,7 @@ constexpr int DenseKeyCnt = DenseHalfCnt<R> * DenseHalfCnt<R>;
+ 
+ static_assert(DenseHalfCnt<FREESTYLE> == 121 && DenseKeyCnt<FREESTYLE> == 14641);
+ static_assert(DenseHalfCnt<STANDARD> == 364 && DenseKeyCnt<STANDARD> == 132496);
++static_assert(DenseHalfCnt<CARO> == DenseHalfCnt<STANDARD>);
+ 
+ namespace detail {
+ 
+@@ -135,18 +137,21 @@ alignas(64) inline constexpr auto HALF_CODE_HI_S =
+ alignas(64) extern Pattern2x PATTERN2x[DenseKeyCnt<FREESTYLE>];
+ alignas(64) extern Pattern2x PATTERN2xStandard[DenseKeyCnt<STANDARD>];
+ alignas(64) extern Pattern2x PATTERN2xRenju[DenseKeyCnt<RENJU>];
++alignas(64) extern Pattern2x PATTERN2xCaro[DenseKeyCnt<CARO>];
+ 
+ /// Select the per-rule (dense line index -> Pattern2x) table.
+ template <Rule R>
+ inline const auto &pattern2xTable()
+ {
+-    static_assert(R == FREESTYLE || R == STANDARD || R == RENJU);
++    static_assert(R == FREESTYLE || R == STANDARD || R == RENJU || R == CARO);
+     if constexpr (R == Rule::FREESTYLE)
+         return PATTERN2x;
+     else if constexpr (R == Rule::STANDARD)
+         return PATTERN2xStandard;
+-    else
++    else if constexpr (R == Rule::RENJU)
+         return PATTERN2xRenju;
++    else
++        return PATTERN2xCaro;
+ }
+ 
+ /// Bits a PatternCode occupies inside a fused PCodeP4 entry. PCODE_NB (3876, see
+@@ -194,18 +199,21 @@ inline const auto &pcodeTable()
+ alignas(64) extern uint8_t DEFENCE[DenseKeyCnt<FREESTYLE>][2];
+ alignas(64) extern uint8_t DEFENCEStandard[DenseKeyCnt<STANDARD>][2];
+ alignas(64) extern uint8_t DEFENCERenju[DenseKeyCnt<RENJU>][2];
++alignas(64) extern uint8_t DEFENCECaro[DenseKeyCnt<CARO>][2];
+ 
+ /// Select the per-rule (dense line index + attacker -> defence bitmask) table.
+ template <Rule R>
+ inline const auto &defenceTable()
+ {
+-    static_assert(R == FREESTYLE || R == STANDARD || R == RENJU);
++    static_assert(R == FREESTYLE || R == STANDARD || R == RENJU || R == CARO);
+     if constexpr (R == Rule::FREESTYLE)
+         return DEFENCE;
+     else if constexpr (R == Rule::STANDARD)
+         return DEFENCEStandard;
+-    else
++    else if constexpr (R == Rule::RENJU)
+         return DEFENCERenju;
++    else
++        return DEFENCECaro;
+ }
+ 
+ /// Debug helper: check the two invariants every runtime line key satisfies — the center
+diff --git a/Rapfi/game/wincheck.h b/Rapfi/game/wincheck.h
+index 8659d12..9703f00 100644
+--- a/Rapfi/game/wincheck.h
++++ b/Rapfi/game/wincheck.h
+@@ -119,5 +119,6 @@ quickWinCheck(Rule rule, const Board &board, int ply, Value beta = VALUE_MATE_IN
+     case FREESTYLE: return quickWinCheck<FREESTYLE>(board, ply, beta);
+     case STANDARD: return quickWinCheck<STANDARD>(board, ply, beta);
+     case RENJU: return quickWinCheck<RENJU>(board, ply, beta);
++    case CARO: return quickWinCheck<CARO>(board, ply, beta);
+     }
+ }
+diff --git a/Rapfi/search/ab/history.cpp b/Rapfi/search/ab/history.cpp
+index 924ae3e..18540d7 100644
+--- a/Rapfi/search/ab/history.cpp
++++ b/Rapfi/search/ab/history.cpp
+@@ -30,17 +30,17 @@ namespace {
+ /// History and stats update bonus, based on depth
+ constexpr int statBonus(Rule rule, Depth d)
+ {
+-    constexpr int StatBonusQuadratic[RULE_NB] = {29, 24, 23};
++    constexpr int StatBonusQuadratic[RULE_NB] = {29, 24, 23, 29};
+     return std::min(static_cast<int>(StatBonusQuadratic[rule] * d * d + 99 * d - 164), 8927);
+ }
+ 
+-constexpr int MainHistoryAttackWeight[RULE_NB + 1] = {492, 531, 511, 520};
+-constexpr int MainHistoryQuietWeight[RULE_NB + 1]  = {265, 270, 270, 268};
+-constexpr int CounterMoveBonus[RULE_NB + 1]        = {38, 33, 31, 33};
++constexpr int MainHistoryAttackWeight[RULE_NB + 1] = {492, 531, 511, 520, 492};
++constexpr int MainHistoryQuietWeight[RULE_NB + 1]  = {265, 270, 270, 268, 265};
++constexpr int CounterMoveBonus[RULE_NB + 1]        = {38, 33, 31, 33, 38};
+ 
+ constexpr int historyTableIndex(Rule rule, Color sideToMove)
+ {
+-    return int(rule) + (rule == RENJU ? int(sideToMove) : 0);
++    return rule == CARO ? int(RULE_NB) : int(rule) + (rule == RENJU ? int(sideToMove) : 0);
+ }
+ 
+ static_assert(std::numeric_limits<int>::max() >= 1LL * 10692 * 2048);
+diff --git a/Rapfi/search/ab/parameter.h b/Rapfi/search/ab/parameter.h
+index 7b75f12..0929332 100644
+--- a/Rapfi/search/ab/parameter.h
++++ b/Rapfi/search/ab/parameter.h
+@@ -42,15 +42,15 @@ constexpr Depth IID_DEPTH        = 14.5f;
+ 
+ // Reductions
+ 
+-inline constexpr Depth IIR_REDUCTION[RULE_NB]         = {0.71f, 0.65f, 0.65f};
+-inline constexpr Depth IIR_REDUCTION_PV[RULE_NB]      = {0.45f, 0.43f, 0.37f};
+-inline constexpr Depth IIR_REDUCTION_TT[RULE_NB]      = {0.19f, 0.20f, 0.17f};
+-inline constexpr Depth IIR_REDUCTION_TT_MAX[RULE_NB]  = {3.6f, 3.8f, 3.3f};
++inline constexpr Depth IIR_REDUCTION[RULE_NB]         = {0.71f, 0.65f, 0.65f, 0.71f};
++inline constexpr Depth IIR_REDUCTION_PV[RULE_NB]      = {0.45f, 0.43f, 0.37f, 0.45f};
++inline constexpr Depth IIR_REDUCTION_TT[RULE_NB]      = {0.19f, 0.20f, 0.17f, 0.19f};
++inline constexpr Depth IIR_REDUCTION_TT_MAX[RULE_NB]  = {3.6f, 3.8f, 3.3f, 3.6f};
+ constexpr Depth        TRIVIAL_PRUN_DEPTH             = 4.4f;
+ constexpr Depth        LMR_EXTRA_MAX_DEPTH            = 5.1f;
+-inline constexpr Depth LMRTtPvSubtract[RULE_NB]       = {0.98f, 0.81f, 0.71f};
+-inline constexpr Depth LMRNoAlphaAdd[RULE_NB]         = {0.91f, 0.96f, 0.99f};
+-inline constexpr Depth LMRNoKillerCutNodeAdd[RULE_NB] = {1.8f, 2.2f, 1.8f};
++inline constexpr Depth LMRTtPvSubtract[RULE_NB]       = {0.98f, 0.81f, 0.71f, 0.98f};
++inline constexpr Depth LMRNoAlphaAdd[RULE_NB]         = {0.91f, 0.96f, 0.99f, 0.91f};
++inline constexpr Depth LMRNoKillerCutNodeAdd[RULE_NB] = {1.8f, 2.2f, 1.8f, 1.8f};
+ constexpr Depth        FALSE_FORBID_LESS_REDUCTION    = 1.03f;
+ constexpr Depth        ALPHA_IMPROVEMENT_REDUCTION    = 1.05f;
+ constexpr Depth        OPPO_USELESS_DEFEND_REDUCTION  = 2.07f;
+@@ -60,11 +60,11 @@ constexpr Depth        SELF_USELESS_DEFEND_REDUCTION  = 0.93f;
+ 
+ constexpr Depth        OPPO5_EXT              = 1.1f;
+ constexpr Depth        SE_DEPTH               = 6.85f;
+-inline constexpr Depth SE_TTE_DEPTH[RULE_NB]  = {2.09f, 2.03f, 1.95f};
++inline constexpr Depth SE_TTE_DEPTH[RULE_NB]  = {2.09f, 2.03f, 1.95f, 2.09f};
+ constexpr Depth        SE_EXTRA_MAX_DEPTH     = 10.8f;
+ constexpr Depth        SE_REDUCTION_FH        = 1.48f;
+-inline constexpr Depth TTM_EXT_PV[RULE_NB]    = {0.16f, 0.24f, 0.14f};
+-inline constexpr Depth TTM_EXT_NONPV[RULE_NB] = {0.08f, 0.12f, 0.10f};
++inline constexpr Depth TTM_EXT_PV[RULE_NB]    = {0.16f, 0.24f, 0.14f, 0.16f};
++inline constexpr Depth TTM_EXT_NONPV[RULE_NB] = {0.08f, 0.12f, 0.10f, 0.08f};
+ constexpr Depth        NEARB4_EXT_DIST4       = 0.27f;
+ constexpr Depth        NEARB4_EXT_DIST6       = 0.05f;
+ constexpr Depth        CONTINUOUS_ATTACK_EXT  = 0.41f;
+@@ -72,31 +72,31 @@ constexpr Depth        CONTINUOUS_ATTACK_EXT  = 0.41f;
+ // -------------------------------------------------
+ // Dynamic margin & reduction functions/LUTs
+ 
+-inline constexpr int AspirationInitialDelta[RULE_NB] = {20, 10, 11};
+-inline constexpr int AspirationAddDelta[RULE_NB]     = {8, 3, 8};
++inline constexpr int AspirationInitialDelta[RULE_NB] = {20, 10, 11, 20};
++inline constexpr int AspirationAddDelta[RULE_NB]     = {8, 3, 8, 8};
+ 
+-inline constexpr float RazorQuadratic[RULE_NB] = {0.17f, 0.20f, 0.17f};
+-inline constexpr int   RazorLinear[RULE_NB]    = {15, -1, 8};
+-inline constexpr int   RazorBias[RULE_NB]      = {11, -1, 9};
++inline constexpr float RazorQuadratic[RULE_NB] = {0.17f, 0.20f, 0.17f, 0.17f};
++inline constexpr int   RazorLinear[RULE_NB]    = {15, -1, 8, 15};
++inline constexpr int   RazorBias[RULE_NB]      = {11, -1, 9, 11};
+ 
+-inline constexpr int FutilityScale[RULE_NB]       = {68, 43, 63};
+-inline constexpr int FutilityNoTTPenalty[RULE_NB] = {16, 13, 13};
++inline constexpr int FutilityScale[RULE_NB]       = {68, 43, 63, 68};
++inline constexpr int FutilityNoTTPenalty[RULE_NB] = {16, 13, 13, 16};
+ 
+-inline constexpr int NMMDepth[RULE_NB]    = {6, 15, 11};
+-inline constexpr int NMMSlope[RULE_NB]    = {24, 32, 24};
+-inline constexpr int NMMFloor[RULE_NB]    = {277, 197, 399};
+-inline constexpr int NMMHeadroom[RULE_NB] = {38, 38, 6};
++inline constexpr int NMMDepth[RULE_NB]    = {6, 15, 11, 6};
++inline constexpr int NMMSlope[RULE_NB]    = {24, 32, 24, 24};
++inline constexpr int NMMFloor[RULE_NB]    = {277, 197, 399, 277};
++inline constexpr int NMMHeadroom[RULE_NB] = {38, 38, 6, 38};
+ 
+-inline constexpr float NMRBias[RULE_NB]  = {3.70f, 4.37f, 4.21f};
+-inline constexpr float NMRScale[RULE_NB] = {0.141f, 0.156f, 0.160f};
++inline constexpr float NMRBias[RULE_NB]  = {3.70f, 4.37f, 4.21f, 3.70f};
++inline constexpr float NMRScale[RULE_NB] = {0.141f, 0.156f, 0.160f, 0.141f};
+ 
+-inline constexpr int FailHighDepthScale[RULE_NB] = {20, 12, 16};
+-inline constexpr int FailHighOppo4Bonus[RULE_NB] = {80, 91, 80};
++inline constexpr int FailHighDepthScale[RULE_NB] = {20, 12, 16, 20};
++inline constexpr int FailHighOppo4Bonus[RULE_NB] = {80, 91, 80, 80};
+ 
+-inline constexpr float SEScale[RULE_NB] = {0.85f, 0.85f, 0.90f};
++inline constexpr float SEScale[RULE_NB] = {0.85f, 0.85f, 0.90f, 0.85f};
+ 
+-inline constexpr int LMRExt1Bias[RULE_NB] = {22, 12, 20};
+-inline constexpr int LMRExtGap[RULE_NB]   = {321, 278, 253};
++inline constexpr int LMRExt1Bias[RULE_NB] = {22, 12, 20, 22};
++inline constexpr int LMRExtGap[RULE_NB]   = {321, 278, 253, 321};
+ 
+ /// Aspiration window delta. When prevDelta is zero, returns the initial aspiration
+ /// window size. Otherwise returns the next expanded window size for the given prevDelta.
+@@ -148,8 +148,8 @@ constexpr Depth nullMoveReduction(Depth d)
+ template <Rule R>
+ constexpr Depth iidDepthReduction(Depth d)
+ {
+-    constexpr Depth IDRBias[RULE_NB]  = {8.4f, 8.2f, 9.7f};
+-    constexpr Depth IDRScale[RULE_NB] = {0.74f, 0.56f, 0.52f};
++    constexpr Depth IDRBias[RULE_NB]  = {8.4f, 8.2f, 9.7f, 8.4f};
++    constexpr Depth IDRScale[RULE_NB] = {0.74f, 0.56f, 0.52f, 0.74f};
+     return IDRBias[R] + IDRScale[R] * d;
+ }
+ 
+@@ -157,7 +157,7 @@ constexpr Depth iidDepthReduction(Depth d)
+ template <Rule R>
+ constexpr Value failHighMargin(Depth d, int oppo4)
+ {
+-    constexpr int FailHighBias[RULE_NB] = {-3, -11, -4};
++    constexpr int FailHighBias[RULE_NB] = {-3, -11, -4, -3};
+     return Value(FailHighBias[R] + FailHighDepthScale[R] * int(d)
+                  + FailHighOppo4Bonus[R] * bool(oppo4));
+ }
+@@ -195,8 +195,8 @@ constexpr Depth singularReduction(Depth d, bool formerPv)
+ template <Rule R>
+ constexpr Value doubleSEMargin(Depth d)
+ {
+-    constexpr float DoubleSEScale[RULE_NB] = {0.71f, 0.60f, 0.58f};
+-    constexpr int   DoubleSEMax[RULE_NB]   = {4, 6, 8};
++    constexpr float DoubleSEScale[RULE_NB] = {0.71f, 0.60f, 0.58f, 0.71f};
++    constexpr int   DoubleSEMax[RULE_NB]   = {4, 6, 8, 4};
+     return Value(29 - std::min(int(d * DoubleSEScale[R]), DoubleSEMax[R]));
+ }
+ 
+@@ -204,8 +204,8 @@ constexpr Value doubleSEMargin(Depth d)
+ template <Rule R>
+ constexpr Value qvcfDeltaMargin(Depth d)  // note: d <= 0
+ {
+-    constexpr int QVCFBias[RULE_NB]  = {2084, 1817, 2154};
+-    constexpr int QVCFScale[RULE_NB] = {62, 66, 53};
++    constexpr int QVCFBias[RULE_NB]  = {2084, 1817, 2154, 2084};
++    constexpr int QVCFScale[RULE_NB] = {62, 66, 53, 62};
+     return Value(std::max(QVCFBias[R] + QVCFScale[R] * int(d), 768));
+ }
+ 
+@@ -214,7 +214,7 @@ template <Rule R>
+ constexpr int
+ lmrExtension(Depth newDepth, Depth searchedDepth, Value value, Value alpha, Value bestValue)
+ {
+-    constexpr int LMRExt1Diff[RULE_NB] = {10, 3, 10};
++    constexpr int LMRExt1Diff[RULE_NB] = {10, 3, 10, 10};
+     bool          doDeeperSearch =
+         value > (alpha + LMRExt1Bias[R] + Value(LMRExt1Diff[R] * (newDepth - searchedDepth)));
+     bool doEvenDeeperSearch =
+@@ -226,7 +226,7 @@ lmrExtension(Depth newDepth, Depth searchedDepth, Value value, Value alpha, Valu
+ /// Init Reductions table according to num threads.
+ inline void initReductionLUT(std::array<Depth, MAX_MOVES + 1> (&lut)[RULE_NB], int numThreads = 1)
+ {
+-    constexpr double Factor[RULE_NB] = {0.95, 0.78, 0.83};
++    constexpr double Factor[RULE_NB] = {0.95, 0.78, 0.83, 0.95};
+     double           threadBias      = 0.1 * std::log(numThreads);
+     for (int r = 0; r < RULE_NB; r++) {
+         lut[r][0] = 0.0f;
+@@ -257,10 +257,10 @@ constexpr Depth reduction(const std::array<Depth, MAX_MOVES + 1> (&lut)[RULE_NB]
+ template <Rule R>
+ constexpr Depth complexityReduction(bool trivialMove, bool importantMove, bool distract)
+ {
+-    constexpr Depth CR1[RULE_NB] = {0.0920f, 0.0697f, 0.0600f};
+-    constexpr Depth CR2[RULE_NB] = {0.0333f, 0.0199f, 0.0280f};
+-    constexpr Depth CR3[RULE_NB] = {0.0250f, 0.0206f, 0.0229f};
+-    constexpr Depth CR4[RULE_NB] = {0.0053f, 0.0070f, 0.0077f};
++    constexpr Depth CR1[RULE_NB] = {0.0920f, 0.0697f, 0.0600f, 0.0920f};
++    constexpr Depth CR2[RULE_NB] = {0.0333f, 0.0199f, 0.0280f, 0.0333f};
++    constexpr Depth CR3[RULE_NB] = {0.0250f, 0.0206f, 0.0229f, 0.0250f};
++    constexpr Depth CR4[RULE_NB] = {0.0053f, 0.0070f, 0.0077f, 0.0053f};
+     return (trivialMove ? (distract ? CR1 : CR2) : !importantMove ? CR3 : CR4)[R];
+ }
+ 
+@@ -269,9 +269,9 @@ constexpr Depth complexityReduction(bool trivialMove, bool importantMove, bool d
+ template <Rule R>
+ constexpr Depth policyReduction(float scaledMoveScore)
+ {
+-    constexpr Depth PolicyReductionScale[RULE_NB] = {3.60f, 1.76f, 3.15f};
+-    constexpr Depth PolicyReductionBias[RULE_NB]  = {2.53f, 2.64f, 3.39f};
+-    constexpr Depth PolicyReductionMax[RULE_NB]   = {5.18f, 3.07f, 4.90f};
++    constexpr Depth PolicyReductionScale[RULE_NB] = {3.60f, 1.76f, 3.15f, 3.60f};
++    constexpr Depth PolicyReductionBias[RULE_NB]  = {2.53f, 2.64f, 3.39f, 2.53f};
++    constexpr Depth PolicyReductionMax[RULE_NB]   = {5.18f, 3.07f, 4.90f, 5.18f};
+ 
+     Depth r = PolicyReductionBias[R] - PolicyReductionScale[R] * scaledMoveScore;
+     return std::min(std::max(r, 0.0f), PolicyReductionMax[R]);
+@@ -281,8 +281,8 @@ constexpr Depth policyReduction(float scaledMoveScore)
+ template <Rule R>
+ constexpr int policyPruningScore(Depth d)
+ {
+-    constexpr int PPBias[RULE_NB]  = {372, 363, 377};
+-    constexpr int PPScale[RULE_NB] = {48, 63, 62};
++    constexpr int PPBias[RULE_NB]  = {372, 363, 377, 372};
++    constexpr int PPScale[RULE_NB] = {48, 63, 62, 48};
+     return PPBias[R] - int(d * PPScale[R]);
+ }
+ 
+@@ -298,7 +298,7 @@ inline int statScore(const MainHistory &mainHistory, Color stm, Pos move)
+ template <Rule R>
+ constexpr Depth extensionFromStatScore(int statScore, Depth depth)
+ {
+-    constexpr Depth ExtStatDepth[RULE_NB] = {5.3f, 5.4f, 5.4f};
++    constexpr Depth ExtStatDepth[RULE_NB] = {5.3f, 5.4f, 5.4f, 5.3f};
+     // Use less stat score at higher depths
+     return statScore * (1.0f / (12266 + 4380 * (depth > ExtStatDepth[R])));
+ }
+diff --git a/Rapfi/search/ab/search.cpp b/Rapfi/search/ab/search.cpp
+index 4167845..8cf35af 100644
+--- a/Rapfi/search/ab/search.cpp
++++ b/Rapfi/search/ab/search.cpp
+@@ -686,6 +686,7 @@ Value search(Rule         rule,
+         case Rule::STANDARD:
+             return search<Rule::STANDARD, NT>(board, ss, alpha, beta, depth, cutNode);
+         case Rule::RENJU: return search<Rule::RENJU, NT>(board, ss, alpha, beta, depth, cutNode);
++        case Rule::CARO: return search<Rule::CARO, NT>(board, ss, alpha, beta, depth, cutNode);
+         }
+     };
+ 
+diff --git a/Rapfi/search/mcts/search.cpp b/Rapfi/search/mcts/search.cpp
+index 9d066cc..9128aeb 100644
+--- a/Rapfi/search/mcts/search.cpp
++++ b/Rapfi/search/mcts/search.cpp
+@@ -64,6 +64,7 @@ Value vcf(Rule rule, Board &board, int ply)
+         case FREESTYLE: return vcfdefend<FREESTYLE>(board, ss, ply, alpha, beta, depth);
+         case STANDARD: return vcfdefend<STANDARD>(board, ss, ply, alpha, beta, depth);
+         case RENJU: return vcfdefend<RENJU>(board, ss, ply, alpha, beta, depth);
++        case CARO: return vcfdefend<CARO>(board, ss, ply, alpha, beta, depth);
+         default: break;
+         }
+     }
+@@ -72,6 +73,7 @@ Value vcf(Rule rule, Board &board, int ply)
+         case FREESTYLE: return vcfsearch<FREESTYLE>(board, ss, ply, alpha, beta, depth);
+         case STANDARD: return vcfsearch<STANDARD>(board, ss, ply, alpha, beta, depth);
+         case RENJU: return vcfsearch<RENJU>(board, ss, ply, alpha, beta, depth);
++        case CARO: return vcfsearch<CARO>(board, ss, ply, alpha, beta, depth);
+         default: break;
+         }
+     }
+diff --git a/Rapfi/search/movepick.cpp b/Rapfi/search/movepick.cpp
+index 18df8ec..9862b7d 100644
+--- a/Rapfi/search/movepick.cpp
++++ b/Rapfi/search/movepick.cpp
+@@ -63,6 +63,7 @@ ScoredMove *generateDefendB4F3Moves(Rule rule, const Board &board, ScoredMove *m
+     case FREESTYLE: return generate<DEFEND_B4F3 | RULE_FREESTYLE>(board, moveList);
+     case STANDARD: return generate<DEFEND_B4F3 | RULE_STANDARD>(board, moveList);
+     case RENJU: return generate<DEFEND_B4F3 | RULE_RENJU>(board, moveList);
++    case CARO: return generateCaroB4F3Defence(board, moveList);
+     }
+ }
+ 
+diff --git a/Rapfi/tuning/dataformat.h b/Rapfi/tuning/dataformat.h
+index 6cdf2e8..4ee9c03 100644
+--- a/Rapfi/tuning/dataformat.h
++++ b/Rapfi/tuning/dataformat.h
+@@ -46,10 +46,11 @@ struct DatasetError : ::std::runtime_error
+ // Field encodings shared by both formats
+ 
+ /// The rule value stored on the wire is the Gomocup protocol rule number, NOT
+-/// the internal Rule enum: 0=freestyle, 1=standard, 4=renju.
++/// the internal Rule enum: 0=freestyle, 1=standard, 4=renju. Caro (experiment-web) is 3: its
++/// protocol number 8 does not fit the 3-bit field.
+ constexpr uint32_t encodeWireRule(Rule rule)
+ {
+-    return rule == RENJU ? 4 : uint32_t(rule);
++    return rule == RENJU ? 4 : rule == CARO ? 3 : uint32_t(rule);
+ }
+ 
+ /// Decode a wire rule number back to the internal Rule enum.
+@@ -59,6 +60,8 @@ constexpr Rule decodeWireRule(uint32_t wireRule)
+ {
+     if (wireRule == 4)
+         return RENJU;
++    if (wireRule == 3)
++        return CARO;
+     return wireRule < 2 ? Rule(wireRule) : RULE_NB;
+ }
+ 
+diff --git a/Trainer b/Trainer
+--- a/Trainer
++++ b/Trainer
+@@ -1 +1 @@
+-Subproject commit 3641196344856432c599d1c59e314e345dc7d1dd
++Subproject commit 3641196344856432c599d1c59e314e345dc7d1dd-dirty

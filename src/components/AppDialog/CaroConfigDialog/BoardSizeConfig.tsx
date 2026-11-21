@@ -22,6 +22,9 @@ export default function BoardSizeConfig() {
       <Button variant={size == 15 ? 'default' : 'outline'} onClick={() => setSize(15)}>
         15x15
       </Button>
+      <Button variant={size == 20 ? 'default' : 'outline'} onClick={() => setSize(20)}>
+        20x20
+      </Button>
     </TitleContainer>
   );
 }

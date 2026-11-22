@@ -30,7 +30,7 @@ const DEFAULT_METADATA: TCaroMetadataType = {
   gameType: 'normal',
   winMode: 'blockOpponent',
   isOverride: false,
-  size: 15,
+  size: 20,
   maxNumberOfBlindError: 5,
   preWinner: 0,
   machineLevel: 'hell',
@@ -128,48 +128,53 @@ export const useCaroStore = create<
     }),
     {
       name: 'experiment.caro',
-      version: 1.3,
+      version: 1.4,
       migrate(persistedState, version) {
-        const state = persistedState as TCaroStateType;
-        // 1.2 made "hard machine" the default, so saved games move to it with a fresh board.
+        let state = persistedState as TCaroStateType;
+        const freshBoard = {
+          numberOfBlindError: { 0: 0, 1: 0 },
+          isBlindForceOver: false,
+          turn: 0 as TTurn,
+          steps: {},
+          stepsOrder: [],
+          winState: undefined,
+        };
+        // Each step moves saved games to a new default with a fresh board; they run in order so
+        // an old save picks up every later default too.
+        // 1.2 made "hard machine" the default.
         if (version < 1.2)
-          return {
+          state = {
             ...state,
+            ...freshBoard,
             metadata: {
               ...DEFAULT_METADATA,
               ...state.metadata,
               playMode: DEFAULT_METADATA.playMode,
-              machineLevel: DEFAULT_METADATA.machineLevel,
               machineTurn: DEFAULT_METADATA.machineTurn,
               // Override is not available against the machine.
               isOverride: false,
               preWinner: 0,
             },
-            numberOfBlindError: { 0: 0, 1: 0 },
-            isBlindForceOver: false,
-            turn: 0,
-            steps: {},
-            stepsOrder: [],
-            winState: undefined,
           };
-        // 1.3 made the hell level on a 15x15 board the default.
+        // 1.3 made the hell level the default.
         if (version < 1.3)
-          return {
+          state = {
             ...state,
+            ...freshBoard,
             metadata: {
               ...state.metadata,
               playMode: DEFAULT_METADATA.playMode,
               machineLevel: DEFAULT_METADATA.machineLevel,
-              size: DEFAULT_METADATA.size,
               isOverride: false,
               preWinner: 0,
             },
-            numberOfBlindError: { 0: 0, 1: 0 },
-            isBlindForceOver: false,
-            turn: 0,
-            steps: {},
-            stepsOrder: [],
-            winState: undefined,
+          };
+        // 1.4 made the 20x20 board the default.
+        if (version < 1.4)
+          state = {
+            ...state,
+            ...freshBoard,
+            metadata: { ...state.metadata, size: DEFAULT_METADATA.size },
           };
         return state;
       },

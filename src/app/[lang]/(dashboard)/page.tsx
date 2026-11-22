@@ -2,7 +2,7 @@ import { ArrowUpRight, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { GithubIcon } from 'src/components/icons';
 import { Badge } from 'src/components/shadcn/badge';
-import { NAV_ITEMS, PORTFOLIO_URL, REPO_URL } from 'src/configs/navigation';
+import { PORTFOLIO_URL, REPO_URL, VISIBLE_NAV_ITEMS } from 'src/configs/navigation';
 import { commonMessages } from 'src/i18n/messages/common';
 import { getMessages } from 'src/i18n/server';
 
@@ -41,7 +41,7 @@ export default async function Home() {
           {home.experiments}
         </h2>
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {NAV_ITEMS.map((item) => {
+          {VISIBLE_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const text = nav[item.id];
 

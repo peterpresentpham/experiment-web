@@ -2,7 +2,8 @@
 
 import { ComponentProps, useCallback, useEffect, useMemo, useRef } from 'react';
 import useFitBoard from 'src/hooks/useFitBoard';
-import { MAX_CARO_BOARD_SIZE } from 'src/configs/constance';
+import useKeepCellInView from 'src/hooks/useKeepCellInView';
+import { MAX_CARO_BOARD_SIZE, MIN_CARO_CELL_SIZE } from 'src/configs/constance';
 import { useCaroStateContext } from 'src/context/caro-state.context';
 import { cn } from 'src/lib/utils';
 import { soundtrack } from 'src/services/soundtrack';
@@ -26,13 +27,14 @@ export default function CaroBoard(props: ComponentProps<'div'>) {
   } = useCaroStateContext();
 
   const errorCount = numberOfBlindError[0] + numberOfBlindError[1];
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const { ref, size } = useFitBoard(
     useCallback(
       (width, height) => {
         const column = (width - boardSize - 1) / boardSize;
         const row = (height - boardSize - 1) / boardSize;
-        return Math.min(column, row, MAX_CARO_BOARD_SIZE);
+        return Math.max(MIN_CARO_CELL_SIZE, Math.min(column, row, MAX_CARO_BOARD_SIZE));
       },
       [boardSize]
     )
@@ -51,7 +53,9 @@ export default function CaroBoard(props: ComponentProps<'div'>) {
 
       const canMove = !isBlocked && (metadata.isOverride ? steps[location] != turn : !isOccupied);
       if (canMove) {
-        soundtrack.play({ type: TSound.CLICK });
+        // Two players on one device hear their own stone sound; otherwise this is always "you".
+        const isSecond = metadata.playMode == 'offline' && turn == 1;
+        soundtrack.play({ type: isSecond ? TSound.PLACE_OPPONENT : TSound.PLACE });
         move(location);
       } else soundtrack.play({ type: TSound.ERROR });
     },
@@ -78,6 +82,8 @@ export default function CaroBoard(props: ComponentProps<'div'>) {
   }, [errorCount, gameType]);
 
   const isWin = winState != undefined || isBlindForceOver;
+  // When the board scrolls, keep the latest move (or the centre of a new board) on screen.
+  useKeepCellInView(scrollRef, size, boardSize, lastStep);
 
   return (
     <div {...props} className={cn('flex flex-col gap-3', props.className)}>
@@ -86,7 +92,9 @@ export default function CaroBoard(props: ComponentProps<'div'>) {
           otherwise a board taller than the viewport makes the container grow, the next
           measurement keeps the oversized cells, and the bottom rows stay off screen. */}
       <div ref={ref} className="relative min-h-72 min-w-0 flex-1 overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center">
+        {/* `m-auto` centres a board that fits; one that does not starts at the edge and scrolls
+            (centring with justify-center would clip its top-left corner). */}
+        <div ref={scrollRef} className="absolute inset-0 flex overflow-auto">
           {size > 0 && (
             <div
               ref={caroRef}
@@ -94,7 +102,7 @@ export default function CaroBoard(props: ComponentProps<'div'>) {
                 width: boardSize * size + boardSize + 1,
                 height: boardSize * size + boardSize + 1,
               }}
-              className="bg-border flex flex-wrap gap-px overflow-hidden rounded-lg border"
+              className="bg-border m-auto flex shrink-0 flex-wrap gap-px overflow-hidden rounded-lg border"
             >
               {locations.map((location) => {
                 const _turn = steps[location];

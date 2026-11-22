@@ -108,15 +108,15 @@ const pikachuMachine = setup({
           {
             guard: 'isMatch',
             target: PikachuMachineState.MATCHED,
-            actions: ['startMatch', { type: 'playSound', params: { sound: TSound.MOVE } }],
+            actions: ['startMatch', { type: 'playSound', params: { sound: TSound.MATCH } }],
           },
           {
             guard: 'isSelect',
-            actions: ['selectPiece', { type: 'playSound', params: { sound: TSound.CLICK } }],
+            actions: ['selectPiece', { type: 'playSound', params: { sound: TSound.SELECT } }],
           },
           {
             guard: 'isDeselect',
-            actions: ['deselectPiece', { type: 'playSound', params: { sound: TSound.CLICK } }],
+            actions: ['deselectPiece', { type: 'playSound', params: { sound: TSound.DESELECT } }],
           },
           {
             guard: 'isInvalid',
@@ -160,7 +160,7 @@ const pikachuMachine = setup({
         {
           guard: 'isCleared',
           target: PikachuMachineState.PLAYING,
-          actions: 'createNextRound',
+          actions: ['createNextRound', { type: 'playSound', params: { sound: TSound.ROUND } }],
         },
         { target: PikachuMachineState.PLAYING },
       ],

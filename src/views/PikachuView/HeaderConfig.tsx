@@ -47,6 +47,7 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
           <Button
             size="sm"
             variant="outline"
+            sound={TSound.HINT}
             onClick={() => send({ type: PikachuMachineEvent.SHOW_HINT })}
           >
             {text.hint}
@@ -54,14 +55,14 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
           <Button
             size="sm"
             variant="outline"
-            sound={TSound.SUCCESS}
+            sound={TSound.SHUFFLE}
             onClick={() => send({ type: PikachuMachineEvent.CHANGE })}
           >
             {text.changeBoard}
           </Button>
           <Button
             size="sm"
-            sound={TSound.SUCCESS}
+            sound={TSound.SHUFFLE}
             onClick={() => send({ type: PikachuMachineEvent.CREATE, mode: 'newGame' })}
           >
             {actions.newGame}

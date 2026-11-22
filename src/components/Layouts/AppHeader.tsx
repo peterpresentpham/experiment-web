@@ -4,7 +4,7 @@ import { Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
-import { NAV_ITEMS } from 'src/configs/navigation';
+import { VISIBLE_NAV_ITEMS } from 'src/configs/navigation';
 import { useMessages } from 'src/i18n/client';
 import { commonMessages } from 'src/i18n/messages/common';
 import { cn } from 'src/lib/utils';
@@ -43,7 +43,7 @@ export default function AppHeader({ actions }: TProps) {
             Experiment Web
           </Link>
           <nav aria-label={header.mainNav} className="hidden items-center gap-1 md:flex">
-            {NAV_ITEMS.map((item) => {
+            {VISIBLE_NAV_ITEMS.map((item) => {
               const active = isActive(pathname, item.href);
 
               return (
@@ -78,7 +78,7 @@ export default function AppHeader({ actions }: TProps) {
               <nav aria-label={header.mobileNav} className="flex flex-col gap-1">
                 {[
                   { title: header.home, href: '/', icon: null },
-                  ...NAV_ITEMS.map((item) => ({ ...item, title: nav[item.id].title })),
+                  ...VISIBLE_NAV_ITEMS.map((item) => ({ ...item, title: nav[item.id].title })),
                 ].map((item) => {
                   const active =
                     item.href === '/' ? pathname === '/' : isActive(pathname, item.href);

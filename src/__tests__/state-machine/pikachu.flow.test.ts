@@ -34,7 +34,7 @@ function loadBoard(
       numberOfRows: ROWS,
       numberOfColumns: COLUMNS,
       numberOfLines: 2,
-      imgType: 'internal',
+      imgType: 'magic',
       gameType: 'normal',
       round: 1,
       roundList: pikachuRoundTransformations,

@@ -4,7 +4,7 @@ import { parseArgs } from 'node:util';
 import { createHellEvaluator } from 'src/services/caro-hell/model';
 import { findHellMove } from 'src/services/caro-hell/player';
 import { findMachineMove } from 'src/services/caro-machine';
-import { TCaroSizeBoard, TTurn } from 'src/types/caro.type';
+import { TCaroSizeBoard, TCaroWinMode, TTurn } from 'src/types/caro.type';
 import {
   initBackend,
   isEntry,
@@ -46,7 +46,8 @@ export async function runArena(
   opponent: TPlayer,
   games: number,
   size: TCaroSizeBoard = 15,
-  log = true
+  log = true,
+  winMode: TCaroWinMode = 'blockOpponent'
 ): Promise<TArenaResult> {
   const result = { wins: 0, losses: 0, draws: 0, score: 0 };
   let opening: Array<number> = [];
@@ -57,7 +58,7 @@ export async function runArena(
       TTurn,
       TPlayer
     >;
-    const game = await playGame(players, size, 'blockOpponent', opening);
+    const game = await playGame(players, size, winMode, opening);
     if (game.winner == challengerTurn) result.wins++;
     else if (game.winner < 0) result.draws++;
     else result.losses++;

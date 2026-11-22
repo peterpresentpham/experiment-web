@@ -5,11 +5,26 @@ export type TPosition = [number, number]; // expect [row, column]
 export type TVector = TPosition; // expect [x, y]
 
 export enum TSound {
+  // Buttons.
   CLICK = 'click',
-  MOVE = 'move',
-  SUCCESS = 'success',
+  // Pikachu: pick a piece, drop it, match a pair, ask for a hint, deal a new board.
+  SELECT = 'select',
+  DESELECT = 'deselect',
+  MATCH = 'match',
+  HINT = 'hint',
+  SHUFFLE = 'shuffle',
+  // Caro: a stone from this player, from the other side (machine, friend online), take back.
+  PLACE = 'place',
+  PLACE_OPPONENT = 'placeOpponent',
+  UNDO = 'undo',
+  // A move that is not allowed.
   ERROR = 'error',
+  // Short music for the outcome: a Pikachu round cleared, game won, lost, drawn, no move left.
+  ROUND = 'round',
   WIN = 'win',
+  LOSE = 'lose',
+  DRAW = 'draw',
+  NO_MOVE = 'noMove',
   BACKGROUND = 'background',
 }
 

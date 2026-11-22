@@ -15,7 +15,12 @@ export const blogMessages = defineMessages<{
     docs: string;
     pages: Record<TFormatNumberSlug, string>;
   };
-  rubik: { title: string; description: string; f2lTitle: string };
+  rubik: {
+    title: string;
+    description: string;
+    f2lTitle: string;
+    player: { show: string; hide: string; loading: string; error: string };
+  };
 }>({
   en: {
     meta: {
@@ -67,6 +72,12 @@ export const blogMessages = defineMessages<{
       description:
         'A leveled guide to solving the 3x3 cube: beginner, intermediate and advanced. Full OLL, PLL and F2L, with diagrams.',
       f2lTitle: 'Rubik 3x3 | F2L',
+      player: {
+        show: 'Watch in 3D',
+        hide: 'Hide 3D',
+        loading: 'Loading the 3D cube...',
+        error: 'The 3D cube could not load.',
+      },
     },
   },
   vi: {
@@ -119,6 +130,12 @@ export const blogMessages = defineMessages<{
       description:
         'Hướng dẫn giải Rubik 3x3 theo cấp độ: người mới, trung cấp, chuyên nghiệp. Đủ OLL, PLL, F2L, có hình minh hoạ.',
       f2lTitle: 'Rubik 3x3 | F2L',
+      player: {
+        show: 'Xem 3D',
+        hide: 'Ẩn 3D',
+        loading: 'Đang tải khối 3D...',
+        error: 'Không tải được khối 3D.',
+      },
     },
   },
 });

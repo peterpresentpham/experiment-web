@@ -1,4 +1,4 @@
-import { TPikachuTransform } from 'src/types/pikachu.type';
+import { TPikachuImg, TPikachuTransform } from 'src/types/pikachu.type';
 import { defineMessages } from '../define';
 
 export const pikachuMessages = defineMessages<{
@@ -17,8 +17,7 @@ export const pikachuMessages = defineMessages<{
     title: string;
     board: string;
     imageType: string;
-    internal: string;
-    external: string;
+    imageSets: Record<TPikachuImg, string>;
     lines: string;
     rounds: string;
     reset: string;
@@ -29,7 +28,7 @@ export const pikachuMessages = defineMessages<{
     randomBoard: string;
     blind: string;
   };
-  instruction: { title: string; internal: string; external: string };
+  instruction: { title: string };
 }>({
   en: {
     meta: {
@@ -66,8 +65,7 @@ export const pikachuMessages = defineMessages<{
       title: 'Pikachu config',
       board: 'Board config',
       imageType: 'Image type',
-      internal: 'Internal',
-      external: 'External',
+      imageSets: { magic: 'Magic items', 'vietnamese-food': 'Vietnamese food' },
       lines: 'Number of lines',
       rounds: 'Round config',
       reset: 'Reset',
@@ -80,8 +78,6 @@ export const pikachuMessages = defineMessages<{
     },
     instruction: {
       title: 'Pikachu instructions',
-      internal: '1. Internal images',
-      external: '2. External images',
     },
   },
   vi: {
@@ -119,8 +115,7 @@ export const pikachuMessages = defineMessages<{
       title: 'Cài đặt Pikachu',
       board: 'Kích thước bàn',
       imageType: 'Bộ hình',
-      internal: 'Có sẵn',
-      external: 'Bên ngoài',
+      imageSets: { magic: 'Phép thuật', 'vietnamese-food': 'Món ăn Việt' },
       lines: 'Số đoạn nối',
       rounds: 'Các màn chơi',
       reset: 'Đặt lại',
@@ -133,8 +128,6 @@ export const pikachuMessages = defineMessages<{
     },
     instruction: {
       title: 'Hướng dẫn Pikachu',
-      internal: '1. Bộ hình có sẵn',
-      external: '2. Bộ hình bên ngoài',
     },
   },
 });

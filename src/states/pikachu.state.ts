@@ -1,4 +1,8 @@
-import { pikachuRoundTransformations } from 'src/configs/pikachu.constance';
+import {
+  PIKACHU_NUM_TYPES,
+  pikachuImageSets,
+  pikachuRoundTransformations,
+} from 'src/configs/pikachu.constance';
 import { getRandom } from 'src/services';
 import { TPosition } from 'src/types/global';
 import { TPikachuGame, TPikachuImg, TPikachuTransform } from 'src/types/pikachu.type';
@@ -30,6 +34,25 @@ type TPikachuStateType = {
   };
 };
 
+type TPikachuSavedState = Pick<TPikachuStateType, 'metadata' | 'board' | 'suggestion'>;
+
+/**
+ * Version 2 replaced the 'internal' and 'external' (1025 Pokémon) image sets: a saved game moves to
+ * the default set, and a board using pieces past the sets' range is dropped.
+ */
+export function migratePikachuState(persistedState: unknown, version: number) {
+  const state = { ...(persistedState as TPikachuSavedState) };
+  if (version < 2 && state.metadata) {
+    if (!pikachuImageSets.includes(state.metadata.imgType))
+      state.metadata = { ...state.metadata, imgType: 'magic' };
+    if (state.board?.some((row) => row.some((value) => value > PIKACHU_NUM_TYPES))) {
+      state.board = [];
+      state.suggestion = [];
+    }
+  }
+  return state as TPikachuStateType;
+}
+
 export const usePikachuStore = create<
   TPikachuStateType,
   [['zustand/persist', unknown], ['zustand/immer', unknown]]
@@ -42,7 +65,7 @@ export const usePikachuStore = create<
           numberOfColumns: 16,
           numberOfLines: 2,
           round: 1,
-          imgType: 'internal',
+          imgType: 'magic',
           roundList: pikachuRoundTransformations,
           randomRoundListIndex: -1,
           gameType: 'normal',
@@ -91,11 +114,8 @@ export const usePikachuStore = create<
     }),
     {
       name: 'experiment.pikachu',
-      version: 1.0,
-      migrate(persistedState, version) {
-        if (version < 1.0) return { ...(persistedState as TPikachuStateType) };
-        return persistedState;
-      },
+      version: 2,
+      migrate: migratePikachuState,
       partialize: (state) => {
         const { fn, ...rest } = state;
         return rest;

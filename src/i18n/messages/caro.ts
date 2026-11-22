@@ -56,13 +56,14 @@ export const caroMessages = defineMessages({
       machineLevel: 'Machine level',
       levels: { easy: 'Easy', medium: 'Medium', hard: 'Hard', hell: 'Hell' },
       hellHint: {
-        unknown: 'A self-learning neural network that keeps training on every game you play.',
+        unknown:
+          'The strongest level: a tournament-style caro engine running in your browser, which also remembers the moves that lost it a game.',
         ready: (games: number) =>
           games == 0
-            ? 'A self-learning neural network; it trains on every game you play in this browser.'
-            : `A self-learning neural network, trained on ${games} of your ${games == 1 ? 'game' : 'games'} in this browser.`,
+            ? 'The strongest level: a tournament-style caro engine running in your browser, which also remembers the moves that lost it a game.'
+            : `The strongest level: a tournament-style caro engine running in your browser; it has studied ${games} of your ${games == 1 ? 'game' : 'games'} here.`,
         missing:
-          'The neural network has not been trained yet, so this level plays like Hard for now.',
+          'The engine could not start in this browser, so this level plays like Hard for now.',
       },
       firstMove: 'First move',
       firstMoveYou: 'You',
@@ -202,12 +203,14 @@ export const caroMessages = defineMessages({
       machineLevel: 'Mức độ của máy',
       levels: { easy: 'Dễ', medium: 'Trung bình', hard: 'Khó', hell: 'Địa ngục' },
       hellHint: {
-        unknown: 'Mạng neural tự học, tiếp tục huấn luyện sau mỗi ván bạn chơi.',
+        unknown:
+          'Mức mạnh nhất: engine caro chuẩn giải đấu chạy ngay trên trình duyệt, nhớ cả những nước từng khiến nó thua.',
         ready: (games: number) =>
           games == 0
-            ? 'Mạng neural tự học: huấn luyện thêm sau mỗi ván bạn chơi trên trình duyệt này.'
-            : `Mạng neural tự học: đã huấn luyện thêm từ ${games} ván của bạn trên trình duyệt này.`,
-        missing: 'Mạng neural chưa được huấn luyện nên tạm thời mức này chơi như mức Khó.',
+            ? 'Mức mạnh nhất: engine caro chuẩn giải đấu chạy ngay trên trình duyệt, nhớ cả những nước từng khiến nó thua.'
+            : `Mức mạnh nhất: engine caro chuẩn giải đấu chạy ngay trên trình duyệt; đã rút kinh nghiệm từ ${games} ván của bạn ở đây.`,
+        missing:
+          'Engine không khởi động được trên trình duyệt này nên tạm thời mức này chơi như mức Khó.',
       },
       firstMove: 'Đi trước',
       firstMoveYou: 'Bạn',

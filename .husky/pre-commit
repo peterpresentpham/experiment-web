@@ -1,2 +1,5 @@
+# Staged files only: lint (with fixes), format, and the tests that touch them.
+npx lint-staged
+# The whole project: a full production build (also type-checks) and lint.
 npm run build
 npx eslint --config ./eslint.commit.js --cache

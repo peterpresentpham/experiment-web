@@ -5,7 +5,15 @@ import { immer } from 'zustand/middleware/immer';
 interface TConfigStateType {
   isSound: boolean;
   backgroundSound: boolean;
-  fn: { setIsSound: () => void; setBackgroundSound: () => void };
+  // 0..1, applied on top of each sound's own level.
+  effectsVolume: number;
+  musicVolume: number;
+  fn: {
+    setIsSound: () => void;
+    setBackgroundSound: () => void;
+    setEffectsVolume: (volume: number) => void;
+    setMusicVolume: (volume: number) => void;
+  };
 }
 
 export const useConfigStore = create<
@@ -17,6 +25,8 @@ export const useConfigStore = create<
       return {
         isSound: true,
         backgroundSound: true,
+        effectsVolume: 0.8,
+        musicVolume: 0.6,
         fn: {
           setIsSound: () => {
             set((state) => {
@@ -26,6 +36,16 @@ export const useConfigStore = create<
           setBackgroundSound: () => {
             set((state) => {
               state.backgroundSound = !state.backgroundSound;
+            });
+          },
+          setEffectsVolume: (volume) => {
+            set((state) => {
+              state.effectsVolume = Math.min(1, Math.max(0, volume));
+            });
+          },
+          setMusicVolume: (volume) => {
+            set((state) => {
+              state.musicVolume = Math.min(1, Math.max(0, volume));
             });
           },
         },

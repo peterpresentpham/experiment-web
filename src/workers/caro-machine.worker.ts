@@ -6,7 +6,7 @@ import {
   TExperienceEntry,
   TGameRecord,
 } from 'src/services/caro-machine/experience';
-import { TCaroMachineLevel } from 'src/types/caro.type';
+import { TCaroMachineLevel, TCaroWinMode } from 'src/types/caro.type';
 
 export type TExperienceEntries = Array<[string, TExperienceEntry]>;
 
@@ -23,8 +23,8 @@ export type TCaroMachineWorkerRequest =
       /** Recent hell games, replayed while fine-tuning the network. */
       replay: Array<THellGame>;
     }
-  /** Hell level: load the network before the first move. */
-  | { type: 'warm-up'; epoch: number }
+  /** Hell level: load the engine for this rule (or the network) before the first move. */
+  | { type: 'warm-up'; epoch: number; winMode: TCaroWinMode }
   /** Hell level: the learner saved new weights, drop the cached network. */
   | { type: 'reload-model' };
 
@@ -40,8 +40,10 @@ function reply(response: TCaroMachineWorkerResponse) {
   self.postMessage(response);
 }
 
-// TensorFlow.js and the network are only loaded once the hell level is actually used.
+// TensorFlow.js and the network are only loaded once the hell level actually needs them: the
+// level plays Tengen (a WebAssembly engine) and keeps the network as its fallback.
 const loadHell = () => import('src/services/caro-hell/worker-runtime');
+const loadTengen = () => import('src/services/caro-tengen/player');
 
 async function handle(message: TCaroMachineWorkerRequest) {
   if (message.type == 'book') {
@@ -49,6 +51,12 @@ async function handle(message: TCaroMachineWorkerRequest) {
   } else if (message.type == 'move') {
     const { id, type: _type, epoch, ...request } = message;
     if (request.level == 'hell' && request.size != 3) {
+      const tengen = await (await loadTengen()).findTengenMove(request, book);
+      if (tengen != null) {
+        reply({ type: 'hell-status', available: true });
+        reply({ type: 'move', id, location: tengen });
+        return;
+      }
       const hell = await loadHell();
       const { location, available } = await hell.findHellLevelMove(request, epoch, book);
       reply({ type: 'hell-status', available });
@@ -69,6 +77,10 @@ async function handle(message: TCaroMachineWorkerRequest) {
     }
     reply({ type: 'learned', entries, hellGame });
   } else if (message.type == 'warm-up') {
+    if (await (await loadTengen()).warmUpTengen(message.winMode)) {
+      reply({ type: 'hell-status', available: true });
+      return;
+    }
     const hell = await loadHell();
     reply({ type: 'hell-status', available: await hell.warmUpHell(message.epoch) });
   } else if (message.type == 'reload-model') {

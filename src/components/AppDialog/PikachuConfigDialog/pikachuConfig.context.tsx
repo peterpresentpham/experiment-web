@@ -32,7 +32,7 @@ type TPikachuConfigContextType = {
 const pikachuConfigContextDefault: TPikachuConfigContextType = {
   size: { numberOfRows: 16, numberOfColumns: 9 },
   numberOfLines: 2,
-  imgType: 'internal',
+  imgType: 'magic',
   rounds: [],
   gameType: 'normal',
   fn: {
@@ -57,7 +57,7 @@ export default function PikachuConfigProvider({ children }: TProps) {
     numberOfColumns: 9,
   });
   const [numberOfLines, setNumberOfLines] = useState(2);
-  const [imgType, setImgType] = useState<TPikachuImg>('internal');
+  const [imgType, setImgType] = useState<TPikachuImg>('magic');
   const [rounds, setRounds] = useState<Array<TPikachuTransform>>(pikachuRoundTransformations);
   const [gameType, setGameType] = useState<TPikachuGame>('normal');
 

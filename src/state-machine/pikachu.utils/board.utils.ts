@@ -1,3 +1,4 @@
+import { PIKACHU_NUM_TYPES } from 'src/configs/pikachu.constance';
 import { toast } from 'sonner';
 import { getDocumentLocale } from 'src/i18n/client';
 import { pikachuMessages } from 'src/i18n/messages/pikachu';
@@ -18,13 +19,13 @@ export type TMoveResolution =
 
 export function changeBoard() {
   const state = usePikachuStore.getState();
-  const { numberOfRows, numberOfColumns, numberOfLines, imgType } = state.metadata;
+  const { numberOfRows, numberOfColumns, numberOfLines } = state.metadata;
   const { board, path } = PikachuService.changeBoard({
     currentBoard: state.board,
     numberOfRows,
     numberOfColumns,
     numberOfLines,
-    numTypes: imgType == 'internal' ? 90 : 1025,
+    numTypes: PIKACHU_NUM_TYPES,
   });
   state.fn.changeBoard(board, path);
 }
@@ -106,6 +107,7 @@ export function commitMatchResult(result: TMatchResult | undefined) {
 }
 
 export function notifyOutOfMove() {
+  soundtrack.play({ type: TSound.NO_MOVE });
   toast.warning(pikachuMessages[getDocumentLocale()].outOfMove);
 }
 

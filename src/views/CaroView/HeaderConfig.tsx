@@ -13,6 +13,7 @@ import { caroMessages } from 'src/i18n/messages/caro';
 import { commonMessages } from 'src/i18n/messages/common';
 import { useCaroStore } from 'src/states/caro.state';
 import CaroModeBadge from './CaroModeBadge';
+import { TSound } from 'src/types/global';
 
 export default function HeaderConfig(props: ComponentProps<'div'>) {
   const turn = useCaroStore((state) => state.turn);
@@ -47,20 +48,23 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
         </>
       }
       actions={
-        !isOver ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={undo}
-            disabled={stepCount <= 1 || shouldDisableBoard}
-          >
-            {actions.undo}
-          </Button>
-        ) : (
-          <Button size="sm" onClick={() => reset()}>
+        <>
+          {!isOver && (
+            <Button
+              size="sm"
+              variant="outline"
+              sound={TSound.UNDO}
+              onClick={undo}
+              disabled={stepCount <= 1 || shouldDisableBoard}
+            >
+              {actions.undo}
+            </Button>
+          )}
+          {/* Always reachable; highlighted once the game is over. */}
+          <Button size="sm" variant={isOver ? 'default' : 'outline'} onClick={() => reset()}>
             {actions.newGame}
           </Button>
-        )
+        </>
       }
     >
       {gameType == 'blind' && (

@@ -19,6 +19,8 @@ import { createCaroMessage, decodeCaroMessage, TSyncReturnType } from 'src/servi
 import { useCaroStore } from 'src/states/caro.state';
 import { useCaroChat } from 'src/states/messenger.state';
 import { TConnection, TRole } from 'src/types/caro.type';
+import { soundtrack } from 'src/services/soundtrack';
+import { TSound } from 'src/types/global';
 
 export type TCaroConnectionContext = {
   peer: Instance | null;
@@ -190,8 +192,10 @@ export default function CaroConnectionProvider({ children }: TProps) {
               toast.info(text.syncGameType(configText[gameType], isOverride));
             } else if (type == 'move') {
               const location = Number(message);
+              soundtrack.play({ type: TSound.PLACE_OPPONENT });
               move(location);
             } else if (type == 'undo') {
+              soundtrack.play({ type: TSound.UNDO });
               undo();
               toast.warning(text.opponentUndo);
             } else if (type == 'newGame') reset();

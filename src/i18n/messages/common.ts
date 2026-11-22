@@ -1,3 +1,4 @@
+import { TSound } from 'src/types/global';
 import { defineMessages } from '../define';
 
 type TNavText = { title: string; description: string; tag: string };
@@ -35,7 +36,10 @@ export const commonMessages = defineMessages<{
     unmute: string;
     backgroundMute: string;
     backgroundUnmute: string;
-    samples: { click: string; success: string; move: string; error: string; win: string };
+    effectsVolume: string;
+    musicVolume: string;
+    preview: string;
+    samples: Record<Exclude<TSound, TSound.BACKGROUND>, string>;
   };
   actions: {
     save: string;
@@ -125,7 +129,26 @@ export const commonMessages = defineMessages<{
       unmute: 'Unmute',
       backgroundMute: 'Mute background',
       backgroundUnmute: 'Unmute background',
-      samples: { click: 'Click', success: 'Success', move: 'Move', error: 'Error', win: 'Win' },
+      effectsVolume: 'Effects volume',
+      musicVolume: 'Music volume',
+      preview: 'Listen',
+      samples: {
+        click: 'Button',
+        select: 'Pick a piece',
+        deselect: 'Drop a piece',
+        match: 'Match',
+        hint: 'Hint',
+        shuffle: 'New board',
+        place: 'Your stone',
+        placeOpponent: 'Opponent stone',
+        undo: 'Undo',
+        error: 'Not allowed',
+        round: 'Round cleared',
+        win: 'Win',
+        lose: 'Lose',
+        draw: 'Draw',
+        noMove: 'No moves left',
+      },
     },
     actions: {
       save: 'Save',
@@ -217,12 +240,25 @@ export const commonMessages = defineMessages<{
       unmute: 'Bật tiếng',
       backgroundMute: 'Tắt nhạc nền',
       backgroundUnmute: 'Bật nhạc nền',
+      effectsVolume: 'Âm lượng hiệu ứng',
+      musicVolume: 'Âm lượng nhạc nền',
+      preview: 'Nghe thử',
       samples: {
-        click: 'Bấm',
-        success: 'Thành công',
-        move: 'Di chuyển',
-        error: 'Lỗi',
+        click: 'Nút bấm',
+        select: 'Chọn hình',
+        deselect: 'Bỏ chọn',
+        match: 'Ghép đúng',
+        hint: 'Gợi ý',
+        shuffle: 'Bàn mới',
+        place: 'Quân của bạn',
+        placeOpponent: 'Quân đối thủ',
+        undo: 'Đi lại',
+        error: 'Không hợp lệ',
+        round: 'Qua màn',
         win: 'Thắng',
+        lose: 'Thua',
+        draw: 'Hoà',
+        noMove: 'Hết nước',
       },
     },
     actions: {

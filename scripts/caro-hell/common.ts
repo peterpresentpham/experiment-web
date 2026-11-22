@@ -160,7 +160,9 @@ export type TPlayer = (state: {
   size: TCaroSizeBoard;
   winMode: TCaroWinMode;
   turn: TTurn;
-}) => { move: number; policy?: Array<[number, number]> | null };
+}) => TChoice | Promise<TChoice>;
+
+type TChoice = { move: number; policy?: Array<[number, number]> | null };
 
 /** Lets pending signals and timers run between long synchronous steps. */
 export const yieldToEvents = () => new Promise((resolve) => setImmediate(resolve));
@@ -187,7 +189,8 @@ export async function playGame(
     if (ply < opening.length) move = opening[ply];
     else {
       await yieldToEvents();
-      const choice = players[turn]({ steps, moves, size, winMode, turn });
+      // External engines (other processes) answer asynchronously.
+      const choice = await players[turn]({ steps, moves, size, winMode, turn });
       move = choice.move;
       policy = choice.policy === undefined ? [[move, 1]] : choice.policy;
     }

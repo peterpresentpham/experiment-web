@@ -55,38 +55,50 @@ export default function CaroStateProvider({ children }: TProps) {
 
   const isOverWin = Boolean(winState) || isBlindForceOver;
 
-  const { playerText, isWin, isOver } = useMemo(() => {
+  // `outcome` is how the game ended for the player at this device, for the closing sound.
+  const { playerText, isWin, isOver, outcome } = useMemo((): {
+    playerText: string;
+    isWin: boolean;
+    isOver: boolean;
+    outcome?: 'win' | 'lose' | 'draw';
+  } => {
     const isDraw = stepCount == size * size;
     if (playMode == 'machine') {
       const isMachine = turn == machineTurn;
       if (isOverWin) {
-        if (isMachine) return { playerText: status.machineWins, isWin: false, isOver: true };
-        return { playerText: status.youWin, isWin: true, isOver: true };
+        if (isMachine)
+          return { playerText: status.machineWins, isWin: false, isOver: true, outcome: 'lose' };
+        return { playerText: status.youWin, isWin: true, isOver: true, outcome: 'win' };
       }
-      if (isDraw) return { playerText: status.draw, isWin: false, isOver: true };
+      if (isDraw) return { playerText: status.draw, isWin: false, isOver: true, outcome: 'draw' };
       const playerText = isMachine ? status.machineThinking : status.yourTurn;
       return { playerText, isWin: false, isOver: false };
     }
     if (playMode == 'online' && connectionType == 'connected') {
       const isMine = (role == 'host' && turn == 0) || (role == 'guest' && turn == 1);
       // Only the winner's side treats the game as over; the loser waits for the new game.
-      if (isOverWin && isMine) return { playerText: status.youWin, isWin: true, isOver: true };
-      if (isOverWin) return { playerText: status.opponentWins, isWin: false, isOver: false };
-      if (isDraw) return { playerText: status.draw, isWin: false, isOver: true };
+      if (isOverWin && isMine)
+        return { playerText: status.youWin, isWin: true, isOver: true, outcome: 'win' };
+      if (isOverWin)
+        return { playerText: status.opponentWins, isWin: false, isOver: false, outcome: 'lose' };
+      if (isDraw) return { playerText: status.draw, isWin: false, isOver: true, outcome: 'draw' };
       return {
         playerText: isMine ? status.yourTurn : status.opponentTurn,
         isWin: false,
         isOver: false,
       };
     }
-    if (isOverWin) return { playerText: status.win(turn + 1), isWin: true, isOver: true };
-    if (isDraw) return { playerText: status.draw, isWin: false, isOver: true };
+    if (isOverWin)
+      return { playerText: status.win(turn + 1), isWin: true, isOver: true, outcome: 'win' };
+    if (isDraw) return { playerText: status.draw, isWin: false, isOver: true, outcome: 'draw' };
     return { playerText: status.turn(turn + 1), isWin: false, isOver: false };
   }, [isOverWin, playMode, machineTurn, connectionType, role, turn, stepCount, size, status]);
 
   useEffect(() => {
-    if (isWin) soundtrack.play({ type: TSound.WIN });
-  }, [isWin]);
+    if (!outcome) return;
+    const sounds = { win: TSound.WIN, lose: TSound.LOSE, draw: TSound.DRAW };
+    soundtrack.play({ type: sounds[outcome] });
+  }, [outcome]);
 
   const { shouldDisableBoard } = useMemo(() => {
     if (connectionType == 'connected' && playMode == 'online') {

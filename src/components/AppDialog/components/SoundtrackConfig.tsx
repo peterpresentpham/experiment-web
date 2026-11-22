@@ -2,11 +2,38 @@ import { Volume2, VolumeOff } from 'lucide-react';
 import { Button } from 'src/components/shadcn/button';
 import { useMessages } from 'src/i18n/client';
 import { commonMessages } from 'src/i18n/messages/common';
+import { SOUND_EFFECTS } from 'src/services/soundtrack';
 import { useConfigStore } from 'src/states/config.state';
 import { TSound } from 'src/types/global';
 
+type TEffect = Exclude<TSound, TSound.BACKGROUND>;
+
+const EFFECTS = Object.keys(SOUND_EFFECTS) as Array<TEffect>;
+
+type TVolumeProps = { label: string; value: number; onChange: (value: number) => void };
+
+function VolumeSlider({ label, value, onChange }: TVolumeProps) {
+  return (
+    <label className="flex items-center gap-3 text-sm">
+      <span className="w-36 shrink-0">{label}</span>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        step={5}
+        value={Math.round(value * 100)}
+        onChange={(event) => onChange(Number(event.target.value) / 100)}
+        className="accent-primary min-w-0 flex-1"
+      />
+      <span className="text-muted-foreground w-10 text-right tabular-nums">
+        {Math.round(value * 100)}%
+      </span>
+    </label>
+  );
+}
+
 export default function SoundtrackConfig() {
-  const { isSound, backgroundSound, fn } = useConfigStore();
+  const { isSound, backgroundSound, effectsVolume, musicVolume, fn } = useConfigStore();
   const { settings } = useMessages(commonMessages);
 
   return (
@@ -22,22 +49,26 @@ export default function SoundtrackConfig() {
           {backgroundSound ? settings.backgroundMute : settings.backgroundUnmute}
         </Button>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <Button variant="outline" sound={TSound.CLICK} isSound={true}>
-          {settings.samples.click}
-        </Button>
-        <Button sound={TSound.SUCCESS} isSound={true}>
-          {settings.samples.success}
-        </Button>
-        <Button sound={TSound.MOVE} isSound={true} variant="destructive">
-          {settings.samples.move}
-        </Button>
-        <Button sound={TSound.ERROR} isSound={true}>
-          {settings.samples.error}
-        </Button>
-        <Button sound={TSound.WIN} isSound={true} variant="secondary">
-          {settings.samples.win}
-        </Button>
+      <div className="mt-2 flex flex-col gap-2">
+        <VolumeSlider
+          label={settings.effectsVolume}
+          value={effectsVolume}
+          onChange={fn.setEffectsVolume}
+        />
+        <VolumeSlider
+          label={settings.musicVolume}
+          value={musicVolume}
+          onChange={fn.setMusicVolume}
+        />
+      </div>
+      <p className="text-muted-foreground mt-3 text-xs">{settings.preview}</p>
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        {EFFECTS.map((effect) => (
+          // Previews play even when effects are muted, so a sound can be checked first.
+          <Button key={effect} size="sm" variant="outline" sound={effect} isSound={true}>
+            {settings.samples[effect]}
+          </Button>
+        ))}
       </div>
     </div>
   );

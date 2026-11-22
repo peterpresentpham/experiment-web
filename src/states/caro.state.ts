@@ -128,10 +128,15 @@ export const useCaroStore = create<
     }),
     {
       name: 'experiment.caro',
-      version: 1.4,
+      version: 1.5,
+      // 1.5 (the blocked-ends rule fix in every engine) starts every player over: default
+      // settings and an empty board, whatever was saved before.
       migrate(persistedState, version) {
-        let state = persistedState as TCaroStateType;
-        const freshBoard = {
+        const state = persistedState as TCaroStateType;
+        if (version >= 1.5) return state;
+        return {
+          ...state,
+          metadata: DEFAULT_METADATA,
           numberOfBlindError: { 0: 0, 1: 0 },
           isBlindForceOver: false,
           turn: 0 as TTurn,
@@ -139,44 +144,6 @@ export const useCaroStore = create<
           stepsOrder: [],
           winState: undefined,
         };
-        // Each step moves saved games to a new default with a fresh board; they run in order so
-        // an old save picks up every later default too.
-        // 1.2 made "hard machine" the default.
-        if (version < 1.2)
-          state = {
-            ...state,
-            ...freshBoard,
-            metadata: {
-              ...DEFAULT_METADATA,
-              ...state.metadata,
-              playMode: DEFAULT_METADATA.playMode,
-              machineTurn: DEFAULT_METADATA.machineTurn,
-              // Override is not available against the machine.
-              isOverride: false,
-              preWinner: 0,
-            },
-          };
-        // 1.3 made the hell level the default.
-        if (version < 1.3)
-          state = {
-            ...state,
-            ...freshBoard,
-            metadata: {
-              ...state.metadata,
-              playMode: DEFAULT_METADATA.playMode,
-              machineLevel: DEFAULT_METADATA.machineLevel,
-              isOverride: false,
-              preWinner: 0,
-            },
-          };
-        // 1.4 made the 20x20 board the default.
-        if (version < 1.4)
-          state = {
-            ...state,
-            ...freshBoard,
-            metadata: { ...state.metadata, size: DEFAULT_METADATA.size },
-          };
-        return state;
       },
       partialize: (state) => {
         const { fn, ...rest } = state;

@@ -14,16 +14,20 @@ export type TSignalingSocket = Socket<
 >;
 
 export default function useGameSignalingSocket() {
-  const [socket, setSocket] = useState<TSignalingSocket | null>(null);
+  // Created once in the browser (none on the server), and connected only while mounted. Nothing
+  // renders from it, so the server's null does not change the hydrated markup.
+  const [socket] = useState<TSignalingSocket | null>(() =>
+    typeof window == 'undefined'
+      ? null
+      : io(`${GAME_SIGNAL_URL}/game-signal`, { autoConnect: false })
+  );
 
   useEffect(() => {
-    const newSocket: TSignalingSocket = io(`${GAME_SIGNAL_URL}/game-signal`);
-    setSocket(newSocket);
-
+    socket?.connect();
     return () => {
-      newSocket.disconnect();
+      socket?.disconnect();
     };
-  }, []);
+  }, [socket]);
 
   return { socket };
 }

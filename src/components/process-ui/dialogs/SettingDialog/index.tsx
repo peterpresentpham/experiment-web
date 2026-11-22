@@ -1,6 +1,6 @@
 import { DialogProps } from '@radix-ui/react-dialog';
 import { Settings } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import BaseInput from 'src/components/input/BaseInput';
 import { Button } from 'src/components/shadcn/button';
 import {
@@ -30,12 +30,14 @@ export default function SettingDialog(props: DialogProps) {
   const { settings, schedulers } = useMessages(processMessages);
   const { actions } = useMessages(commonMessages);
 
-  useEffect(() => {
-    if (open) {
+  // Each opening starts from the saved settings.
+  function onOpenChange(next: boolean) {
+    if (next) {
       setLocalMode(mode);
       setLocalMaxBlock(maxBlockTaskPerSlice);
     }
-  }, [open, mode, maxBlockTaskPerSlice]);
+    setOpen(next);
+  }
 
   const onSave = () => {
     setMetadata({ mode: localMode, maxBlockTaskPerSlice: localMaxBlock });
@@ -48,7 +50,7 @@ export default function SettingDialog(props: DialogProps) {
   }
 
   return (
-    <Dialog {...props} open={open} onOpenChange={setOpen}>
+    <Dialog {...props} open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Settings role="button" aria-label={settings.open} size={14} className="cursor-pointer" />
       </DialogTrigger>

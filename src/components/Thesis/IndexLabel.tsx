@@ -1,6 +1,5 @@
 'use client';
 
-import { useRef } from 'react';
 import { useThesisObject } from 'src/context/thesis-config.context';
 import { TThesisObjectModeType } from 'src/types/thesis.type';
 
@@ -21,14 +20,8 @@ interface IndexLabelProps {
  * Props are serializable (strings only) - safe to pass from Server Components.
  */
 export default function IndexLabel({ id, mode, prefix = '', suffix = '' }: IndexLabelProps) {
-  const data = useThesisObject(id, mode);
-  const prevIndex = useRef<string | number | undefined>(undefined);
+  const index = useThesisObject(id, mode)?.index;
+  if (!index) return null;
 
-  if (data?.index !== prevIndex.current) {
-    prevIndex.current = data?.index;
-  }
-
-  if (!prevIndex.current) return null;
-
-  return <>{`${prefix}${prevIndex.current}${suffix}`}</>;
+  return <>{`${prefix}${index}${suffix}`}</>;
 }

@@ -2,12 +2,7 @@
 
 import Link from 'next/link';
 import { Fragment, ReactNode, useEffect, useState } from 'react';
-import {
-  TTableOfContentType,
-  TThesisAppendixType,
-  TThesisFigureType,
-  TThesisTableType,
-} from 'src/types/thesis.type';
+import { TTableOfContentType } from 'src/types/thesis.type';
 import { buildTableOfContent } from 'src/services/thesis/table-of-content';
 
 interface ContentProps {
@@ -73,6 +68,16 @@ function ChapterTableOfContent({ content }: ContentProps) {
   );
 }
 
+const EMPTY_TOC: ReturnType<typeof buildTableOfContent> = {
+  content: [],
+  figures: [],
+  tables: [],
+  appendixes: [],
+  abstract: false,
+  acknowledge: false,
+  reference: false,
+};
+
 interface TProps {
   id: string;
   firstLevel: 'chapter' | 'section';
@@ -80,24 +85,13 @@ interface TProps {
 }
 
 export default function TableOfContent({ id, firstLevel, children }: TProps) {
-  const [content, setContent] = useState<TTableOfContentType>([]);
-  const [figures, setFigures] = useState<Array<Array<TThesisFigureType>>>([]);
-  const [tables, setTables] = useState<Array<Array<TThesisTableType>>>([]);
-  const [appendixes, setAppendixes] = useState<Array<TThesisAppendixType>>([]);
-  const [abstract, setAbstract] = useState(false);
-  const [acknowledge, setAcknowledgement] = useState(false);
-  const [reference, setReference] = useState(false);
+  const [toc, setToc] = useState<ReturnType<typeof buildTableOfContent>>(EMPTY_TOC);
+  const { content, figures, tables, appendixes, abstract, acknowledge, reference } = toc;
 
+  // The table is read from the thesis in the DOM, so it is built once the page has been painted.
   useEffect(() => {
-    const { content, figures, tables, appendixes, abstract, acknowledge, reference } =
-      buildTableOfContent(id, firstLevel);
-    setContent(content);
-    setFigures(figures);
-    setTables(tables);
-    setAppendixes(appendixes);
-    setAbstract(abstract);
-    setAcknowledgement(acknowledge);
-    setReference(reference);
+    const frame = requestAnimationFrame(() => setToc(buildTableOfContent(id, firstLevel)));
+    return () => cancelAnimationFrame(frame);
   }, [id, firstLevel]);
 
   return (

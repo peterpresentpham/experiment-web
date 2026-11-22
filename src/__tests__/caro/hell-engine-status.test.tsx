@@ -10,13 +10,17 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => memory.set(key, value),
   removeItem: (key: string) => memory.delete(key),
 });
-const { default: HellEngineStatus } =
-  await import('src/components/AppDialog/CaroConfigDialog/HellEngineStatus');
+const { default: HellEngineStatus, hellEngineState } =
+  await import('src/views/CaroView/HellEngineStatus');
 const { useCaroExperienceStore } = await import('src/states/caro-experience.state');
+const { useCaroStore } = await import('src/states/caro.state');
+
+const hellGame = useCaroStore.getState().metadata;
 
 afterEach(() => {
   cleanup();
   useCaroExperienceStore.setState({ hellEngines: null });
+  useCaroStore.setState({ metadata: hellGame });
 });
 
 const show = () =>
@@ -25,6 +29,17 @@ const show = () =>
       <HellEngineStatus />
     </LocaleProvider>
   );
+
+describe('hellEngineState', () => {
+  it('names the engine the hell level plays with right now', () => {
+    expect(hellEngineState({ rapfi: 'loading', tengen: 'loading' })).toBe('loading');
+    expect(hellEngineState({ rapfi: 'loading', tengen: 'ready' })).toBe('loadingRapfi');
+    expect(hellEngineState({ rapfi: 'ready', tengen: 'loading' })).toBe('rapfi');
+    expect(hellEngineState({ rapfi: 'failed', tengen: 'ready' })).toBe('tengen');
+    expect(hellEngineState({ rapfi: 'failed', tengen: 'loading' })).toBe('loading');
+    expect(hellEngineState({ rapfi: 'failed', tengen: 'failed' })).toBe('none');
+  });
+});
 
 describe('HellEngineStatus', () => {
   it('stays hidden until the engines start loading', () => {
@@ -36,15 +51,20 @@ describe('HellEngineStatus', () => {
     const { setHellEngines } = useCaroExperienceStore.getState().fn;
     setHellEngines({ rapfi: 'loading', tengen: 'ready' });
     show();
-    expect(screen.getByText('Rapfi · loading…')).toBeTruthy();
-    expect(screen.getByText('Tengen · ready')).toBeTruthy();
-    expect(screen.getByText(/Tengen plays until Rapfi/)).toBeTruthy();
+    const badge = screen.getByText('Loading Rapfi…');
+    expect(badge.getAttribute('title')).toMatch(/Tengen plays until Rapfi/);
 
     act(() => setHellEngines({ rapfi: 'ready', tengen: 'ready' }));
-    expect(screen.getByText('Rapfi · ready')).toBeTruthy();
-    expect(screen.queryByText(/Tengen plays until Rapfi/)).toBeNull();
+    expect(screen.getByText('Rapfi')).toBeTruthy();
 
     act(() => setHellEngines({ rapfi: 'failed', tengen: 'ready' }));
-    expect(screen.getByText('Rapfi · unavailable')).toBeTruthy();
+    expect(screen.getByText('Tengen')).toBeTruthy();
+  });
+
+  it('is hidden outside a game against the hell level', () => {
+    useCaroExperienceStore.getState().fn.setHellEngines({ rapfi: 'ready', tengen: 'ready' });
+    useCaroStore.setState({ metadata: { ...hellGame, machineLevel: 'hard' } });
+    const { container } = show();
+    expect(container.textContent).toBe('');
   });
 });

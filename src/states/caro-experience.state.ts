@@ -74,15 +74,22 @@ export const useCaroExperienceStore = create<TCaroExperienceStateType>()(
     }),
     {
       name: 'experiment.caro.experience',
-      version: 2,
-      // Version 1 lessons came from a search that misread blockOpponent fours (a four one stone
-      // stops counted as open), and they override the engines: drop them, keep the games.
+      version: 3,
+      // Version 3 starts every player over, as "clear memory" does: lessons and games from before
+      // the blocked-ends rule fix are dropped, and the bumped epoch retires the personal network.
       migrate: (persisted, version) => {
         const state = persisted as Pick<
           TCaroExperienceStateType,
           'entries' | 'lastGame' | 'hellGames' | 'hellTrainedGames' | 'epoch'
         >;
-        return version < 2 ? { ...state, entries: [], lastGame: '' } : state;
+        if (version >= 3) return state;
+        return {
+          entries: [],
+          lastGame: '',
+          hellGames: [],
+          hellTrainedGames: 0,
+          epoch: (state.epoch ?? 0) + 1,
+        };
       },
       partialize: (state) => ({
         entries: state.entries,

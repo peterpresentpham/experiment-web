@@ -13,6 +13,7 @@ import { caroMessages } from 'src/i18n/messages/caro';
 import { commonMessages } from 'src/i18n/messages/common';
 import { useCaroStore } from 'src/states/caro.state';
 import CaroGameInfo from './CaroGameInfo';
+import HellEngineStatus from './HellEngineStatus';
 import { TSound } from 'src/types/global';
 
 export default function HeaderConfig(props: ComponentProps<'div'>) {
@@ -57,6 +58,7 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
               </span>
             }
           />
+          <HellEngineStatus />
           {/* Wide screens: in the title row, so the header is one row and the board grows. */}
           <CaroGameInfo className="hidden lg:flex" />
         </>

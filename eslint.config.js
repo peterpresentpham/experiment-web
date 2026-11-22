@@ -70,10 +70,6 @@ export default [
       'import/no-unresolved': 'warn',
       'react/prop-types': 'off',
       'react/jsx-pascal-case': 'warn',
-      // React Compiler rules (react-hooks v7) flag existing code; warn until it is cleaned up.
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/refs': 'warn',
-      'react-hooks/immutability': 'warn',
     },
   },
   {

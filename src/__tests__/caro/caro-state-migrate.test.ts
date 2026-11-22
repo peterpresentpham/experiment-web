@@ -18,28 +18,27 @@ function savedGame(metadata: object) {
 }
 
 describe('caro store migration', () => {
-  it('moves a 1.3 save to the 20x20 board with a fresh game, keeping its other settings', () => {
-    const state = migrate(
-      savedGame({ playMode: 'machine', machineLevel: 'easy', size: 15 }),
-      1.3
-    ) as ReturnType<typeof useCaroStore.getState>;
-    expect(state.metadata.size).toBe(20);
-    expect(state.metadata.machineLevel).toBe('easy');
-    expect(state.stepsOrder).toEqual([]);
-    expect(state.turn).toBe(0);
-  });
-
-  it('applies every later default to an old save', () => {
-    const state = migrate(savedGame({ size: 10, machineLevel: 'easy' }), 1.1) as ReturnType<
-      typeof useCaroStore.getState
-    >;
-    expect(state.metadata.playMode).toBe('machine');
-    expect(state.metadata.machineLevel).toBe('hell');
-    expect(state.metadata.size).toBe(20);
+  it('starts every older save over: default settings and an empty board', () => {
+    for (const version of [1.1, 1.3, 1.4]) {
+      const state = migrate(
+        savedGame({ playMode: 'offline', machineLevel: 'easy', size: 15 }),
+        version
+      ) as ReturnType<typeof useCaroStore.getState>;
+      expect(state.metadata).toMatchObject({
+        playMode: 'machine',
+        machineLevel: 'hell',
+        size: 20,
+        machineTurn: 1,
+      });
+      expect(state.steps).toEqual({});
+      expect(state.stepsOrder).toEqual([]);
+      expect(state.turn).toBe(0);
+      expect(state.numberOfBlindError).toEqual({ 0: 0, 1: 0 });
+    }
   });
 
   it('leaves a current save alone', () => {
     const saved = savedGame({ size: 10 });
-    expect(migrate(saved, 1.4)).toBe(saved);
+    expect(migrate(saved, 1.5)).toBe(saved);
   });
 });

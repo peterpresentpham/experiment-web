@@ -1,5 +1,5 @@
 import { DialogProps } from '@radix-ui/react-dialog';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from 'src/components/shadcn/button';
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from 'src/components/shadcn/dialog';
 import { useProcessStore } from 'src/states/process.state';
@@ -23,9 +23,14 @@ export default function UpdateProcessDialog(props: DialogProps) {
   } = useProcessStore();
   const [data, setData] = useState<TProcessDataObject>({});
 
-  useEffect(() => {
-    if (props.open) setData(processes);
-  }, [props.open, processes]);
+  // The draft starts from the store's processes whenever the dialog opens or they change while it
+  // is open. Adjusted during render, as React recommends over an effect.
+  const shown = props.open ? processes : null;
+  const [synced, setSynced] = useState<TProcessDataObject | null>(null);
+  if (synced != shown) {
+    setSynced(shown);
+    if (shown) setData(shown);
+  }
 
   function onCreateProcess() {
     setData((state) => {

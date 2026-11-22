@@ -6,7 +6,6 @@ import {
   ReactNode,
   SetStateAction,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -80,37 +79,22 @@ export default function CaroConfigProvider({ children }: TProps) {
   const [machineLevel, setMachineLevel] = useState(metadata.machineLevel);
   const [machineTurn, setMachineTurn] = useState(metadata.machineTurn);
 
-  useEffect(() => {
-    setWinMode(metadata.winMode);
-  }, [metadata.winMode]);
-
-  useEffect(() => {
-    setSize(metadata.size);
-  }, [metadata.size]);
-
-  useEffect(() => {
-    setPlayMode(metadata.playMode);
-  }, [metadata.playMode]);
-
-  useEffect(() => {
-    setGameType(metadata.gameType);
-  }, [metadata.gameType]);
-
-  useEffect(() => {
-    setIsOverride(metadata.isOverride);
-  }, [metadata.isOverride]);
-
-  useEffect(() => {
-    setMaxError(metadata.maxNumberOfBlindError);
-  }, [metadata.maxNumberOfBlindError]);
-
-  useEffect(() => {
-    setMachineLevel(metadata.machineLevel);
-  }, [metadata.machineLevel]);
-
-  useEffect(() => {
-    setMachineTurn(metadata.machineTurn);
-  }, [metadata.machineTurn]);
+  // The drafts follow the store when it changes (a new game, an online sync), field by field, so
+  // an unrelated change does not undo an edit. Adjusted during render, as React recommends over an
+  // effect: https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [synced, setSynced] = useState(metadata);
+  if (synced != metadata) {
+    setSynced(metadata);
+    if (metadata.size != synced.size) setSize(metadata.size);
+    if (metadata.playMode != synced.playMode) setPlayMode(metadata.playMode);
+    if (metadata.gameType != synced.gameType) setGameType(metadata.gameType);
+    if (metadata.winMode != synced.winMode) setWinMode(metadata.winMode);
+    if (metadata.isOverride != synced.isOverride) setIsOverride(metadata.isOverride);
+    if (metadata.maxNumberOfBlindError != synced.maxNumberOfBlindError)
+      setMaxError(metadata.maxNumberOfBlindError);
+    if (metadata.machineLevel != synced.machineLevel) setMachineLevel(metadata.machineLevel);
+    if (metadata.machineTurn != synced.machineTurn) setMachineTurn(metadata.machineTurn);
+  }
 
   const contextData = useMemo<TCaroConfigContextType>(() => {
     return {

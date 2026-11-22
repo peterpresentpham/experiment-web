@@ -6,11 +6,9 @@ import {
   ReactNode,
   SetStateAction,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from 'react';
-import { pikachuRoundTransformations } from 'src/configs/pikachu.constance';
 import { usePikachuStore } from 'src/states/pikachu.state';
 import { TPikachuGame, TPikachuImg, TPikachuTransform } from 'src/types/pikachu.type';
 
@@ -53,33 +51,30 @@ interface TProps {
 export default function PikachuConfigProvider({ children }: TProps) {
   const { metadata } = usePikachuStore();
   const [size, setSize] = useState<{ numberOfRows: number; numberOfColumns: number }>({
-    numberOfRows: 16,
-    numberOfColumns: 9,
+    numberOfRows: metadata.numberOfRows,
+    numberOfColumns: metadata.numberOfColumns,
   });
-  const [numberOfLines, setNumberOfLines] = useState(2);
-  const [imgType, setImgType] = useState<TPikachuImg>('magic');
-  const [rounds, setRounds] = useState<Array<TPikachuTransform>>(pikachuRoundTransformations);
-  const [gameType, setGameType] = useState<TPikachuGame>('normal');
+  const [numberOfLines, setNumberOfLines] = useState(metadata.numberOfLines);
+  const [imgType, setImgType] = useState<TPikachuImg>(metadata.imgType);
+  const [rounds, setRounds] = useState<Array<TPikachuTransform>>(metadata.roundList);
+  const [gameType, setGameType] = useState<TPikachuGame>(metadata.gameType);
 
-  useEffect(() => {
-    setSize({ numberOfRows: metadata.numberOfRows, numberOfColumns: metadata.numberOfColumns });
-  }, [metadata.numberOfRows, metadata.numberOfColumns]);
-
-  useEffect(() => {
-    setNumberOfLines(metadata.numberOfLines);
-  }, [metadata.numberOfLines]);
-
-  useEffect(() => {
-    setImgType(metadata.imgType);
-  }, [metadata.imgType]);
-
-  useEffect(() => {
-    setRounds(metadata.roundList);
-  }, [metadata.roundList]);
-
-  useEffect(() => {
-    setGameType(metadata.gameType);
-  }, [metadata.gameType]);
+  // The drafts follow the store when it changes (e.g. once it is restored from storage), field by
+  // field, so an unrelated change does not undo an edit. Adjusted during render, as React
+  // recommends over an effect.
+  const [synced, setSynced] = useState(metadata);
+  if (synced != metadata) {
+    setSynced(metadata);
+    if (
+      metadata.numberOfRows != synced.numberOfRows ||
+      metadata.numberOfColumns != synced.numberOfColumns
+    )
+      setSize({ numberOfRows: metadata.numberOfRows, numberOfColumns: metadata.numberOfColumns });
+    if (metadata.numberOfLines != synced.numberOfLines) setNumberOfLines(metadata.numberOfLines);
+    if (metadata.imgType != synced.imgType) setImgType(metadata.imgType);
+    if (metadata.roundList != synced.roundList) setRounds(metadata.roundList);
+    if (metadata.gameType != synced.gameType) setGameType(metadata.gameType);
+  }
 
   const contextData = useMemo<TPikachuConfigContextType>(() => {
     return {

@@ -14,15 +14,19 @@ describe('caro experience migration', () => {
     epoch: 1,
   };
 
-  it('drops version 1 lessons, learned with the old blockOpponent four rule, and keeps the games', async () => {
-    const state = (await migrate(saved, 1)) as typeof saved;
-    expect(state.entries).toEqual([]);
-    expect(state.lastGame).toBe('');
-    expect(state.hellGames).toEqual(saved.hellGames);
-    expect(state.hellTrainedGames).toBe(3);
+  it('starts every older save over and retires the personal network', async () => {
+    for (const version of [1, 2]) {
+      expect(await migrate(saved, version)).toEqual({
+        entries: [],
+        lastGame: '',
+        hellGames: [],
+        hellTrainedGames: 0,
+        epoch: 2,
+      });
+    }
   });
 
-  it('keeps lessons from the current version', async () => {
-    expect(await migrate(saved, 2)).toEqual(saved);
+  it('keeps a current save', async () => {
+    expect(await migrate(saved, 3)).toEqual(saved);
   });
 });

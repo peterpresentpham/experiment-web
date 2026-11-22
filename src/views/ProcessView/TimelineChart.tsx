@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Group } from '@visx/group';
 import { Bar } from '@visx/shape';
 import { scaleLinear, scaleBand } from '@visx/scale';
@@ -25,14 +25,21 @@ type TTooltipData = {
 
 export default function TimelineChart() {
   const { chart } = useMessages(processMessages);
-  const containerRef = useRef<HTMLDivElement>(null);
+  // The chart's width follows its container (800 until it is measured).
+  const [containerWidth, setContainerWidth] = useState(800);
+  const measure = useCallback((element: HTMLDivElement | null) => {
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => setContainerWidth(entry.contentRect.width));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   const monitorData = useProcessMonitorData();
 
   const { tooltipOpen, tooltipLeft, tooltipTop, tooltipData, showTooltip, hideTooltip } =
     useTooltip<TTooltipData>();
 
   const { width, height, xScale, yScale, bars } = useMemo(() => {
-    const w = Math.max(containerRef.current?.clientWidth ?? 800, 400);
+    const w = Math.max(containerWidth, 400);
     const maxTime = Math.max(...monitorData.map((d) => d.end), 10);
     const catSet = new Set<string>();
     monitorData.forEach((p) => catSet.add(p.index !== undefined ? `P${p.index}` : p.pid));
@@ -66,7 +73,7 @@ export default function TimelineChart() {
     });
 
     return { width: w, height: h, categories: cats, xScale, yScale, bars };
-  }, [monitorData, chart]);
+  }, [monitorData, chart, containerWidth]);
 
   if (monitorData.length === 0) {
     return (
@@ -77,7 +84,7 @@ export default function TimelineChart() {
   }
 
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div ref={measure} className="relative w-full">
       <svg width={width} height={height} className="overflow-visible">
         {/* Title */}
         <text x={MARGIN.left} y={22} fill="var(--foreground, #000)" fontSize={16} fontWeight={700}>

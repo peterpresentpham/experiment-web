@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, ReactNode, useContext } from 'react';
-import { DEFAULT_LOCALE, isLocale, TLocale } from './config';
+import { DEFAULT_LOCALE, isLocale, LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, TLocale } from './config';
 import { TLocalized } from './define';
 
 const LocaleContext = createContext<TLocale>(DEFAULT_LOCALE);
@@ -27,4 +27,9 @@ export function getDocumentLocale(): TLocale {
   if (typeof document == 'undefined') return DEFAULT_LOCALE;
   const lang = document.documentElement.lang;
   return isLocale(lang) ? lang : DEFAULT_LOCALE;
+}
+
+/** Remembers the chosen locale; the proxy serves it from the next request on. */
+export function saveLocale(locale: TLocale) {
+  document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=${LOCALE_COOKIE_MAX_AGE}; samesite=lax`;
 }

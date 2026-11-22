@@ -4,8 +4,8 @@ import { Languages } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import { Button } from 'src/components/shadcn/button';
-import { useLocale, useMessages } from 'src/i18n/client';
-import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE, LOCALES, TLocale } from 'src/i18n/config';
+import { saveLocale, useLocale, useMessages } from 'src/i18n/client';
+import { LOCALES, TLocale } from 'src/i18n/config';
 import { commonMessages } from 'src/i18n/messages/common';
 
 export default function LanguageConfig() {
@@ -16,7 +16,7 @@ export default function LanguageConfig() {
 
   function onChange(next: TLocale) {
     if (next == locale) return;
-    document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=${LOCALE_COOKIE_MAX_AGE}; samesite=lax`;
+    saveLocale(next);
     // The proxy rewrites the same URL to the other locale once the cookie is set, so a refresh is
     // enough: the router keeps the page (only the [lang] value changes, not the root layout).
     startTransition(() => router.refresh());

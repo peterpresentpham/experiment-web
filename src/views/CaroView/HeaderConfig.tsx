@@ -13,6 +13,7 @@ import { caroMessages } from 'src/i18n/messages/caro';
 import { commonMessages } from 'src/i18n/messages/common';
 import { useCaroStore } from 'src/states/caro.state';
 import CaroModeBadge from './CaroModeBadge';
+import { TSound } from 'src/types/global';
 
 export default function HeaderConfig(props: ComponentProps<'div'>) {
   const turn = useCaroStore((state) => state.turn);
@@ -52,6 +53,7 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
             <Button
               size="sm"
               variant="outline"
+              sound={TSound.UNDO}
               onClick={undo}
               disabled={stepCount <= 1 || shouldDisableBoard}
             >

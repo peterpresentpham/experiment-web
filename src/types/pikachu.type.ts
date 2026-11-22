@@ -1,6 +1,7 @@
 import { TPosition } from './global';
 
-export type TPikachuImg = 'internal' | 'external';
+// The piece image set: public/pikachu-<set>/piece1.png..piece90.png.
+export type TPikachuImg = 'magic' | 'vietnamese-food';
 export type TPikachuGame = 'normal' | 'customBoard' | 'randomBoard' | 'blind';
 
 export type TBasePikachu = {

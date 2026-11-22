@@ -53,7 +53,9 @@ export default function CaroBoard(props: ComponentProps<'div'>) {
 
       const canMove = !isBlocked && (metadata.isOverride ? steps[location] != turn : !isOccupied);
       if (canMove) {
-        soundtrack.play({ type: TSound.CLICK });
+        // Two players on one device hear their own stone sound; otherwise this is always "you".
+        const isSecond = metadata.playMode == 'offline' && turn == 1;
+        soundtrack.play({ type: isSecond ? TSound.PLACE_OPPONENT : TSound.PLACE });
         move(location);
       } else soundtrack.play({ type: TSound.ERROR });
     },

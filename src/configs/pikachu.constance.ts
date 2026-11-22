@@ -1,4 +1,4 @@
-import { TPikachuTransform } from 'src/types/pikachu.type';
+import { TPikachuImg, TPikachuTransform } from 'src/types/pikachu.type';
 
 export const PIKACHU_PIECE_SIZE = 52;
 
@@ -20,5 +20,11 @@ export const pikachuRoundTransformations: Array<TPikachuTransform> = [
   'collapseToCenter',
 ];
 
-export const PIKACHU_URL =
-  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
+export const pikachuImageSets: Array<TPikachuImg> = ['magic', 'vietnamese-food'];
+
+// Every image set has this many different pieces.
+export const PIKACHU_NUM_TYPES = 90;
+
+export function pikachuPieceSrc(imgType: TPikachuImg, value: number) {
+  return `/pikachu-${imgType}/piece${value}.png`;
+}

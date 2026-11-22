@@ -99,7 +99,7 @@ export default function useCaroMachine({ isOver, move }: TParams) {
       const wait = Math.max(0, MIN_THINKING_MS - (performance.now() - startedAt));
       timer = setTimeout(() => {
         if (isCancelled) return;
-        soundtrack.play({ type: TSound.CLICK });
+        soundtrack.play({ type: TSound.PLACE_OPPONENT });
         move(response.location);
       }, wait);
     };

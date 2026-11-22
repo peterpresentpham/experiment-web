@@ -1,7 +1,11 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { PIKACHU_PIECE_SIZE } from 'src/configs/pikachu.constance';
+import {
+  PIKACHU_NUM_TYPES,
+  PIKACHU_PIECE_SIZE,
+  pikachuPieceSrc,
+} from 'src/configs/pikachu.constance';
 import useFitBoard from 'src/hooks/useFitBoard';
 import { hasPieces } from 'src/services/pikachu/round.utils';
 import useAssetsPreLoader from 'src/hooks/useAssetsPreLoader';
@@ -16,7 +20,7 @@ function PikachuViewLayout() {
   const hasLoadedSaveRef = useRef(false);
   const {
     board,
-    metadata: { numberOfColumns, numberOfRows },
+    metadata: { numberOfColumns, numberOfRows, imgType },
   } = usePikachuStore();
   const send = usePikachuSend();
   const isInitial = PikachuMachineContext.useSelector(
@@ -24,10 +28,8 @@ function PikachuViewLayout() {
   );
   useEnableSoundtrack();
   const assets = useMemo(() => {
-    return Array.from({ length: 90 }, (_, i) => i + 1).map((i) => {
-      return `/pikachu/piece${i}.png`;
-    });
-  }, []);
+    return Array.from({ length: PIKACHU_NUM_TYPES }, (_, i) => pikachuPieceSrc(imgType, i + 1));
+  }, [imgType]);
   useAssetsPreLoader(assets);
 
   const { ref: boardContainerRef, size } = useFitBoard(

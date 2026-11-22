@@ -1,5 +1,6 @@
 import { TitleContainer } from 'src/components/box/TitleBox';
 import { Button } from 'src/components/shadcn/button';
+import { pikachuImageSets } from 'src/configs/pikachu.constance';
 import { usePikachuConfigContext } from './pikachuConfig.context';
 import { useMessages } from 'src/i18n/client';
 import { pikachuMessages } from 'src/i18n/messages/pikachu';
@@ -13,18 +14,15 @@ export default function ImgTypeConfig() {
 
   return (
     <TitleContainer className="mt-2" title={text.imageType}>
-      <Button
-        variant={imgType == 'internal' ? 'default' : 'outline'}
-        onClick={() => setImgType('internal')}
-      >
-        {text.internal}
-      </Button>
-      <Button
-        variant={imgType == 'external' ? 'default' : 'outline'}
-        onClick={() => setImgType('external')}
-      >
-        {text.external}
-      </Button>
+      {pikachuImageSets.map((set) => (
+        <Button
+          key={set}
+          variant={imgType == set ? 'default' : 'outline'}
+          onClick={() => setImgType(set)}
+        >
+          {text.imageSets[set]}
+        </Button>
+      ))}
     </TitleContainer>
   );
 }

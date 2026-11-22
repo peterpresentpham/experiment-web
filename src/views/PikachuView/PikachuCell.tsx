@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { PIKACHU_URL } from 'src/configs/pikachu.constance';
+import { pikachuPieceSrc } from 'src/configs/pikachu.constance';
 import { useMessages } from 'src/i18n/client';
 import { pikachuMessages } from 'src/i18n/messages/pikachu';
 import { cn } from 'src/lib/utils';
@@ -34,7 +34,7 @@ function PikachuCell({ row, column, size, value, imgType, isSelected, onPieceCli
     >
       {hasPiece && (
         <img
-          src={imgType == 'external' ? `${PIKACHU_URL}/${value}.png` : `/pikachu/piece${value}.png`}
+          src={pikachuPieceSrc(imgType, value)}
           alt={piece(value, row, column)}
           draggable={false}
           decoding="async"

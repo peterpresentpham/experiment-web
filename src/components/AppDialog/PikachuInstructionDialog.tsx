@@ -1,20 +1,22 @@
 import AppTooltip from 'src/components/AppTooltip';
 import { Info } from 'lucide-react';
 import IconDialogTrigger from 'src/components/AppDialog/components/IconDialogTrigger';
-import { useState } from 'react';
 import { DIALOG_KEY } from 'src/configs/constance';
-import { PIKACHU_PIECE_SIZE, PIKACHU_URL } from 'src/configs/pikachu.constance';
+import {
+  PIKACHU_NUM_TYPES,
+  PIKACHU_PIECE_SIZE,
+  pikachuImageSets,
+  pikachuPieceSrc,
+} from 'src/configs/pikachu.constance';
 import { useMessages } from 'src/i18n/client';
 import { commonMessages } from 'src/i18n/messages/common';
 import { pikachuMessages } from 'src/i18n/messages/pikachu';
 import { useDialogStore } from 'src/states/dialog.state';
-import AppPagination from '../AppPagination';
 import { Dialog, DialogContent, DialogHeader } from '../shadcn/dialog';
 
 export default function PikachuInstructionDialog() {
   const { dialog, setDialog } = useDialogStore();
-  const [currentPage, setCurrentPage] = useState(1);
-  const { instruction: text } = useMessages(pikachuMessages);
+  const { instruction: text, config } = useMessages(pikachuMessages);
   const { actions } = useMessages(commonMessages);
 
   return (
@@ -26,69 +28,39 @@ export default function PikachuInstructionDialog() {
       <DialogContent className="sm:max-w-4xl!">
         <DialogHeader>{text.title}</DialogHeader>
         <div className="scroll-hidden h-fit max-h-[75vh] overflow-auto">
-          <p className="text-lg">{text.internal}</p>
-          <div className="mt-2 flex flex-wrap gap-1">
-            {Array.from({ length: 90 }).map((_, index) => {
-              const _index = index + 1;
-
-              return (
-                <div key={_index}>
-                  <AppTooltip
-                    tooltipContent={
-                      <img
-                        src={`/pikachu/piece${_index}.png`}
-                        alt={_index.toString()}
-                        style={{ width: PIKACHU_PIECE_SIZE + 20, height: PIKACHU_PIECE_SIZE + 20 }}
-                      />
-                    }
-                  >
-                    <img
-                      src={`/pikachu/piece${_index}.png`}
-                      alt={_index.toString()}
-                      style={{ width: PIKACHU_PIECE_SIZE, height: PIKACHU_PIECE_SIZE }}
-                    />
-                  </AppTooltip>
-                </div>
-              );
-            })}
-          </div>
-          <p className="text-lg">{text.external}</p>
-          <div className="mt-2">
-            <div className="flex flex-wrap gap-1">
-              {Array.from({ length: currentPage < 12 ? 90 : 35 }).map((_, index) => {
-                const _index = index - 89 + 90 * currentPage;
-
-                return (
-                  <div key={`external-${_index}`}>
-                    <AppTooltip
-                      tooltipContent={
+          {pikachuImageSets.map((set, setIndex) => (
+            <div key={set} className={setIndex > 0 ? 'mt-4' : undefined}>
+              <p className="text-lg">{`${setIndex + 1}. ${config.imageSets[set]}`}</p>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {Array.from({ length: PIKACHU_NUM_TYPES }, (_, index) => {
+                  const src = pikachuPieceSrc(set, index + 1);
+                  return (
+                    <div key={src}>
+                      <AppTooltip
+                        tooltipContent={
+                          <img
+                            src={src}
+                            alt={(index + 1).toString()}
+                            style={{
+                              width: PIKACHU_PIECE_SIZE + 20,
+                              height: PIKACHU_PIECE_SIZE + 20,
+                            }}
+                          />
+                        }
+                      >
                         <img
-                          src={`${PIKACHU_URL}/${_index}.png`}
-                          alt={_index.toString()}
-                          style={{
-                            width: PIKACHU_PIECE_SIZE + 20,
-                            height: PIKACHU_PIECE_SIZE + 20,
-                          }}
+                          src={src}
+                          alt={(index + 1).toString()}
+                          loading="lazy"
+                          style={{ width: PIKACHU_PIECE_SIZE, height: PIKACHU_PIECE_SIZE }}
                         />
-                      }
-                    >
-                      <img
-                        src={`${PIKACHU_URL}/${_index}.png`}
-                        alt={_index.toString()}
-                        style={{ width: PIKACHU_PIECE_SIZE, height: PIKACHU_PIECE_SIZE }}
-                      />
-                    </AppTooltip>
-                  </div>
-                );
-              })}
+                      </AppTooltip>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-            <AppPagination
-              className="flex justify-end"
-              currentPage={currentPage}
-              totalPages={12}
-              events={{ onPageChange: (page) => setCurrentPage(page) }}
-            />
-          </div>
+          ))}
         </div>
       </DialogContent>
     </Dialog>

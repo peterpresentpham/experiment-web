@@ -49,7 +49,7 @@ export default function GettingStartedPage() {
       <p>{t.gettingStarted.arithmetic}</p>
       <p className="mt-5 text-lg font-bold">{t.gettingStarted.installation}</p>
       <Separator />
-      <div className="bg-secondary rounded-2xl">
+      <div className="rounded-2xl bg-secondary">
         <ToggleGroup className="mt-2" type="single">
           {Object.values(configs).map((config) => {
             return (
@@ -62,13 +62,13 @@ export default function GettingStartedPage() {
                 <Image src={config.img} alt={config.title} width={12} height={12} />
                 <p>{config.title}</p>
                 {cli == config.id && (
-                  <div className="bg-destructive absolute right-1.5 bottom-0 left-1.5 h-0.5" />
+                  <div className="absolute right-1.5 bottom-0 left-1.5 h-0.5 bg-destructive" />
                 )}
               </ToggleGroupItem>
             );
           })}
         </ToggleGroup>
-        <div className="border-border mx-3 flex items-center justify-between border-t">
+        <div className="mx-3 flex items-center justify-between border-t border-border">
           <p className="text-xl">{configs[cli].cli}</p>
           <CopyClipboard copyText={configs[cli].cli} iconprops={{ className: 'size-3.5' }} />
         </div>

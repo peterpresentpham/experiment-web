@@ -28,7 +28,7 @@ export default function UpdateFooter({ onSave, onOpenChange }: TProps) {
         variant="outline"
         size="sm"
         disabled={status === 'running'}
-        className="text-destructive hover:text-destructive/50 border-destructive! hover:border-destructive/50"
+        className="border-destructive! text-destructive hover:border-destructive/50 hover:text-destructive/50"
         onClick={onClear}
       >
         <Trash size={10} />

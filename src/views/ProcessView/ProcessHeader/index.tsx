@@ -49,7 +49,7 @@ export default function ProcessHeader() {
       <div className="flex items-center gap-1">
         <UpdateProcessDialog open={updateProcessOpen} onOpenChange={setUpdateProcessOpen} />
         <Button
-          onClick={onRun}
+          onClick={() => void onRun()}
           variant={status == 'ended' ? 'outline' : 'secondary'}
           size="sm"
           className="bg-success/10 text-success hover:bg-success/20 hover:text-success"
@@ -60,7 +60,7 @@ export default function ProcessHeader() {
         <Button
           onClick={onChangeDisplayMode}
           variant="ghost"
-          className="hover:border-border hover:bg-muted h-8 border-x border-transparent"
+          className="h-8 border-x border-transparent hover:border-border hover:bg-muted"
           size="sm"
         >
           {displayMode == 'chart' ? (

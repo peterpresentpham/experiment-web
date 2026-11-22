@@ -27,6 +27,6 @@ export default function useAssetsPreLoader(assets: Array<string>) {
       }
     }
 
-    preloadAll();
+    void preloadAll();
   }, [assets]);
 }

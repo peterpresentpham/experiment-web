@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { AppArticle, ArticleLI, ArticleUL } from 'src/components/box/ArticleBox';
 import RefLink from 'src/components/Thesis/RefLink';
 import SectionBox from 'src/components/Thesis/SectionBox';

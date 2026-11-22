@@ -5,10 +5,11 @@ import { parseArgs } from 'node:util';
 import { openingKey, TOpeningBookFile } from 'src/services/caro-tengen/opening-book';
 import { TTurn } from 'src/types/caro.type';
 import { parseNumber, ROOT } from './common';
-import { PiskvorkEngine } from './piskvork';
+import { PiskvorkEngine, TEngineName } from './piskvork';
 
 /**
- * Builds the hell level's opening book (blocked-ends rule) with a long native Tengen search.
+ * Builds the hell level's opening book (blocked-ends rule) with a long native engine search
+ * (Tengen by default, or `--engine rapfi-classical`).
  *
  *   node --import tsx scripts/caro-hell/opening-book.ts --depth 3 --radius 2 --time 10000
  *
@@ -34,6 +35,7 @@ function bookKey(moves: TMoves) {
 async function main() {
   const { values } = parseArgs({
     options: {
+      engine: { type: 'string', default: 'tengen' },
       depth: { type: 'string', default: '3' },
       radius: { type: 'string', default: '2' },
       time: { type: 'string', default: '10000' },
@@ -42,6 +44,7 @@ async function main() {
       out: { type: 'string', default: 'public/models/caro-book/opening-block.json' },
     },
   });
+  const engineName = values.engine as TEngineName;
   const depth = parseNumber(values.depth, 3);
   const radius = parseNumber(values.radius, 2);
   const timeMs = parseNumber(values.time, 10_000);
@@ -57,7 +60,7 @@ async function main() {
     const file: TOpeningBookFile = {
       version: 1,
       winMode: 'blockOpponent',
-      meta: { engine: 'tengen', timeMs, threads, depth, radius },
+      meta: { engine: engineName, timeMs, threads, depth, radius },
       entries,
     };
     writeFileSync(out, JSON.stringify(file) + '\n');
@@ -65,7 +68,7 @@ async function main() {
 
   const engines = await Promise.all(
     Array.from({ length: workers }, async () => {
-      const engine = new PiskvorkEngine('tengen');
+      const engine = new PiskvorkEngine(engineName);
       await engine.start(BOARD, 'blockOpponent', timeMs, threads);
       return engine;
     })

@@ -44,12 +44,13 @@ export default function MachineConfig() {
           </Button>
         ))}
         {machineLevel == 'hell' && (
-          <p className="text-muted-foreground w-full text-sm">
+          <p className="w-full text-sm text-muted-foreground">
             {hellModel == 'ready'
               ? text.hellHint.ready(hellTrainedGames)
               : hellModel == 'missing'
                 ? text.hellHint.missing
-                : text.hellHint.unknown}
+                : text.hellHint.unknown}{' '}
+            {text.hellHint.report}
           </p>
         )}
       </TitleContainer>
@@ -72,8 +73,8 @@ export default function MachineConfig() {
         title={text.memory}
         contentProps={{ className: 'justify-between' }}
       >
-        <p className="text-muted-foreground flex items-center gap-2 text-sm" aria-live="polite">
-          <Brain size={16} className={isLearning ? 'text-primary animate-pulse' : undefined} />
+        <p className="flex items-center gap-2 text-sm text-muted-foreground" aria-live="polite">
+          <Brain size={16} className={isLearning ? 'animate-pulse text-primary' : undefined} />
           {isLearning ? text.memoryLearning : text.memoryCount(memoryCount)}
         </p>
         {memoryCount > 0 && (

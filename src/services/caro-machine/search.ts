@@ -72,7 +72,12 @@ function byPriority(a: TCandidate, b: TCandidate) {
  * Applies the forcing rules of the game before any searching:
  * win now, block a five, finish with an unstoppable four, or answer an open three.
  */
-function planMoves(candidates: Array<TCandidate>, beamWidth: number): TMovePlan {
+function planMoves(
+  board: MachineBoard,
+  side: TStone,
+  candidates: Array<TCandidate>,
+  beamWidth: number
+): TMovePlan {
   const opponentFives: Array<TCandidate> = [];
   let ownWinThreat: TCandidate | undefined;
   let opponentHasFour = false;
@@ -89,17 +94,32 @@ function planMoves(candidates: Array<TCandidate>, beamWidth: number): TMovePlan 
     }
   }
 
-  if (opponentFives.length >= 2) return { kind: 'loss', index: opponentFives[0].index };
-  if (opponentFives.length == 1) return { kind: 'moves', moves: opponentFives, isForced: true };
+  if (opponentFives.length > 0) {
+    const fives = opponentFives.map((candidate) => candidate.index);
+    const defences = new Set(board.fiveDefences(side, fives));
+    if (defences.size == 0) return { kind: 'loss', index: fives[0] };
+    // Defences touch the opponent's run, so they are candidates (unless excluded at the root).
+    const moves = candidates.filter((candidate) => defences.has(candidate.index));
+    if (moves.length == 0) return { kind: 'loss', index: fives[0] };
+    return { kind: 'moves', moves: moves.sort(byPriority), isForced: true };
+  }
   // An open four only wins for sure when the opponent has no fours to interject.
   if (ownWinThreat && !opponentHasFour) return { kind: 'win', index: ownWinThreat.index, plies: 3 };
 
   let moves = candidates;
   if (opponentHasWinThreat) {
+    // Under blockOpponent a stone a few cells out can also defend (see stopsWinThreats).
+    const threats =
+      board.winMode == 'blockOpponent'
+        ? candidates
+            .filter((candidate) => candidate.defenseFlags & CELL_FLAG.WIN_THREAT)
+            .map((candidate) => candidate.index)
+        : [];
     moves = candidates.filter(
       (candidate) =>
         candidate.defenseFlags & (CELL_FLAG.WIN_THREAT | CELL_FLAG.FOUR) ||
-        candidate.attackFlags & CELL_FLAG.FOUR
+        candidate.attackFlags & CELL_FLAG.FOUR ||
+        (threats.length > 0 && board.stopsWinThreats(candidate.index, side, threats))
     );
   }
   moves = [...moves].sort(byPriority).slice(0, beamWidth);
@@ -164,7 +184,7 @@ function negamax(
   const candidates = board.scoreCandidates(side);
   if (candidates.length == 0) return 0;
 
-  const plan = planMoves(candidates, beamAt(context, ply));
+  const plan = planMoves(board, side, candidates, beamAt(context, ply));
   if (plan.kind == 'win') return WIN_SCORE - ply - plan.plies;
   if (plan.kind == 'loss') return -(WIN_SCORE - ply - 2);
 
@@ -257,7 +277,7 @@ export function analyzePosition(
   const candidates = board.scoreCandidates(side).filter((candidate) => isAllowed(candidate.index));
   if (candidates.length == 0) return { move: -1, score: -WIN_SCORE };
 
-  const plan = planMoves(candidates, options.beamWidth + 6);
+  const plan = planMoves(board, side, candidates, options.beamWidth + 6);
   if (plan.kind == 'win') return { move: plan.index, score: WIN_SCORE - plan.plies };
   if (plan.kind == 'loss') return { move: plan.index, score: -(WIN_SCORE - 2) };
   if (plan.isForced && !options.searchForced) return { move: plan.moves[0].index, score: 0 };

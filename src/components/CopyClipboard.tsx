@@ -28,7 +28,11 @@ export default function CopyClipboard({ copyText, iconprops, ...props }: TProps)
   }
 
   return (
-    <button aria-label={copied ? actions.copied : actions.copy} {...props} onClick={handleCopy}>
+    <button
+      aria-label={copied ? actions.copied : actions.copy}
+      {...props}
+      onClick={(event) => void handleCopy(event)}
+    >
       {copied ? (
         <Check {...iconprops} className={cn('size-4 cursor-pointer', iconprops?.className)} />
       ) : (
@@ -61,7 +65,7 @@ export function ContainerClipboard({ copyText, ...props }: TContainerProps) {
   return (
     <div
       {...props}
-      onClick={handleCopy}
+      onClick={(event) => void handleCopy(event)}
       data-copied-label={`${actions.copied}!`}
       className={cn(copied && 'card-copy-fog', 'cursor-pointer', props.className)}
     >

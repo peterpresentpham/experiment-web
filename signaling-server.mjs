@@ -12,5 +12,6 @@ const httpServer = createServer((req, res) => {
 attachSignalingServer(httpServer);
 
 httpServer.listen(port, hostname, () => {
+  // eslint-disable-next-line no-console -- startup message of a command-line server
   console.log(`> Game signaling server ready on http://${hostname}:${port}`);
 });

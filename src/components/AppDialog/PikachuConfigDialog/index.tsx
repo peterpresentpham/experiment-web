@@ -89,7 +89,7 @@ function PikachuConfigDialogLayout() {
       <DialogContent>
         <DialogHeader>{text.title}</DialogHeader>
         <form onSubmit={onSaveConfig} className="scroll-hidden max-h-[75vh] overflow-auto">
-          <div className="bg-background fixed right-0 left-0 flex items-center justify-between px-6 py-2 shadow-2xl">
+          <div className="fixed right-0 left-0 flex items-center justify-between bg-background px-6 py-2 shadow-2xl">
             <Button type="button" onClick={onCancel} variant="outline" className="mr-2">
               {actions.cancel}
             </Button>

@@ -10,7 +10,7 @@ interface TProps {
 
 export default function RoundTypeSelect({ mode = 'half', setMode }: TProps) {
   return (
-    <ToggleGroup className="bg-accent mt-2" type="single">
+    <ToggleGroup className="mt-2 bg-accent" type="single">
       {configs.map((item) => {
         return (
           <ToggleGroupItem
@@ -21,7 +21,7 @@ export default function RoundTypeSelect({ mode = 'half', setMode }: TProps) {
           >
             {item}
             {mode == item && (
-              <div className="bg-destructive absolute right-1.5 bottom-0 left-1.5 h-0.5" />
+              <div className="absolute right-1.5 bottom-0 left-1.5 h-0.5 bg-destructive" />
             )}
           </ToggleGroupItem>
         );

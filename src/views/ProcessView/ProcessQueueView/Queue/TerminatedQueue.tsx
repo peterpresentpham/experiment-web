@@ -31,7 +31,7 @@ export default function TerminatedQueue({ processList }: TProps) {
         </motion.div>
       ))}
       {terminatedProcesses.length === 0 && (
-        <p className="text-muted-foreground py-8 text-center text-sm">{queues.noTerminated}</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{queues.noTerminated}</p>
       )}
     </BaseQueue>
   );

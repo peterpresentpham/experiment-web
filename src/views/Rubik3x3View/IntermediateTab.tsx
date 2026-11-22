@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { RUBIK_BASE } from 'src/configs/blog.config';

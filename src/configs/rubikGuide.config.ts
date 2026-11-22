@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { defineMessages } from 'src/i18n/define';
 import type { MaskName } from 'src/lib/cube/render';
 

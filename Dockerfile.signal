@@ -8,8 +8,10 @@ FROM node:20-alpine AS base
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
-COPY package.json package-lock.json .npmrc* ./
-RUN npm ci --omit=dev
+RUN npm install -g corepack@latest && corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# Runtime dependencies only; --ignore-scripts skips the husky "prepare" hook (husky is a dev dependency).
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
 FROM base AS runner
 WORKDIR /app

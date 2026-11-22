@@ -11,7 +11,12 @@ engine by dhbloo and contributors, licensed under the GNU General Public License
   - a caro rule (`Rule::CARO`, protocol `INFO rule 8`): five or more in a row wins unless both
     cells past the run hold opponent stones; the board edge does not block. Its line patterns
     were checked against the app's rule on every 11-cell line. Its classical tables and search
-    parameters start as copies of freestyle's; the model file format is unchanged;
+    parameters start as copies of freestyle's; the model file format is unchanged. Under this rule
+    one stone can stop several fives (a stone past a run closes it at both ends), so a four is
+    open only when no single stone stops all its fives, and the defences against a five, a
+    flex-four threat and a four-three are found by trying the cells on the threat's lines rather
+    than by the freestyle shapes (fixed 2026-11-22: before, the engine announced mates that did
+    not exist and missed defences such as capping an open three two cells away);
   - the build can preload another set of network files (`NETWORKS_DIR`).
 
 `rapfi.data` holds the files preloaded into the engine, listed in `networks/wasm_preloads.txt`:

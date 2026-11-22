@@ -21,10 +21,10 @@ export default async function F2lView() {
             {group.data.map((item, index) => (
               <div
                 key={item.id}
-                className="border-border relative flex flex-col items-center gap-2 rounded-md border p-3"
+                className="relative flex flex-col items-center gap-2 rounded-md border border-border p-3"
               >
                 <p className="absolute top-3 left-3 font-bold underline">{index + 1}.</p>
-                <p className="text-muted-foreground absolute top-3 right-3 text-xs">{item.id}</p>
+                <p className="absolute top-3 right-3 text-xs text-muted-foreground">{item.id}</p>
                 <CubePicture
                   image={{ kind: 'iso', alg: item.methods[0], mask: 'f2l' }}
                   size={110}

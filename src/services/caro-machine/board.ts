@@ -1,5 +1,5 @@
 import { TCaroWinMode } from 'src/types/caro.type';
-import { combinePatterns, getPattern, LINE_RADIUS } from './pattern';
+import { CELL_FLAG, combinePatterns, getPattern, LINE_RADIUS } from './pattern';
 
 /** Stone owners on the engine board. 0 is an empty cell. */
 export type TStone = 1 | 2;
@@ -163,6 +163,54 @@ export class MachineBoard {
       }
     }
     return result;
+  }
+
+  /** Whether `stone` playing on the empty `cell` has all of `flag` (a CELL_FLAG). */
+  private makes(cell: number, stone: TStone, flag: number) {
+    this.evaluateCell(cell, stone, this.flagsOut);
+    return (this.flagsOut.flags & flag) == flag;
+  }
+
+  /**
+   * Moves for `defender` after which none of `fives` (the cells where the opponent completes a
+   * five) still does. Under the free rule that is the single five cell, and two fives are lost.
+   * Under blockOpponent a stone just past the run also stops a five (it caps it at both ends) and
+   * one stone can stop two fives of one line, so the cells on the lines through a five are tried.
+   * Empty when nothing stops them.
+   */
+  fiveDefences(defender: TStone, fives: ReadonlyArray<number>) {
+    if (this.winMode != 'blockOpponent') return fives.length == 1 ? [...fives] : [];
+    const attacker = opponentOf(defender);
+    const first = fives[0];
+    const tried = [first];
+    for (let k = 0; k < 4 * LINE_CELLS; k++) {
+      const cell = this.lines[first * 4 * LINE_CELLS + k];
+      if (cell != OFF_BOARD) tried.push(cell);
+    }
+    return tried.filter((cell) => {
+      if (this.cells[cell] != 0) return false;
+      this.place(cell, defender);
+      const stops = fives.every(
+        (five) => this.cells[five] != 0 || !this.makes(five, attacker, CELL_FLAG.FIVE)
+      );
+      this.undo();
+      return stops;
+    });
+  }
+
+  /**
+   * blockOpponent: whether a `defender` stone on `cell` leaves the opponent none of `threats`
+   * (cells where it makes an open or double four). Besides the usual blocks, a stone a few cells
+   * out can turn the coming four into one that a single stone stops.
+   */
+  stopsWinThreats(cell: number, defender: TStone, threats: ReadonlyArray<number>) {
+    const attacker = opponentOf(defender);
+    this.place(cell, defender);
+    const stops = threats.every(
+      (threat) => this.cells[threat] != 0 || !this.makes(threat, attacker, CELL_FLAG.WIN_THREAT)
+    );
+    this.undo();
+    return stops;
   }
 
   /** Scores every candidate cell for both the side to move and its opponent. */

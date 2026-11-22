@@ -29,7 +29,7 @@ export default function BaseInput({ name, error, rootprops, icon, ...props }: TP
         {icon?.end && <div className="absolute top-1/2 right-2.5 -translate-y-1/2">{icon.end}</div>}
       </div>
       {error && (
-        <p role="alert" className="text-destructive text-xs font-medium">
+        <p role="alert" className="text-xs font-medium text-destructive">
           {error}
         </p>
       )}

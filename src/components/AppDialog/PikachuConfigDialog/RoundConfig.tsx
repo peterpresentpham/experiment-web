@@ -48,12 +48,12 @@ export default function RoundConfig() {
         </CollapsibleTrigger>
         <CollapsibleContent>
           <Button onClick={() => setRounds(pikachuRoundTransformations)}>{text.reset}</Button>
-          <div className="border-ring mt-2 flex flex-wrap items-center gap-2 rounded-sm border p-1">
+          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-sm border border-ring p-1">
             {pikachuRoundTransformations
               .filter((id) => !rounds.includes(id))
               .map((id) => {
                 return (
-                  <Draggable key={id} id={id} className="border-ring rounded-sm border p-2">
+                  <Draggable key={id} id={id} className="rounded-sm border border-ring p-2">
                     <p className="text-sm">{transforms[id]}</p>
                   </Draggable>
                 );
@@ -61,13 +61,13 @@ export default function RoundConfig() {
           </div>
           <Droppable
             id="pikachu-config-droppable"
-            className="border-ring mt-2 flex flex-wrap gap-2 rounded-sm border p-1"
+            className="mt-2 flex flex-wrap gap-2 rounded-sm border border-ring p-1"
           >
             {rounds.map((id, index) => (
               <SortableItem
                 key={id}
                 id={id}
-                className="border-ring bg-background/70 flex cursor-grab justify-between rounded-sm border p-2"
+                className="flex cursor-grab justify-between rounded-sm border border-ring bg-background/70 p-2"
               >
                 <div className="flex items-center gap-1">
                   <p className="font-bold">{index + 1}.</p>

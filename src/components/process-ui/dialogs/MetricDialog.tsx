@@ -52,14 +52,14 @@ export default function MetricDialog(props: DialogProps) {
   return (
     <Dialog {...props} open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="hover:border-border h-8 border-x border-transparent">
+        <Button className="h-8 border-x border-transparent hover:border-border">
           {metrics.trigger}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl opacity-80">
         <DialogHeader>{metrics.title}</DialogHeader>
         <div className="flex min-w-[320px] flex-1 flex-col gap-2 px-3 py-2 text-xs">
-          <div className="text-foreground flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 text-foreground">
             <div className="bg-muted px-2 py-1">
               {metrics.avgTurnaround}:{' '}
               <span className="font-semibold">
@@ -87,7 +87,7 @@ export default function MetricDialog(props: DialogProps) {
           <div className="overflow-auto">
             <table className="w-full table-auto border-collapse text-left">
               <thead>
-                <tr className="border-border text-muted-foreground border-b">
+                <tr className="border-b border-border text-muted-foreground">
                   <th className="py-1 pr-2">#</th>
                   <th className="py-1 pr-2">{metrics.turnaround}</th>
                   <th className="py-1 pr-2">{metrics.waiting}</th>
@@ -97,13 +97,13 @@ export default function MetricDialog(props: DialogProps) {
               <tbody>
                 {processMetrics.length === 0 ? (
                   <tr>
-                    <td className="text-muted-foreground py-2" colSpan={4}>
+                    <td className="py-2 text-muted-foreground" colSpan={4}>
                       {metrics.empty}
                     </td>
                   </tr>
                 ) : (
                   processMetrics.map((metric, idx) => (
-                    <tr key={idx} className="border-border border-b">
+                    <tr key={idx} className="border-b border-border">
                       <td className="py-1 pr-2">
                         {metric.index !== undefined ? metric.index : idx + 1}
                       </td>

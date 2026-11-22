@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { defineMessages } from 'src/i18n/define';
 import { getLocale } from 'src/i18n/server';
 import { Callout, P } from './parts';

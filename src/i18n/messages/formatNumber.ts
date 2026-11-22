@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { defineMessages } from '../define';
 
 type TFnDoc = { description: string; params: Record<string, string>; returns: string };

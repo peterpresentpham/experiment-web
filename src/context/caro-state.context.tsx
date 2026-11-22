@@ -13,6 +13,8 @@ import { useCaroConnectionContext } from './caro-connection.context';
 
 type TCaroStateContextType = {
   playerText: string;
+  /** A word or two for the header, next to the piece of the side to move. */
+  shortText: string;
   isWin: boolean;
   isOver: boolean;
   shouldDisableBoard: boolean;
@@ -25,6 +27,7 @@ type TCaroStateContextType = {
 
 const caroStateContextDefault: TCaroStateContextType = {
   playerText: '',
+  shortText: '',
   isWin: false,
   isOver: false,
   shouldDisableBoard: false,
@@ -56,8 +59,9 @@ export default function CaroStateProvider({ children }: TProps) {
   const isOverWin = Boolean(winState) || isBlindForceOver;
 
   // `outcome` is how the game ended for the player at this device, for the closing sound.
-  const { playerText, isWin, isOver, outcome } = useMemo((): {
+  const { playerText, shortText, isWin, isOver, outcome } = useMemo((): {
     playerText: string;
+    shortText?: string;
     isWin: boolean;
     isOver: boolean;
     outcome?: 'win' | 'lose' | 'draw';
@@ -71,8 +75,19 @@ export default function CaroStateProvider({ children }: TProps) {
         return { playerText: status.youWin, isWin: true, isOver: true, outcome: 'win' };
       }
       if (isDraw) return { playerText: status.draw, isWin: false, isOver: true, outcome: 'draw' };
-      const playerText = isMachine ? status.machineThinking : status.yourTurn;
-      return { playerText, isWin: false, isOver: false };
+      if (isMachine)
+        return {
+          playerText: status.machineThinking,
+          shortText: status.short.machine,
+          isWin: false,
+          isOver: false,
+        };
+      return {
+        playerText: status.yourTurn,
+        shortText: status.short.you,
+        isWin: false,
+        isOver: false,
+      };
     }
     if (playMode == 'online' && connectionType == 'connected') {
       const isMine = (role == 'host' && turn == 0) || (role == 'guest' && turn == 1);
@@ -84,6 +99,7 @@ export default function CaroStateProvider({ children }: TProps) {
       if (isDraw) return { playerText: status.draw, isWin: false, isOver: true, outcome: 'draw' };
       return {
         playerText: isMine ? status.yourTurn : status.opponentTurn,
+        shortText: isMine ? status.short.you : status.short.opponent,
         isWin: false,
         isOver: false,
       };
@@ -91,7 +107,12 @@ export default function CaroStateProvider({ children }: TProps) {
     if (isOverWin)
       return { playerText: status.win(turn + 1), isWin: true, isOver: true, outcome: 'win' };
     if (isDraw) return { playerText: status.draw, isWin: false, isOver: true, outcome: 'draw' };
-    return { playerText: status.turn(turn + 1), isWin: false, isOver: false };
+    return {
+      playerText: status.turn(turn + 1),
+      shortText: status.short.player(turn + 1),
+      isWin: false,
+      isOver: false,
+    };
   }, [isOverWin, playMode, machineTurn, connectionType, role, turn, stepCount, size, status]);
 
   useEffect(() => {
@@ -136,6 +157,8 @@ export default function CaroStateProvider({ children }: TProps) {
   const value = useMemo<TCaroStateContextType>(
     () => ({
       playerText,
+      // Results are short already.
+      shortText: shortText ?? playerText,
       isWin,
       isOver,
       shouldDisableBoard: shouldDisableBoard || isMachineTurn || isWin || isOver,
@@ -143,6 +166,7 @@ export default function CaroStateProvider({ children }: TProps) {
     }),
     [
       playerText,
+      shortText,
       isWin,
       isOver,
       shouldDisableBoard,

@@ -102,7 +102,7 @@ export default function CaroBoard(props: ComponentProps<'div'>) {
                 width: boardSize * size + boardSize + 1,
                 height: boardSize * size + boardSize + 1,
               }}
-              className="bg-border m-auto flex shrink-0 flex-wrap gap-px overflow-hidden rounded-lg border"
+              className="m-auto flex shrink-0 flex-wrap gap-px overflow-hidden rounded-lg border bg-border"
             >
               {locations.map((location) => {
                 const _turn = steps[location];

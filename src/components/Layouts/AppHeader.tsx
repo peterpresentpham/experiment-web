@@ -31,7 +31,7 @@ export default function AppHeader({ actions }: TProps) {
   const { header, nav } = useMessages(commonMessages);
 
   return (
-    <header className="bg-background/80 fixed top-0 z-50 h-(--header-height) w-full border-b backdrop-blur-md">
+    <header className="fixed top-0 z-50 h-(--header-height) w-full border-b bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-4 px-4 md:px-5">
         <div className="flex items-center gap-6">
           <Link
@@ -39,7 +39,7 @@ export default function AppHeader({ actions }: TProps) {
             aria-label={header.homeLabel}
             className="flex items-center gap-2 text-lg font-semibold tracking-tight"
           >
-            <span className="bg-primary size-2.5 rounded-full" aria-hidden />
+            <span className="size-2.5 rounded-full bg-primary" aria-hidden />
             Experiment Web
           </Link>
           <nav aria-label={header.mainNav} className="hidden items-center gap-1 md:flex">

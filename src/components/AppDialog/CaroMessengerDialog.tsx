@@ -58,7 +58,7 @@ export default function CaroMessengerDialog() {
                 return (
                   <div key={index} className="relative mt-4 ml-4 flex justify-end">
                     <div className="absolute -top-2 right-0 text-[8px]">{text.you}</div>
-                    <div className={cn('bg-secondary rounded-sm p-1', beVietnamPro.className)}>
+                    <div className={cn('rounded-sm bg-secondary p-1', beVietnamPro.className)}>
                       {chat.message}
                     </div>
                   </div>
@@ -67,7 +67,7 @@ export default function CaroMessengerDialog() {
                 return (
                   <div key={index} className="relative mt-4 mr-4 flex">
                     <div className="absolute -top-2 text-[8px]">{text.friend}</div>
-                    <div className={cn('bg-sidebar-ring rounded-sm p-1', beVietnamPro.className)}>
+                    <div className={cn('rounded-sm bg-sidebar-ring p-1', beVietnamPro.className)}>
                       {chat.message}
                     </div>
                   </div>

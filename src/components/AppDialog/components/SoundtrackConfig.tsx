@@ -23,9 +23,9 @@ function VolumeSlider({ label, value, onChange }: TVolumeProps) {
         step={5}
         value={Math.round(value * 100)}
         onChange={(event) => onChange(Number(event.target.value) / 100)}
-        className="accent-primary min-w-0 flex-1"
+        className="min-w-0 flex-1 accent-primary"
       />
-      <span className="text-muted-foreground w-10 text-right tabular-nums">
+      <span className="w-10 text-right text-muted-foreground tabular-nums">
         {Math.round(value * 100)}%
       </span>
     </label>
@@ -61,7 +61,7 @@ export default function SoundtrackConfig() {
           onChange={fn.setMusicVolume}
         />
       </div>
-      <p className="text-muted-foreground mt-3 text-xs">{settings.preview}</p>
+      <p className="mt-3 text-xs text-muted-foreground">{settings.preview}</p>
       <div className="mt-1 flex flex-wrap items-center gap-2">
         {EFFECTS.map((effect) => (
           // Previews play even when effects are muted, so a sound can be checked first.

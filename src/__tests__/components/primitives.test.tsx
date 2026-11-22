@@ -38,4 +38,12 @@ describe('GameStatus', () => {
     expect(status.getAttribute('aria-live')).toBe('polite');
     expect(status.textContent).toContain('Player 1 turn');
   });
+
+  it('shows the short label and marker, and still announces the full text', () => {
+    render(<GameStatus text="Your turn" label="You" marker={<span>x</span>} turn={0} />);
+    const status = screen.getByRole('status');
+    expect(status.textContent).toContain('You');
+    expect(status.textContent).toContain('x');
+    expect(status.querySelector('.sr-only')?.textContent).toBe('Your turn');
+  });
 });

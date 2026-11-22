@@ -15,13 +15,13 @@ export default async function Home() {
         <h1 className="text-4xl font-semibold tracking-tight text-balance md:text-5xl">
           Experiment <span className="text-primary">Web</span>
         </h1>
-        <p className="text-muted-foreground text-lg leading-relaxed text-pretty">{home.intro}</p>
+        <p className="text-lg leading-relaxed text-pretty text-muted-foreground">{home.intro}</p>
         <div className="flex flex-wrap items-center gap-4 pt-1 text-sm font-medium">
           <a
             href={REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-foreground hover:text-primary inline-flex items-center gap-2 transition-colors"
+            className="inline-flex items-center gap-2 text-foreground transition-colors hover:text-primary"
           >
             <GithubIcon className="size-4" /> {home.source}
           </a>
@@ -29,7 +29,7 @@ export default async function Home() {
             href={PORTFOLIO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-primary inline-flex items-center gap-1.5 transition-colors"
+            className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-primary"
           >
             {home.portfolio} <ExternalLink className="size-3.5" />
           </a>
@@ -49,10 +49,10 @@ export default async function Home() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="group bg-card hover:border-primary/40 focus-visible:ring-ring flex h-full flex-col gap-4 rounded-xl border p-5 shadow-xs transition-all outline-none hover:shadow-md focus-visible:ring-[3px]"
+                  className="group flex h-full flex-col gap-4 rounded-xl border bg-card p-5 shadow-xs transition-all outline-none hover:border-primary/40 hover:shadow-md focus-visible:ring-[3px] focus-visible:ring-ring"
                 >
                   <div className="flex items-start justify-between">
-                    <span className="bg-accent text-accent-foreground rounded-lg p-2.5">
+                    <span className="rounded-lg bg-accent p-2.5 text-accent-foreground">
                       <Icon className="size-5" />
                     </span>
                     <Badge variant="secondary">{text.tag}</Badge>
@@ -60,9 +60,9 @@ export default async function Home() {
                   <div className="flex flex-col gap-1.5">
                     <h3 className="flex items-center gap-1 text-base font-semibold">
                       {text.title}
-                      <ArrowUpRight className="text-muted-foreground group-hover:text-primary size-4 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                      <ArrowUpRight className="size-4 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary" />
                     </h3>
-                    <p className="text-muted-foreground text-sm leading-relaxed">
+                    <p className="text-sm leading-relaxed text-muted-foreground">
                       {text.description}
                     </p>
                   </div>

@@ -12,11 +12,11 @@ export default function SettingSpot() {
     <div className="flex items-center gap-2">
       <Badge
         variant="outline"
-        className="border-info/30 bg-info/10 text-info px-2 text-xs font-semibold tracking-wide uppercase"
+        className="border-info/30 bg-info/10 px-2 text-xs font-semibold tracking-wide text-info uppercase"
       >
         {text.statusBadge(text.storeStatus[status])}
       </Badge>
-      <div className="bg-border h-6 w-px" />
+      <div className="h-6 w-px bg-border" />
       <SettingDialog />
     </div>
   );

@@ -13,7 +13,7 @@ export default function SuggestionDraw({ size }: TProps) {
     <div className="pointer-events-none">
       <div
         style={{ width: size, height: size, left: firstPiece[1] * size, top: firstPiece[0] * size }}
-        className="animate-pulse-soft border-primary absolute rounded-lg border shadow-md"
+        className="animate-pulse-soft absolute rounded-lg border border-primary shadow-md"
       />
       <div
         style={{
@@ -22,7 +22,7 @@ export default function SuggestionDraw({ size }: TProps) {
           left: secondPiece[1] * size,
           top: secondPiece[0] * size,
         }}
-        className="animate-pulse-soft border-primary absolute rounded-lg border shadow-md"
+        className="animate-pulse-soft absolute rounded-lg border border-primary shadow-md"
       />
     </div>
   );

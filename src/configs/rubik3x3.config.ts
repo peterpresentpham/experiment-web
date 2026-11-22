@@ -1,5 +1,3 @@
-/* eslint-disable quotes */
-
 type ItemType = { id: string; methods: Array<string> };
 
 // Groups are numbered in order; `basic` marks the two groups of basic insertions.

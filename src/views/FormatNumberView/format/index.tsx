@@ -170,7 +170,7 @@ export default function FormatPage() {
           />
         }
       />
-      <div className="bg-muted group border-border relative mt-2 rounded-sm border p-4">
+      <div className="group relative mt-2 rounded-sm border border-border bg-muted p-4">
         <CopyClipboard
           copyText={fnCode}
           className="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100"

@@ -9,7 +9,7 @@ DIR=$(node -p "require('path').dirname(require.resolve('@tensorflow/tfjs-node/pa
 GYP=$(mktemp -d)
 trap 'rm -rf "$GYP"' EXIT
 echo "[setup] installing node-gyp into a temporary folder"
-npm install --silent --no-save --prefix "$GYP" node-gyp@11 >/dev/null
+pnpm --dir "$GYP" add node-gyp@11 >/dev/null
 echo "[setup] downloading libtensorflow and building the binding (a few minutes)"
 cd "$DIR"
 PATH="$GYP/node_modules/.bin:$DIR/node_modules/.bin:$PATH" node scripts/install.js

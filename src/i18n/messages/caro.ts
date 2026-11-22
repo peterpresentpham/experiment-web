@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { defineMessages } from '../define';
 
 export const caroMessages = defineMessages({
@@ -18,6 +17,13 @@ export const caroMessages = defineMessages({
       opponentWins: 'Opponent wins',
       machineThinking: 'Machine is thinking…',
       machineWins: 'Machine wins',
+      // Shown next to the side's piece in the header; the full sentences above are announced.
+      short: {
+        you: 'You',
+        opponent: 'Opponent',
+        machine: 'Thinking…',
+        player: (player: number) => `Player ${player}`,
+      },
     },
     blindErrors: (player: number) => `Player ${player} errors`,
     mode: {
@@ -27,7 +33,8 @@ export const caroMessages = defineMessages({
       notConnected: 'Not connected',
       label: 'Mode',
       changeAction: 'Change',
-      change: (summary: string) => `Play mode: ${summary}. Change play mode`,
+      change: (summary: string) => `Game settings: ${summary}. Change settings`,
+      rules: { blockOpponent: 'Blocked ends', 'non-blockOpponent': 'Free' },
     },
     cell: (row: number, column: number, piece?: string) =>
       `Row ${row}, column ${column}${piece ? `: ${piece}` : ''}`,
@@ -64,6 +71,8 @@ export const caroMessages = defineMessages({
             : `The strongest level: a tournament-style caro engine running in your browser; it has studied ${games} of your ${games == 1 ? 'game' : 'games'} here.`,
         missing:
           'The engine could not start in this browser, so this level plays like Hard for now.',
+        report:
+          'Games at this level are saved anonymously (moves only) to make the machine stronger.',
       },
       firstMove: 'First move',
       firstMoveYou: 'You',
@@ -99,7 +108,7 @@ export const caroMessages = defineMessages({
       roomErrors: {
         'Room not found or expired': 'Room not found or expired',
         'Room is already full': 'Room is already full',
-      } as Record<string, string>,
+      },
       greeting: 'Hello',
       newMessage: 'New message!',
       syncBoard: (size: number) => `Board size set to ${size}x${size}`,
@@ -165,6 +174,13 @@ export const caroMessages = defineMessages({
       opponentWins: 'Đối thủ thắng',
       machineThinking: 'Máy đang nghĩ…',
       machineWins: 'Máy thắng',
+      // Shown next to the side's piece in the header; the full sentences above are announced.
+      short: {
+        you: 'Bạn',
+        opponent: 'Đối thủ',
+        machine: 'Máy nghĩ…',
+        player: (player: number) => `Người ${player}`,
+      },
     },
     blindErrors: (player: number) => `Lỗi của người chơi ${player}`,
     mode: {
@@ -174,7 +190,8 @@ export const caroMessages = defineMessages({
       notConnected: 'Chưa kết nối',
       label: 'Chế độ',
       changeAction: 'Đổi',
-      change: (summary: string) => `Chế độ chơi: ${summary}. Đổi chế độ chơi`,
+      change: (summary: string) => `Cài đặt ván: ${summary}. Đổi cài đặt`,
+      rules: { blockOpponent: 'Chặn hai đầu', 'non-blockOpponent': 'Tự do' },
     },
     cell: (row: number, column: number, piece?: string) =>
       `Hàng ${row}, cột ${column}${piece ? `: ${piece}` : ''}`,
@@ -211,6 +228,7 @@ export const caroMessages = defineMessages({
             : `Mức mạnh nhất: engine caro chuẩn giải đấu chạy ngay trên trình duyệt; đã rút kinh nghiệm từ ${games} ván của bạn ở đây.`,
         missing:
           'Engine không khởi động được trên trình duyệt này nên tạm thời mức này chơi như mức Khó.',
+        report: 'Các ván ở mức này được lưu ẩn danh (chỉ các nước đi) để máy chơi mạnh hơn.',
       },
       firstMove: 'Đi trước',
       firstMoveYou: 'Bạn',
@@ -246,7 +264,7 @@ export const caroMessages = defineMessages({
       roomErrors: {
         'Room not found or expired': 'Không tìm thấy phòng hoặc phòng đã hết hạn',
         'Room is already full': 'Phòng đã đủ người',
-      } as Record<string, string>,
+      },
       greeting: 'Xin chào',
       newMessage: 'Có tin nhắn mới!',
       syncBoard: (size: number) => `Kích thước bàn cờ: ${size}x${size}`,

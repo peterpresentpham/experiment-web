@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import useGameSignalingSocket from 'src/hooks/useGameSignalingSocket';
 import { useMessages } from 'src/i18n/client';
 import { caroMessages } from 'src/i18n/messages/caro';
-import { createCaroMessage, decodeCaroMessage, TSyncReturnType } from 'src/services/caro.utils';
+import { createCaroMessage, decodeCaroMessage } from 'src/services/caro.utils';
 import { useCaroStore } from 'src/states/caro.state';
 import { useCaroChat } from 'src/states/messenger.state';
 import { TConnection, TRole } from 'src/types/caro.type';
@@ -127,7 +127,7 @@ export default function CaroConnectionProvider({ children }: TProps) {
       if (connection != 'connected') toast.warning(text.friendLeft);
     };
     const onRoomError = ({ reason }: { reason: string }) => {
-      toast.error(text.roomErrors[reason] ?? reason);
+      toast.error(text.roomErrors[reason as keyof typeof text.roomErrors] ?? reason);
       setConnection('init');
       setRoomCode('');
       roomCodeRef.current = '';
@@ -186,7 +186,7 @@ export default function CaroConnectionProvider({ children }: TProps) {
               addChats('friendChat', message);
               toast.info(text.newMessage);
             } else if (type == 'sync') {
-              const { size, gameType, isOverride } = message as TSyncReturnType;
+              const { size, gameType, isOverride } = message;
               setMetadata({ size, gameType, isOverride });
               toast.info(text.syncBoard(size));
               toast.info(text.syncGameType(configText[gameType], isOverride));

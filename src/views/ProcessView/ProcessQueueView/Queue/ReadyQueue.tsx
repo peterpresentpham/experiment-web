@@ -34,7 +34,7 @@ export default function ReadyQueue({ processList }: TProps) {
           </motion.div>
         ))}
         {readyProcesses.length === 0 && (
-          <p className="text-muted-foreground py-8 text-center text-sm">{queues.emptyQueue}</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">{queues.emptyQueue}</p>
         )}
       </AnimatePresence>
     </BaseQueue>

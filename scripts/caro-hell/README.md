@@ -110,3 +110,15 @@ near-empty board (80/80 in a test), so plain matches cannot tell two builds apar
 
 `tengen-book` is Tengen behind the opening book (`opening-book.ts` builds it into
 `public/models/caro-book/`). The plan for further work is in `docs/plans/caro-tengen-roadmap.md`.
+
+## Games from the deployed site
+
+Finished hell-level games are posted anonymously (moves, rule, result only) to `/api/caro/games`
+and stored in a Vercel Blob store, one file per game: `caro-games/<hash>.json`.
+
+1. Vercel dashboard → Storage → Create → Blob, **private**, connected to the project. Vercel sets
+   `BLOB_STORE_ID` and signs in with OIDC (older stores set `BLOB_READ_WRITE_TOKEN`). With
+   neither, the route answers 404 and stores nothing.
+2. Download them: `vercel env pull .env.local`, then `pnpm caro:fetch-games` (into
+   `ml-data/caro-games/prod/`; games already there are skipped). The OIDC token expires after a
+   few hours: pull again.

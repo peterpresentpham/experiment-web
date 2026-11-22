@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { AppArticle } from 'src/components/box/ArticleBox';
 import { Table, TableBody, TableCell, TableRow } from 'src/components/shadcn/table';
 import AlgorithmBox from 'src/components/Thesis/AlgorithmBox';

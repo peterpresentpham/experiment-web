@@ -26,9 +26,9 @@ function PikachuCell({ row, column, size, value, imgType, isSelected, onPieceCli
       className={cn(
         'relative overflow-hidden rounded-md border',
         hasPiece
-          ? 'bg-card cursor-pointer shadow-xs transition-transform duration-150 hover:z-10 hover:-translate-y-px hover:scale-105 active:scale-95'
+          ? 'cursor-pointer bg-card shadow-xs transition-transform duration-150 hover:z-10 hover:-translate-y-px hover:scale-105 active:scale-95'
           : 'border-none',
-        isSelected && 'ring-primary z-10 ring-2'
+        isSelected && 'z-10 ring-2 ring-primary'
       )}
       onClick={() => onPieceClick(row, column)}
     >
@@ -38,7 +38,7 @@ function PikachuCell({ row, column, size, value, imgType, isSelected, onPieceCli
           alt={piece(value, row, column)}
           draggable={false}
           decoding="async"
-          className="animate-in zoom-in-75 fade-in h-full w-full object-contain p-1 drop-shadow-sm duration-200"
+          className="h-full w-full animate-in object-contain p-1 drop-shadow-sm duration-200 zoom-in-75 fade-in"
         />
       )}
     </div>

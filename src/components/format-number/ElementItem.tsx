@@ -14,7 +14,7 @@ export default function ElementItem(params: TProps) {
 
   return (
     <div>
-      <div id={id} className="bg-secondary scroll-mt-20 rounded-sm p-2">
+      <div id={id} className="scroll-mt-20 rounded-sm bg-secondary p-2">
         {title}
       </div>
       <p className="mt-2">{description}</p>

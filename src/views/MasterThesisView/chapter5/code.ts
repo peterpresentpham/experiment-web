@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 export const guardianCircuitCode = `
 signal input msg[256];
 

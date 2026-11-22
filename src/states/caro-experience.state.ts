@@ -68,7 +68,16 @@ export const useCaroExperienceStore = create<TCaroExperienceStateType>()(
     }),
     {
       name: 'experiment.caro.experience',
-      version: 1,
+      version: 2,
+      // Version 1 lessons came from a search that misread blockOpponent fours (a four one stone
+      // stops counted as open), and they override the engines: drop them, keep the games.
+      migrate: (persisted, version) => {
+        const state = persisted as Pick<
+          TCaroExperienceStateType,
+          'entries' | 'lastGame' | 'hellGames' | 'hellTrainedGames' | 'epoch'
+        >;
+        return version < 2 ? { ...state, entries: [], lastGame: '' } : state;
+      },
       partialize: (state) => ({
         entries: state.entries,
         lastGame: state.lastGame,

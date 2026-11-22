@@ -35,7 +35,7 @@ export default function RunningProcessView({ runningProcess }: TProps) {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-muted-foreground flex flex-col items-center gap-2"
+            className="flex flex-col items-center gap-2 text-muted-foreground"
           >
             <Activity size={32} className="opacity-20" />
             <span className="text-xs font-medium tracking-wide uppercase opacity-50">

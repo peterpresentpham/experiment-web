@@ -241,7 +241,7 @@ Con số kỳ vọng chỉ là ước tính; mỗi bước được giữ lại 
 - Tiếp theo (giai đoạn 2): `pbrain-rapfi selfplay` sinh dữ liệu (đã mã hoá luật caro = 3 trong
   định dạng dữ liệu), thêm luật vào Trainer, huấn luyện mix9 cho caro.
 
-### Giai đoạn 2: mạng NNUE cho luật chặn (đang chạy, 2026-11-21)
+### Giai đoạn 2: mạng NNUE cho luật chặn (vòng 0 đã đưa vào app, 2026-11-22)
 
 - Pipeline trong `ml-data/engines/rapfi-train/` (`run.sh`, dừng/chạy lại được ở từng bước):
   tự đánh (`selfplay.sh`: 64 shard × 400 ván, 50k node/nước, multipv 4; bàn 20×20 một nửa,
@@ -252,3 +252,47 @@ Con số kỳ vọng chỉ là ước tính; mỗi bước được giữ lại 
   trên macOS (`argutils.cpp`). Trainer: luật caro (mã 3 trong dữ liệu, bit 8 trong file mạng),
   patch ở `ml-data/engines/rapfi-train/trainer.patch`.
 - Đã thử trọn quy trình trên dữ liệu nhỏ: mạng xuất ra khớp ArchHash của engine và nạp được.
+- Vòng 0 (huấn luyện 15.000 bước trên dữ liệu tự đánh của Rapfi cổ điển): thắng Rapfi cổ điển
+  +125 =8 −67 (+104 ± 42 Elo), luật chặn, 15×15, 300 ms/nước. Đã đưa vào app:
+  `public/models/caro-rapfi/` (mạng ~12 MB + config), chỉ tải khi chơi luật chặn; engine ghi file
+  vào FS của Emscripten rồi gửi `RELOADCONFIG` (`src/services/caro-rapfi/engine.ts`), lỗi tải thì
+  vẫn chơi bằng đánh giá cổ điển.
+- Vòng 1 dừng ngay đầu bước tự đánh: tự đánh bằng mạng chậm hơn nhiều (~20 giờ cho 64 shard trên
+  7 nhân). Chạy tiếp: `FROM=1 TO=2` (xem `ml-data/engines/rapfi-train/STATUS.md`).
+
+### Sửa lỗi luật chặn trong search của Rapfi (2026-11-22)
+
+- Lộ ra từ một ván người chơi thắng cấp Địa ngục: Rapfi báo thắng chắc (`+M3`) với bốn quân
+  `_OOOO_X`, nhưng một quân chặn ở ô trái vừa chiếm điểm năm đó vừa kẹp hai đầu năm quân bên phải.
+- Ba chỗ trong Rapfi còn giả định của luật tự do:
+  - phân loại bốn: hai điểm năm trở lên luôn là bốn mở; nay chỉ mở khi không một quân nào chặn
+    được mọi điểm năm;
+  - chặn năm: chỉ có ô điểm năm, và hai điểm năm là thua; nay thử thêm ô ngay ngoài dãy;
+  - chặn bốn mở sắp thành (ba mở) và bốn-ba: chỉ các hình của luật tự do, bỏ sót ví dụ ô cách hai
+    ô ngoài ba quân; nay thử mọi ô trong 5 ô trên các đường của mối đe doạ.
+- Kiểm tra: test trong `src/__tests__/caro/rapfi.test.ts` (trượt với bản cũ); tự đánh 80 ván có
+  trọng tài độc lập: bản cũ báo thắng chắc rồi thua 45 lần, bản mới 0; bản mới vs bản cũ (cùng mạng
+  vòng 0, 15×15, 300 ms/nước): +198 =2 −0.
+- Tengen (`crates/engine/src/pattern.rs`, `movegen.rs`, `search.rs`) có cùng giả định ở phân
+  loại bốn và chặn năm; đã sửa theo cùng cách (thử thêm ô cách 5 ô), build lại `tengen.wasm` và
+  `tengen-mt.wasm`. Bản mới vs bản cũ (luật 8, 15×15, 300 ms/nước): +194 =2 −4. Sách khai cuộc
+  vẫn do bản cũ sinh ra.
+- Search JS (`src/services/caro-machine`): sửa phân loại bốn/ba, chặn năm (`fiveDefences`) và chặn
+  bốn mở sắp thành (`stopsWinThreats`) trong cả search lẫn VCF/VCT. Bài học đã lưu (do search cũ
+  tính) bị bỏ khi nâng phiên bản store `experiment.caro.experience` lên 2.
+- Pipeline huấn luyện tạm dừng; đã đổi sang engine sửa. Dữ liệu vòng 0 do engine cũ sinh ra.
+- Trên engine đã sửa, mạng vòng 0 thua đánh giá cổ điển: 62 thắng, 16 hoà, 122 thua
+  (**−107 ± 47 Elo**, 15×15, 300 ms/nước). Mạng đã học theo lối chơi của search lỗi; cần sinh lại
+  dữ liệu vòng 0 bằng engine sửa.
+
+### Dọn các lỗi còn lại trước khi train lại (2026-11-22)
+
+- Tạm dừng train (vòng 0 chưa xong shard nào), sẽ chạy lại từ đầu khi xong các mục dưới.
+- Tengen: luật 8 trước để sáu quân trở lên bị chặn hai đầu vẫn thắng, khác app (năm trở lên bị
+  chặn hai đầu đều không thắng). Đã sửa cho khớp app; Rapfi và search JS vốn đã đúng.
+- App tạm tắt mạng vòng 0 (`CARO_NETWORK_ENABLED` trong `src/services/caro-rapfi/browser.ts`):
+  trên search đã sửa nó thua đánh giá cổ điển khoảng 107 Elo.
+- Sách khai cuộc được tạo lại bằng Rapfi cổ điển đã sửa (`opening-book.ts --engine
+rapfi-classical`, 10 giây mỗi nước); sách cũ (Tengen trước khi sửa) ở
+  `ml-data/archive/caro-book-pre-caro-fix/`. Trong 6 ván log, Rapfi tự đánh giá bất lợi ngay khi
+  rời sách ở 7/8 lần.

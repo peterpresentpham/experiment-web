@@ -61,7 +61,7 @@ export default function Cube3DPlayer({ alg, mask, className, loadingLabel, error
     <div className={cn('relative aspect-square w-full max-w-72', className)}>
       <div ref={host} className="size-full" />
       {status != 'ready' && (
-        <p className="text-muted-foreground absolute inset-0 flex items-center justify-center text-sm">
+        <p className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
           {status == 'loading' ? loadingLabel : errorLabel}
         </p>
       )}

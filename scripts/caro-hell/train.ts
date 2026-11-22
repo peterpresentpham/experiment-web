@@ -124,7 +124,7 @@ async function main() {
     },
   });
   console.log(`[train] backend: ${await initBackend()}`);
-  const games = readGames(values.data!.split(','));
+  const games = readGames(values.data.split(','));
   console.log(`[train] ${games.length} games from "${values.data}"`);
 
   const isFresh = values.fresh || !hasModel();

@@ -1,5 +1,4 @@
 /* eslint-disable react/no-unescaped-entities */
-/* eslint-disable quotes */
 import { AppArticle, ArticleLI, ArticleUL } from 'src/components/box/ArticleBox';
 import FigureBox from 'src/components/Thesis/FigureBox';
 import RefLink from 'src/components/Thesis/RefLink';

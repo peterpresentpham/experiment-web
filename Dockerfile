@@ -8,13 +8,16 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json package-lock.json .npmrc* ./
-RUN npm ci
+# pnpm at the version pinned in package.json "packageManager". The corepack bundled with Node 20
+# has outdated signing keys, so it is updated first.
+RUN npm install -g corepack@latest && corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 
 
 # Rebuild the source code only when needed
 FROM base AS builder
+RUN npm install -g corepack@latest && corepack enable
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -30,7 +33,7 @@ ENV NEXT_PUBLIC_GAME_SIGNAL_URL=$NEXT_PUBLIC_GAME_SIGNAL_URL
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN npm run build
+RUN pnpm build
 
 # Production image, copy all the files and run next
 FROM base AS runner

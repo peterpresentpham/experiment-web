@@ -31,12 +31,12 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
       {...props}
       className={cn(
         'group relative overflow-hidden rounded-lg border p-2 transition-all duration-300 hover:shadow-md',
-        'bg-card border-border/60',
+        'border-border/60 bg-card',
         {
-          'bg-info/5 ring-info/20 ring-1': data.state == ProcessStatusType.NEW,
-          'bg-warning/10 ring-warning/30 ring-1': data.state == ProcessStatusType.READY,
-          'border-success/30 bg-success/10 ring-success/30 shadow-sm ring-1': isRunning,
-          'bg-primary/5 ring-primary/20 ring-1': data.state == ProcessStatusType.WAITING,
+          'bg-info/5 ring-1 ring-info/20': data.state == ProcessStatusType.NEW,
+          'bg-warning/10 ring-1 ring-warning/30': data.state == ProcessStatusType.READY,
+          'border-success/30 bg-success/10 shadow-sm ring-1 ring-success/30': isRunning,
+          'bg-primary/5 ring-1 ring-primary/20': data.state == ProcessStatusType.WAITING,
           'bg-muted/20 opacity-75 grayscale-[0.5]': isTerminated,
         }
       )}
@@ -62,7 +62,7 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
                 {data.readyPriority >= 0 && data.state == ProcessStatusType.READY && (
                   <Badge
                     variant="outline"
-                    className="border-warning/50 bg-warning/15 text-warning-foreground h-4 rounded-md text-xs font-semibold tracking-wide"
+                    className="h-4 rounded-md border-warning/50 bg-warning/15 text-xs font-semibold tracking-wide text-warning-foreground"
                   >
                     {text.priority(data.readyPriority)}
                   </Badge>
@@ -70,7 +70,7 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
                 {data.waitingPriority >= 0 && data.state == ProcessStatusType.WAITING && (
                   <Badge
                     variant="outline"
-                    className="border-primary/40 bg-primary/10 text-primary h-4 rounded-md text-xs font-semibold tracking-wide"
+                    className="h-4 rounded-md border-primary/40 bg-primary/10 text-xs font-semibold tracking-wide text-primary"
                   >
                     {text.waiting(data.waitingPriority)}
                   </Badge>
@@ -80,7 +80,7 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
             <div className="flex items-center gap-2">
               <div className="relative flex h-2 w-2 items-center justify-center">
                 {isRunning && (
-                  <span className="bg-success/60 absolute h-full w-full animate-ping rounded-full" />
+                  <span className="absolute h-full w-full animate-ping rounded-full bg-success/60" />
                 )}
                 <span
                   className={cn('h-1.5 w-1.5 rounded-full transition-colors duration-500', {
@@ -101,26 +101,26 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium whitespace-nowrap">
+            <div className="flex items-center gap-1 text-xs font-medium whitespace-nowrap text-muted-foreground">
               <Clock size={10} strokeWidth={3} className="opacity-70" />
               <span>
                 {text.arrival}:{' '}
-                <span className="text-foreground font-mono">{data.arrivalTime}</span>
+                <span className="font-mono text-foreground">{data.arrivalTime}</span>
               </span>
             </div>
             {data.beginAt >= 0 && (
-              <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium whitespace-nowrap">
+              <div className="flex items-center gap-1 text-xs font-medium whitespace-nowrap text-muted-foreground">
                 <Timer size={10} className="text-success" />
                 <span>
-                  {text.start}: <span className="text-foreground font-mono">{data.beginAt}</span>
+                  {text.start}: <span className="font-mono text-foreground">{data.beginAt}</span>
                 </span>
               </div>
             )}
             {isTerminated && data.endAt >= 0 && (
-              <div className="text-muted-foreground flex items-center gap-1 text-xs font-medium whitespace-nowrap">
+              <div className="flex items-center gap-1 text-xs font-medium whitespace-nowrap text-muted-foreground">
                 <Timer size={10} className="text-primary/70" />
                 <span>
-                  {text.end}: <span className="text-foreground font-mono">{data.endAt}</span>
+                  {text.end}: <span className="font-mono text-foreground">{data.endAt}</span>
                 </span>
               </div>
             )}
@@ -139,7 +139,7 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
               {data.runtime}/{data.executionTime}ms
             </span>
           </div>
-          <div className="bg-muted h-1.5 overflow-hidden rounded-full">
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <motion.div
               initial={false}
               animate={{ width: `${progress}%` }}
@@ -156,7 +156,7 @@ export default function ViewProcessItem({ data, metadata, props }: TProps) {
         </div>
 
         {data.blockTasks && data.blockTasks.length > 0 && (
-          <div className="border-border/40 mt-2 border-t pt-2">
+          <div className="mt-2 border-t border-border/40 pt-2">
             <BlockTaskList
               onlyShowCurrentBlockTask={metadata?.onlyShowCurrentBlockTask}
               data={data.blockTasks}

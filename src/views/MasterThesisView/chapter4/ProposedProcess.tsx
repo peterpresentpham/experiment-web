@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { AppArticle, ArticleLI, ArticleUL } from 'src/components/box/ArticleBox';
 import AlgorithmBox from 'src/components/Thesis/AlgorithmBox';
 import FigureBox from 'src/components/Thesis/FigureBox';

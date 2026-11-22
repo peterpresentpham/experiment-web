@@ -1,6 +1,6 @@
 'use client';
 
-import { Bluetooth, Circle, Settings } from 'lucide-react';
+import { Bluetooth, Info, Settings } from 'lucide-react';
 import IconDialogTrigger from 'src/components/AppDialog/components/IconDialogTrigger';
 import { DIALOG_KEY } from 'src/configs/constance';
 import { useMessages } from 'src/i18n/client';
@@ -10,7 +10,7 @@ import { useDialogStore } from 'src/states/dialog.state';
 import { Dialog, DialogContent, DialogHeader } from '../shadcn/dialog';
 
 function Term({ children }: { children: string }) {
-  return <span className="text-primary font-medium">{children}</span>;
+  return <span className="font-medium text-primary">{children}</span>;
 }
 
 export default function CaroInstructionDialog() {
@@ -28,7 +28,7 @@ export default function CaroInstructionDialog() {
       open={dialog[DIALOG_KEY.caroInstructionDialog]}
       onOpenChange={(open) => setDialog(DIALOG_KEY.caroInstructionDialog, open)}
     >
-      <IconDialogTrigger label={actions.instructions} icon={Circle} />
+      <IconDialogTrigger label={actions.instructions} icon={Info} />
       <DialogContent className="sm:max-w-4xl!">
         <DialogHeader>{text.title}</DialogHeader>
         <div className="scroll-hidden h-fit max-h-[75vh] overflow-auto">

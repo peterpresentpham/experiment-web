@@ -58,7 +58,7 @@ export function runProcessAction(context: TProcessContextType): Partial<TProcess
     const updateProcess = useProcessStore.getState().fn.updateProcess;
     const _willRunWaitingQueue: Array<TProcess> = [];
     while (!waitingQueue.isEmpty() && ++counter <= maxBlockTaskPerSlice) {
-      _willRunWaitingQueue.push(waitingQueue.dequeue()!);
+      _willRunWaitingQueue.push(waitingQueue.dequeue());
     }
     for (const _waitingProcess of _willRunWaitingQueue) {
       if (_waitingProcess && _waitingProcess.blockTasks) {

@@ -163,14 +163,14 @@ export async function loadTengen(
   options: TTengenOptions = {}
 ): Promise<TTengen> {
   const useThreads = threads > 1 && source.spawnHelper != undefined;
-  const module = await source.compile(useThreads ? 'tengen-mt.wasm' : 'tengen.wasm');
+  const wasm = await source.compile(useThreads ? 'tengen-mt.wasm' : 'tengen.wasm');
   // The threaded module imports its memory, shared so helpers can join; 256 MB holds the hash
   // table and the helpers' stacks.
   const shared = useThreads
     ? new WebAssembly.Memory({ initial: 1024, maximum: 4096, shared: true })
     : null;
   let lastInfo = { nodes: 0 };
-  const instance = await WebAssembly.instantiate(module, {
+  const instance = await WebAssembly.instantiate(wasm, {
     env: {
       ...(shared ? { memory: shared } : {}),
       tg_now: () => performance.timeOrigin + performance.now(),
@@ -188,7 +188,13 @@ export async function loadTengen(
         engine.__tls_size.value as number,
         engine.__tls_align.value as number
       );
-      source.spawnHelper!({ module, memory: shared!, stackTop: stack + HELPER_STACK, tls, id });
+      source.spawnHelper!({
+        module: wasm,
+        memory: shared!,
+        stackTop: stack + HELPER_STACK,
+        tls,
+        id,
+      });
     }
   }
   engine.tg_set_threads(count);

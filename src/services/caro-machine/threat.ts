@@ -44,13 +44,16 @@ function attackerTurn(context: TThreatContext, depth: number): boolean {
     }
   }
 
-  if (defenderFives.length >= 2) return false;
-  if (defenderFives.length == 1) {
-    // Forced to block; the sequence survives only if the block keeps the pressure on.
-    board.place(defenderFives[0], attacker);
-    const result = defenderTurn(context, depth);
-    board.undo();
-    return result;
+  if (defenderFives.length > 0) {
+    // Forced to block (one way, or several under blockOpponent); the sequence survives only if
+    // a block keeps the pressure on.
+    for (const block of board.fiveDefences(attacker, defenderFives)) {
+      board.place(block, attacker);
+      const result = defenderTurn(context, depth);
+      board.undo();
+      if (result) return true;
+    }
+    return false;
   }
   if (depth <= 0) return false;
 
@@ -71,23 +74,27 @@ function defenderTurn(context: TThreatContext, depth: number): boolean {
   const candidates = board.scoreCandidates(defender);
 
   const attackerFives: Array<number> = [];
-  let hasWinThreat = false;
+  const winThreats: Array<number> = [];
   for (const candidate of candidates) {
     if (candidate.attackFlags & CELL_FLAG.FIVE) return false;
     if (candidate.defenseFlags & CELL_FLAG.FIVE) attackerFives.push(candidate.index);
-    if (candidate.defenseFlags & CELL_FLAG.WIN_THREAT) hasWinThreat = true;
+    if (candidate.defenseFlags & CELL_FLAG.WIN_THREAT) winThreats.push(candidate.index);
   }
-  if (attackerFives.length >= 2) return true;
 
   let replies: Array<number>;
-  if (attackerFives.length == 1) replies = attackerFives;
-  else if (hasWinThreat) {
-    // Any cell that touches the attacker's four-making lines, plus counter-fours.
+  if (attackerFives.length > 0) {
+    replies = board.fiveDefences(defender, attackerFives);
+    if (replies.length == 0) return true;
+  } else if (winThreats.length > 0) {
+    // Any cell that touches the attacker's four-making lines, plus counter-fours; under
+    // blockOpponent also the cells further out that stop the coming four (stopsWinThreats).
+    const isBlockRule = board.winMode == 'blockOpponent';
     replies = candidates
       .filter(
         (candidate) =>
           candidate.defenseFlags & (CELL_FLAG.WIN_THREAT | CELL_FLAG.FOUR) ||
-          candidate.attackFlags & CELL_FLAG.FOUR
+          candidate.attackFlags & CELL_FLAG.FOUR ||
+          (isBlockRule && board.stopsWinThreats(candidate.index, defender, winThreats))
       )
       .map((candidate) => candidate.index);
   } else return false;
@@ -128,6 +135,7 @@ export function findThreatWin(
   const candidates = board.scoreCandidates(attacker);
   const win = candidates.find((candidate) => candidate.attackFlags & CELL_FLAG.FIVE);
   if (win) return win.index;
+  // A five of the defender must be answered first: not a threat sequence.
   if (candidates.some((candidate) => candidate.defenseFlags & CELL_FLAG.FIVE)) return -1;
 
   const attacks = candidates

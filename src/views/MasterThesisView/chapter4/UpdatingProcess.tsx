@@ -1,5 +1,4 @@
 /* eslint-disable react/no-unescaped-entities */
-/* eslint-disable quotes */
 import { AppArticle } from 'src/components/box/ArticleBox';
 import {
   Table,

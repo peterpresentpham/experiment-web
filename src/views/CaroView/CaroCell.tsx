@@ -55,8 +55,8 @@ function CaroCell(params: TCaroCellProps) {
     if (turn === 0) {
       return cn(
         baseClasses,
-        'text-player-1 font-bold',
-        winTypes && 'bg-player-1/10 relative',
+        'font-bold text-player-1',
+        winTypes && 'relative bg-player-1/10',
         gameType === 'normal' ? 'hover:bg-player-1/20!' : 'hover:bg-background/60',
         isCurrent && 'bg-player-1/20!'
       );
@@ -66,8 +66,8 @@ function CaroCell(params: TCaroCellProps) {
     if (turn === 1) {
       return cn(
         baseClasses,
-        'text-player-2 font-bold',
-        winTypes && 'bg-player-2/10 relative',
+        'font-bold text-player-2',
+        winTypes && 'relative bg-player-2/10',
         gameType === 'normal' ? 'hover:bg-player-2/20!' : 'hover:bg-background/60',
         isCurrent && 'bg-player-2/20!'
       );
@@ -104,7 +104,7 @@ function CaroCell(params: TCaroCellProps) {
       {icon && (
         <span
           key={icon}
-          className="animate-in zoom-in-50 fade-in flex h-full w-full items-center justify-center duration-200"
+          className="flex h-full w-full animate-in items-center justify-center duration-200 zoom-in-50 fade-in"
         >
           {icon}
         </span>

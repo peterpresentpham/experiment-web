@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { reportCaroGame } from 'src/services/caro-game-report/report';
 import { TGameRecord } from 'src/services/caro-machine/experience';
 import { soundtrack } from 'src/services/soundtrack';
 import { useCaroExperienceStore } from 'src/states/caro-experience.state';
@@ -139,6 +140,9 @@ export default function useCaroMachine({ isOver, move }: TParams) {
       machineTurn,
       moves: stepsOrder.map((location) => ({ location, turn: steps[location] })),
     };
+    // On a win the store keeps the winner as `turn`.
+    const winner = hasWinner ? turn : -1;
+    if (machineLevel == 'hell') reportCaroGame(record, winner);
     // Runs silently; the outcome only shows up as the lesson count in the caro settings.
     experience.fn.setLearning(true);
 
@@ -167,8 +171,7 @@ export default function useCaroMachine({ isOver, move }: TParams) {
       type: 'learn',
       record,
       level: machineLevel,
-      // On a win the store keeps the winner as `turn`.
-      winner: hasWinner ? turn : -1,
+      winner,
       epoch: experience.epoch,
       replay: experience.hellGames,
     });

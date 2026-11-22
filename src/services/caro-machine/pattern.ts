@@ -118,21 +118,39 @@ function countFiveSpots(line: Int8Array, blockRule: boolean) {
   return count;
 }
 
+/**
+ * Whether a line with five spots is an open four: no single opponent stone stops every five.
+ * Counting spots is not enough with the blockOpponent rule, where a stone just past a run caps
+ * it at both ends: in `_XXXX_O` an opponent stone on the left spot also blocks the right five.
+ */
+function isOpenFour(line: Int8Array, blockRule: boolean) {
+  const spots = countFiveSpots(line, blockRule);
+  if (!blockRule || spots < 2) return spots >= 2;
+  for (let i = 0; i < WINDOW; i++) {
+    if (line[i] != EMPTY) continue;
+    line[i] = OPPONENT;
+    const left = countFiveSpots(line, blockRule);
+    line[i] = EMPTY;
+    if (left == 0) return false;
+  }
+  return true;
+}
+
 function classify(line: Int8Array, blockRule: boolean) {
   if (isFive(line, blockRule)) return PATTERN.FIVE;
 
-  const fiveSpots = countFiveSpots(line, blockRule);
-  if (fiveSpots >= 2) return PATTERN.OPEN_FOUR;
-  if (fiveSpots == 1) return PATTERN.FOUR;
+  if (countFiveSpots(line, blockRule) > 0)
+    return isOpenFour(line, blockRule) ? PATTERN.OPEN_FOUR : PATTERN.FOUR;
 
   let hasThree = false;
   for (let i = 0; i < WINDOW; i++) {
     if (line[i] != EMPTY) continue;
     line[i] = OWN;
     const spots = countFiveSpots(line, blockRule);
+    const isOpen = spots > 0 && isOpenFour(line, blockRule);
     line[i] = EMPTY;
-    if (spots >= 2) return PATTERN.OPEN_THREE;
-    if (spots == 1) hasThree = true;
+    if (isOpen) return PATTERN.OPEN_THREE;
+    if (spots > 0) hasThree = true;
   }
   if (hasThree) return PATTERN.THREE;
 

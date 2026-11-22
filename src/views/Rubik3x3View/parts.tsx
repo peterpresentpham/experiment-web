@@ -35,7 +35,7 @@ export function Bullets({ items }: { items: Array<ReactNode> }) {
 
 export function Callout({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="bg-muted/40 mt-6 rounded-md border p-4">
+    <div className="mt-6 rounded-md border bg-muted/40 p-4">
       <p className="font-semibold">{title}</p>
       <div className="mt-1">{children}</div>
     </div>
@@ -67,7 +67,7 @@ export function CubePicture({ image, size }: { image: CubeImage; size?: number }
     <figure className="flex w-fit flex-col items-center gap-1">
       {picture}
       {image.caption && (
-        <figcaption className="text-muted-foreground max-w-40 text-center text-xs">
+        <figcaption className="max-w-40 text-center text-xs text-muted-foreground">
           {image.caption}
         </figcaption>
       )}
@@ -78,7 +78,7 @@ export function CubePicture({ image, size }: { image: CubeImage; size?: number }
 export function AlgText({ alg, main = true }: { alg: string; main?: boolean }) {
   return (
     <ContainerClipboard
-      className={cn('border-border w-fit border px-2 py-1', !main && 'opacity-80')}
+      className={cn('w-fit border border-border px-2 py-1', !main && 'opacity-80')}
       copyText={alg}
     >
       <p className={cn('font-mono font-semibold', main ? 'text-lg' : 'text-sm')}>{alg}</p>
@@ -95,7 +95,7 @@ export function AlgRow({ name, alg, note, image, mask }: AlgType) {
         <div className="mt-1">
           <AlgText alg={alg} />
         </div>
-        {note && <p className="text-muted-foreground mt-1 text-sm">{note}</p>}
+        {note && <p className="mt-1 text-sm text-muted-foreground">{note}</p>}
         <Alg3DToggle alg={alg} mask={mask ?? image?.mask} />
       </div>
     </div>
@@ -117,10 +117,10 @@ export function CaseCard({
   note?: string;
 }) {
   return (
-    <div className="border-border flex flex-col items-center gap-2 rounded-md border p-3">
+    <div className="flex flex-col items-center gap-2 rounded-md border border-border p-3">
       <div className="flex w-full items-baseline justify-between gap-2">
         <p className="font-bold">{title}</p>
-        {subtitle && <p className="text-muted-foreground text-xs">{subtitle}</p>}
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
       </div>
       <CubePicture image={image} size={96} />
       <div className="flex w-full flex-col items-center gap-1">
@@ -128,7 +128,7 @@ export function CaseCard({
           <AlgText key={a} alg={a} main={i === 0} />
         ))}
       </div>
-      {note && <p className="text-muted-foreground text-center text-xs">{note}</p>}
+      {note && <p className="text-center text-xs text-muted-foreground">{note}</p>}
     </div>
   );
 }

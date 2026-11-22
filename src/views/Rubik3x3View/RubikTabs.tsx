@@ -25,15 +25,15 @@ export default function RubikTabs({
 
   return (
     <Tabs value={value} onValueChange={onChange} className="mt-6">
-      <TabsList className="bg-background sticky top-0 z-10 h-auto w-full flex-wrap justify-start gap-1 border sm:w-fit">
+      <TabsList className="sticky top-0 z-10 h-auto w-full flex-wrap justify-start gap-1 border bg-background sm:w-fit">
         {panels.map((p) => (
           <TabsTrigger
             key={p.value}
             value={p.value}
-            className="data-[state=active]:bg-muted flex-col items-start px-4 py-2"
+            className="flex-col items-start px-4 py-2 data-[state=active]:bg-muted"
           >
             <span className="text-base">{p.label}</span>
-            <span className="text-muted-foreground text-xs font-normal">{p.hint}</span>
+            <span className="text-xs font-normal text-muted-foreground">{p.hint}</span>
           </TabsTrigger>
         ))}
       </TabsList>

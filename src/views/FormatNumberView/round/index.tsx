@@ -102,7 +102,7 @@ export default function RoundPage() {
           />
         }
       />
-      <div className="bg-muted relative mt-2 min-h-20 rounded-sm p-2">
+      <div className="relative mt-2 min-h-20 rounded-sm bg-muted p-2">
         <CopyClipboard
           copyText={fnText}
           className="absolute top-2 right-2"

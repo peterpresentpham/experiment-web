@@ -24,10 +24,10 @@ export default async function Blog() {
           <li key={topic.href}>
             <Link
               href={topic.href}
-              className="bg-card hover:border-primary/40 focus-visible:ring-ring flex h-full flex-col gap-2 rounded-xl border p-5 transition-colors outline-none focus-visible:ring-[3px]"
+              className="flex h-full flex-col gap-2 rounded-xl border bg-card p-5 transition-colors outline-none hover:border-primary/40 focus-visible:ring-[3px] focus-visible:ring-ring"
             >
               <h2 className="text-lg font-semibold">{topics[topic.id].title}</h2>
-              <p className="text-muted-foreground text-sm">{topics[topic.id].description}</p>
+              <p className="text-sm text-muted-foreground">{topics[topic.id].description}</p>
             </Link>
           </li>
         ))}

@@ -70,7 +70,7 @@ export default function TimelineChart() {
 
   if (monitorData.length === 0) {
     return (
-      <div className="text-muted-foreground flex h-48 items-center justify-center text-sm">
+      <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
         {chart.empty}
       </div>
     );

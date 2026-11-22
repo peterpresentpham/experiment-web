@@ -24,9 +24,9 @@ function BlockTaskItem({ index, item }: TBlockTaskItemProps) {
           T+{item.arrivalTime} ({item.executionTime}ms)
         </span>
       </div>
-      <div className="bg-muted h-1 overflow-hidden">
+      <div className="h-1 overflow-hidden bg-muted">
         <div
-          className="bg-primary h-full transition-all duration-300"
+          className="h-full bg-primary transition-all duration-300"
           style={{ width: `${subProgress}%` }}
         />
       </div>
@@ -63,7 +63,7 @@ export default function BlockTaskList({
 
   return (
     <div className="bg-muted/60 p-2">
-      <p className="text-muted-foreground mb-2 flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase">
+      <p className="mb-2 flex items-center gap-1.5 text-xs font-bold tracking-wider text-muted-foreground uppercase">
         <Timer size={12} />
         {onlyShowCurrentBlockTask ? text.nextTask : text.blockedTasks(data.length)}
       </p>

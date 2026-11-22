@@ -84,7 +84,7 @@ export default function ExportImportData({ components, isShowExport = true }: TP
             </button>
           )}
         </DialogTrigger>
-        <DialogContent className="from-background to-muted/30 max-w-3xl overflow-hidden border-none bg-linear-to-br p-0">
+        <DialogContent className="max-w-3xl overflow-hidden border-none bg-linear-to-br from-background to-muted/30 p-0">
           <div className="col-span-3 flex flex-col space-y-6 p-8">
             <DialogHeader titleProps={{ className: 'text-2xl font-bold tracking-tight' }}>
               {text.importDialog.title}
@@ -99,15 +99,15 @@ export default function ExportImportData({ components, isShowExport = true }: TP
                   type="file"
                   accept="application/json"
                   onChange={onFileChange}
-                  className="file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer file:mr-4 file:border-0 file:px-4 file:py-1 file:text-sm file:font-semibold"
+                  className="cursor-pointer file:mr-4 file:border-0 file:bg-primary/10 file:px-4 file:py-1 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
                 />
               </div>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="border-border/50 w-full border-t" />
+                  <span className="w-full border-t border-border/50" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background text-muted-foreground px-3 font-medium">
+                  <span className="bg-background px-3 font-medium text-muted-foreground">
                     {text.importDialog.alternative}
                   </span>
                 </div>
@@ -116,25 +116,25 @@ export default function ExportImportData({ components, isShowExport = true }: TP
                 <Label className="text-base font-semibold">{text.importDialog.quickStart}</Label>
                 <Button
                   variant="outline"
-                  className="hover:bg-primary/5 hover:text-primary group h-12 w-full justify-start px-4 transition-all"
+                  className="group h-12 w-full justify-start px-4 transition-all hover:bg-primary/5 hover:text-primary"
                   onClick={onUseExampleData}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="bg-primary/10 group-hover:bg-primary/20 p-2 transition-colors">
+                    <div className="bg-primary/10 p-2 transition-colors group-hover:bg-primary/20">
                       <Import size={18} />
                     </div>
                     <div className="text-left">
                       <div className="font-bold">{text.importDialog.loadExample}</div>
-                      <div className="text-muted-foreground text-xs">
+                      <div className="text-xs text-muted-foreground">
                         {text.importDialog.loadExampleHint}
                       </div>
                     </div>
                   </div>
                 </Button>
               </div>
-              <div className="border-border/50 bg-muted/30 overflow-hidden border">
-                <div className="bg-muted/50 border-border/50 flex items-center justify-between border-b px-4 py-2">
-                  <span className="text-muted-foreground text-xs font-bold tracking-wider uppercase">
+              <div className="overflow-hidden border border-border/50 bg-muted/30">
+                <div className="flex items-center justify-between border-b border-border/50 bg-muted/50 px-4 py-2">
+                  <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
                     {text.importDialog.template}
                   </span>
                   <CopyClipboard
@@ -146,7 +146,7 @@ export default function ExportImportData({ components, isShowExport = true }: TP
                   />
                 </div>
                 <div className="bg-secondary p-4">
-                  <pre className="text-muted-foreground overflow-x-auto font-mono text-xs leading-relaxed">
+                  <pre className="overflow-x-auto font-mono text-xs leading-relaxed text-muted-foreground">
                     {EXAMPLE_JSON_SNIPPET}
                   </pre>
                 </div>

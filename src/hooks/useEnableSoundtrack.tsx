@@ -9,7 +9,7 @@ export default function useEnableSoundtrack() {
 
   useEffect(() => {
     const unlock = () => {
-      soundtrack.preload();
+      void soundtrack.preload();
       setAudioUnlocked(true);
     };
 

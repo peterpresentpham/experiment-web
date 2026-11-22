@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 // Generated from CubeSkills OLL/PLL sheets (Feliks Zemdegs & Andy Klise).
 // Every algorithm was machine-checked with src/lib/cube (F2L kept, case unique, alternatives agree).
 

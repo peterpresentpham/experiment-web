@@ -71,12 +71,57 @@ describe('caro machine patterns', () => {
     expect(patternOf('.oxx.xxo...', 'non-blockOpponent')).toBe(PATTERN.FOUR);
   });
 
+  it('counts a four as open only if no single stone stops every five', () => {
+    // Fives on both sides, but an o on the left spot also caps the right five.
+    expect(patternOf('..xxxx.o...', 'blockOpponent')).toBe(PATTERN.FOUR);
+    expect(patternOf('..xxxx.o...', 'non-blockOpponent')).toBe(PATTERN.OPEN_FOUR);
+    expect(patternOf('..xxxx..o..', 'blockOpponent')).toBe(PATTERN.OPEN_FOUR);
+    // So this three only makes such fours.
+    expect(patternOf('...xxx.o...', 'blockOpponent')).toBe(PATTERN.THREE);
+    expect(patternOf('...xxx.o...', 'non-blockOpponent')).toBe(PATTERN.OPEN_THREE);
+  });
+
   it('does not treat the board edge as a block', () => {
     expect(patternOf('#####xxxx.o', 'blockOpponent')).toBe(PATTERN.FOUR);
   });
 });
 
 describe('caro machine moves', () => {
+  it('stops two fives of one line with one stone under blockOpponent', () => {
+    // Row 7: the opponent (turn 0) has columns 5-8 and the machine holds 10. Columns 4 and 9
+    // both make five, but a stone on 4 also caps the five through 9 at both ends.
+    const steps = place(15, [
+      [7, 5, 0],
+      [7, 6, 0],
+      [7, 7, 0],
+      [7, 8, 0],
+      [7, 10, 1],
+      [0, 0, 1],
+      [14, 14, 1],
+    ]);
+    expect(ask(steps)).toBe(at(15, 7, 4));
+  });
+
+  it('caps an open three two cells out under blockOpponent', () => {
+    // From a logged game (20x20): the opponent (turn 1) has column 7, rows 5-7. A stone on row 9
+    // leaves it only fours that one stone stops, and wins here.
+    const steps: TSteps = {
+      168: 0,
+      148: 1,
+      189: 0,
+      147: 1,
+      210: 0,
+      127: 1,
+      231: 0,
+      252: 1,
+      229: 0,
+      169: 1,
+      190: 0,
+      107: 1,
+    };
+    expect(ask(steps, { size: 20, turn: 0, timeLimitMs: 2000 })).toBe(at(20, 9, 7));
+  });
+
   it('opens in the center of an empty board', () => {
     expect(ask({}, { turn: 0 })).toBe(at(15, 7, 7));
   });

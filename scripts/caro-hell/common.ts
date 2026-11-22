@@ -95,7 +95,7 @@ export async function saveOptimizer(optimizer: tf.Optimizer, dir: string) {
   }));
   const { data, specs } = await tf.io.encodeWeights(weights);
   mkdirSync(dir, { recursive: true });
-  writeAtomic(join(dir, 'optimizer.bin'), Buffer.from(data as ArrayBuffer));
+  writeAtomic(join(dir, 'optimizer.bin'), Buffer.from(data));
   writeAtomic(join(dir, 'optimizer.json'), JSON.stringify(specs));
 }
 

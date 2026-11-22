@@ -1,5 +1,253 @@
+diff --git a/crates/engine/src/movegen.rs b/crates/engine/src/movegen.rs
+index d257b7f..b009f92 100644
+--- a/crates/engine/src/movegen.rs
++++ b/crates/engine/src/movegen.rs
+@@ -100,6 +100,15 @@ pub fn generate(board: &mut Board, moves: &mut Vec<ScoredMove>) -> Gen {
+     }
+     match board.p4_count(them, Pattern4::AFive) {
+         0 => {}
++        // Under caro a five has more answers than its point (a stone past the
++        // run caps it at both ends), and one stone can stop two fives.
++        _ if is_caro(board) => {
++            caro_five_defences(board, moves);
++            if moves.is_empty() {
++                return Gen::Lost(2);
++            }
++            return Gen::Moves { forced: true };
++        }
+         1 => {
+             let pos = board.five_point(them).expect("counted five point");
+             if forbids(board) && board.is_forbidden(pos) {
+@@ -146,6 +155,60 @@ pub fn generate(board: &mut Board, moves: &mut Vec<ScoredMove>) -> Gen {
+     Gen::Moves { forced: false }
+ }
+ 
++/// Whether a five can be blocked at both ends (the caro rules).
++#[inline]
++pub(crate) fn is_caro(board: &Board) -> bool {
++    matches!(board.rule(), Rule::Caro | Rule::FreestyleCaro)
++}
++
++/// How far from a threat point a defence can lie: under caro a stone just
++/// past a run of four, five cells away, can cap a five.
++#[inline]
++fn reach(board: &Board) -> isize {
++    if is_caro(board) { 5 } else { 4 }
++}
++
++/// Caro: every move after which the opponent has no five point. Besides the
++/// point itself, a cell just past the opponent's run through it, when the
++/// cell at the run's other end is already ours, caps that five at both ends.
++pub(crate) fn caro_five_defences(board: &mut Board, moves: &mut Vec<ScoredMove>) {
++    let us = board.side_to_move();
++    let them = us.opponent();
++    let Some(five) = board.five_point(them) else {
++        return;
++    };
++    let mut cells = vec![five];
++    for dir in 0..4 {
++        let run_end = |sign: isize| {
++            let mut k = 1;
++            while board.step(five, dir, sign * k).and_then(|p| board.stone(p)) == Some(them) {
++                k += 1;
++            }
++            (k, board.step(five, dir, sign * k))
++        };
++        let ((lo, a), (hi, b)) = (run_end(-1), run_end(1));
++        if lo + hi - 1 < 5 {
++            continue;
++        }
++        let ours = |p: Option<Pos>| p.and_then(|p| board.stone(p)) == Some(us);
++        let free = |p: Option<Pos>| p.is_some_and(|p| board.is_empty(p));
++        if free(a) && ours(b) {
++            cells.extend(a);
++        }
++        if free(b) && ours(a) {
++            cells.extend(b);
++        }
++    }
++    for pos in cells {
++        board.play(pos);
++        let stops = board.p4_count(them, Pattern4::AFive) == 0;
++        board.undo();
++        if stops {
++            moves.push(ScoredMove { pos, score: 0 });
++        }
++    }
++}
++
+ /// Whether the side to move has forbidden moves.
+ #[inline]
+ fn forbids(board: &Board) -> bool {
+@@ -211,7 +274,7 @@ fn generate_defences(
+             if board.pattern(point, them, dir) < Pattern::B4 {
+                 continue;
+             }
+-            for k in (-4..=4).filter(|&k| k != 0) {
++            for k in (-reach(board)..=reach(board)).filter(|&k| k != 0) {
+                 if let Some(q) = board.step(point, dir, k)
+                     && board.is_empty(q)
+                 {
+@@ -283,7 +346,7 @@ fn generate_four_three_defences(
+             if board.pattern(point, them, dir) < Pattern::B3 {
+                 continue;
+             }
+-            for k in (-4..=4).filter(|&k| k != 0) {
++            for k in (-reach(board)..=reach(board)).filter(|&k| k != 0) {
+                 if let Some(q) = board.step(point, dir, k)
+                     && board.is_empty(q)
+                 {
+@@ -432,6 +495,35 @@ mod tests {
+         assert_eq!(cells, vec![Pos::new(5, 5), Pos::new(9, 5)]);
+     }
+ 
++    fn caro_board_with(moves: &[(usize, usize)]) -> Board {
++        let mut board = Board::with_rule(15, Rule::FreestyleCaro);
++        for &(x, y) in moves {
++            board.play(Pos::new(x, y));
++        }
++        board
++    }
++
++    #[test]
++    fn caro_one_stone_stops_two_fives() {
++        // Black has 5..=8 on row 7 and White holds 10: both 4 and 9 make five,
++        // but a white stone on 4 also caps the five through 9 at both ends.
++        let moves = [(5, 7), (10, 7), (6, 7), (0, 0), (7, 7), (14, 14), (8, 7)];
++        let (kind, cells) = generated(&mut caro_board_with(&moves));
++        assert_eq!(kind, Gen::Moves { forced: true });
++        assert_eq!(cells, vec![Pos::new(4, 7)]);
++        assert_eq!(generated(&mut board_with(&moves)).0, Gen::Lost(2));
++    }
++
++    #[test]
++    fn caro_open_three_is_also_stopped_two_cells_out() {
++        // As defends_open_three: under caro a stone two cells past the three
++        // leaves only fours that one stone stops.
++        let mut board = caro_board_with(&[(7, 7), (6, 5), (12, 12), (7, 5), (12, 2), (8, 5)]);
++        let (kind, cells) = generated(&mut board);
++        assert_eq!(kind, Gen::Moves { forced: true });
++        assert_eq!(cells, vec![Pos::new(4, 5), Pos::new(5, 5), Pos::new(9, 5), Pos::new(10, 5)]);
++    }
++
+     #[test]
+     fn split_three_has_three_defences() {
+         // White's split three (5, 5), (6, 5), (8, 5): the gap and both ends.
+diff --git a/crates/engine/src/pattern.rs b/crates/engine/src/pattern.rs
+index d0affd6..6977f93 100644
+--- a/crates/engine/src/pattern.rs
++++ b/crates/engine/src/pattern.rs
+@@ -430,7 +430,7 @@ enum Semantics {
+     Exact,
+     /// Exactly five; an overline is forbidden.
+     RenjuBlack,
+-    /// Six or more, or five not blocked by stones at both ends.
++    /// Five or more, not blocked by stones at both ends.
+     FreeCaro,
+     /// Exactly five, not blocked by stones at both ends.
+     Caro,
+@@ -540,6 +540,21 @@ fn classify(semantics: Semantics, line: &[Cell; LARGE_CELLS], memo: &mut [u8]) -
+     memo[key]
+ }
+ 
++/// How many empty cells complete a five through the center for the own side
++/// (the five points, as `classify_uncached` counts them).
++fn count_fives(semantics: Semantics, line: &[Cell; LARGE_CELLS], memo: &mut [u8]) -> usize {
++    (0..LARGE_CELLS)
++        .filter(|&i| {
++            if line[i] != Cell::Empty {
++                return false;
++            }
++            let mut next = *line;
++            next[i] = Cell::Own;
++            entry_pattern(classify(semantics, &next, memo)) == Pattern::F5
++        })
++        .count()
++}
++
+ fn classify_uncached(semantics: Semantics, line: &[Cell; LARGE_CELLS], memo: &mut [u8]) -> u8 {
+     const C: usize = LARGE_CENTER;
+     const LAST: usize = LARGE_CELLS - 1;
+@@ -565,7 +580,7 @@ fn classify_uncached(semantics: Semantics, line: &[Cell; LARGE_CELLS], memo: &mu
+             Semantics::Exact if len == 5 => five,
+             Semantics::RenjuBlack if len == 5 => five,
+             Semantics::RenjuBlack => dead | LINE_FORBIDDEN,
+-            Semantics::FreeCaro if len >= 6 || !blocked => five,
++            Semantics::FreeCaro if !blocked => five,
+             Semantics::Caro if len == 5 && !blocked => five,
+             _ => dead,
+         };
+@@ -606,6 +621,20 @@ fn classify_uncached(semantics: Semantics, line: &[Cell; LARGE_CELLS], memo: &mu
+         }
+     }
+     let pattern = match () {
++        // Under caro one opponent stone can stop several fives: in `_xxxx_o`
++        // a stone on the left point takes that five and caps the right one at
++        // both ends. So a four is open only if no single stone stops them all.
++        _ if !fives.is_empty() && matches!(semantics, Semantics::Caro | Semantics::FreeCaro) => {
++            let stoppable = (0..LARGE_CELLS).any(|k| {
++                if line[k] != Cell::Empty {
++                    return false;
++                }
++                let mut blocked = *line;
++                blocked[k] = Cell::Stone;
++                count_fives(semantics, &blocked, memo) == 0
++            });
++            if stoppable { Pattern::B4 } else { Pattern::F4 }
++        }
+         _ if fives.len() >= 2 => {
+             // Two five points five cells apart are the ends of one straight
+             // four; closer ones are two fours on the line, which renju
+@@ -763,6 +792,8 @@ mod tests {
+             assert_eq!(large(rule, true, "x..xx_..x.."), (B3, false), "{rule}");
+         }
+         assert_eq!(large(Rule::FreestyleCaro, true, "..xxx_xx..."), (F5, false));
++        // Blocked at both ends, a six does not win either (as in the app).
++        assert_eq!(large(Rule::FreestyleCaro, true, ".oxxx_xxo.."), (Dead, false));
+         // Renju: White's overline wins, Black's is forbidden.
+         assert_eq!(large(Rule::Renju, false, "..xxx_xx..."), (F5, false));
+         assert_eq!(large(Rule::Renju, true, "..xxx_xx..."), (Dead, true));
+@@ -799,6 +830,22 @@ mod tests {
+         assert_eq!(large(Rule::Standard, true, "o.xxx_o...."), (B4, false));
+     }
+ 
++    #[test]
++    fn caro_four_is_open_only_if_no_stone_stops_every_five() {
++        use Pattern::*;
++        for rule in [Rule::Caro, Rule::FreestyleCaro] {
++            // Two five points, but a stone on the left one caps the right five.
++            assert_eq!(large(rule, true, "..xxx_.o..."), (B4, false), "{rule}");
++            assert_eq!(large(rule, true, "...xx_x.o.."), (B4, false), "{rule}");
++            // Room on both sides: open.
++            assert_eq!(large(rule, true, "..xxx_....."), (F4, false), "{rule}");
++            assert_eq!(large(rule, true, "..xxx_..o.."), (F4, false), "{rule}");
++            // An open three that a far stone turns into a stoppable four.
++            assert_eq!(large(rule, true, "...xx_.o..."), (B3, false), "{rule}");
++        }
++        assert_eq!(large(Rule::Standard, true, "..xxx_.o..."), (F4, false));
++    }
++
+     #[test]
+     fn five_or_more_matches_the_freestyle_table() {
+         // Renju's White table classifies like freestyle, one cell further.
+diff --git a/crates/engine/src/rule.rs b/crates/engine/src/rule.rs
+index a4f1c04..d6f417b 100644
+--- a/crates/engine/src/rule.rs
++++ b/crates/engine/src/rule.rs
+@@ -16,8 +16,9 @@ pub enum Rule {
+     /// Black wins with exactly five and may not make an overline, two fours
+     /// or two open threes at once; White wins with five or more (`INFO rule 4`).
+     Renju,
+-    /// Six or more wins; exactly five wins unless both ends are blocked by
+-    /// stones, the board edge not counting (`INFO rule 8`).
++    /// Five or more wins unless both ends are blocked by stones, the board
++    /// edge not counting (`INFO rule 8`). This is experiment-web's caro rule;
++    /// upstream Tengen let six or more win even when blocked.
+     FreestyleCaro,
+     /// Exactly five wins unless both ends are blocked by stones, the board
+     /// edge not counting (`INFO rule 9`, the Gomocup caro rule).
 diff --git a/crates/engine/src/search.rs b/crates/engine/src/search.rs
-index 700a9a7..09d1440 100644
+index 700a9a7..602b758 100644
 --- a/crates/engine/src/search.rs
 +++ b/crates/engine/src/search.rs
 @@ -116,6 +116,14 @@ pub struct Limits {
@@ -34,17 +282,17 @@ index 700a9a7..09d1440 100644
              time_reduction: 1.0,
              last_value: None,
 +            rng: 0x9e37_79b9_7f4a_7c15,
-+        }
-+    }
-+
+         }
+     }
+ 
 +    /// Seed the random choice of [`Limits::variety`].
 +    pub fn set_seed(&mut self, seed: u64) {
 +        self.rng = seed ^ 0x9e37_79b9_7f4a_7c15;
 +        if self.rng == 0 {
 +            self.rng = 1;
-         }
-     }
- 
++        }
++    }
++
 +    fn random(&mut self) -> u64 {
 +        self.rng ^= self.rng << 13;
 +        self.rng ^= self.rng >> 7;
@@ -212,7 +460,89 @@ index 700a9a7..09d1440 100644
      fn update_pv(&mut self, ply: usize, pos: Pos) {
          let (head, tail) = self.pv.split_at_mut(ply + 1);
          let line = &mut head[ply];
-@@ -1573,6 +1663,47 @@ mod tests {
+@@ -933,6 +1023,22 @@ impl<'a> Worker<'a> {
+         *h += bonus - *h * bonus.abs() / HISTORY_MAX;
+     }
+ 
++    /// Whether the opponent has fives that no single move stops: two or
++    /// more, except under caro where one stone can stop two fives of a line.
++    fn opponent_fives_unstoppable(&mut self) -> bool {
++        let them = self.board.side_to_move().opponent();
++        let fives = self.board.p4_count(them, Pattern4::AFive);
++        if fives < 2 {
++            return false;
++        }
++        if !movegen::is_caro(&self.board) {
++            return true;
++        }
++        let mut defences = Vec::new();
++        movegen::caro_five_defences(&mut self.board, &mut defences);
++        defences.is_empty()
++    }
++
+     fn search<const PV: bool>(
+         &mut self,
+         mut alpha: Value,
+@@ -953,6 +1059,7 @@ impl<'a> Worker<'a> {
+             return 0;
+         }
+ 
++        let fives_lost = self.opponent_fives_unstoppable();
+         let board = &self.board;
+         let us = board.side_to_move();
+         let them = us.opponent();
+@@ -960,7 +1067,7 @@ impl<'a> Worker<'a> {
+             return mate_in(ply + 1);
+         }
+         let opp_fives = board.p4_count(them, Pattern4::AFive);
+-        if opp_fives >= 2 {
++        if fives_lost {
+             return mated_in(ply + 2);
+         }
+         if board.is_full() {
+@@ -1270,6 +1377,7 @@ impl<'a> Worker<'a> {
+             return 0;
+         }
+         self.seldepth = self.seldepth.max(ply);
++        let fives_lost = self.opponent_fives_unstoppable();
+         let board = &self.board;
+         let us = board.side_to_move();
+         let them = us.opponent();
+@@ -1277,7 +1385,7 @@ impl<'a> Worker<'a> {
+             return mate_in(ply + 1);
+         }
+         let opp_fives = board.p4_count(them, Pattern4::AFive);
+-        if opp_fives >= 2 {
++        if fives_lost {
+             return mated_in(ply + 2);
+         }
+         if board.is_full() {
+@@ -1287,6 +1395,24 @@ impl<'a> Worker<'a> {
+             return eval::evaluate(board);
+         }
+ 
++        if opp_fives > 0 && movegen::is_caro(board) {
++            // Caro: a five may have several answers (see caro_five_defences).
++            let mut defences = Vec::new();
++            movegen::caro_five_defences(&mut self.board, &mut defences);
++            let mut best = mated_in(ply + 2);
++            for m in defences {
++                self.board.play(m.pos);
++                let v = -self.qsearch(-beta, -alpha, ply + 1, qply + 1);
++                self.board.undo();
++                best = best.max(v);
++                alpha = alpha.max(v);
++                if alpha >= beta {
++                    break;
++                }
++            }
++            return best;
++        }
++
+         if opp_fives == 1 {
+             // Answer the opponent's four; they then continue their attack.
+             let block = board.five_point(them).expect("counted five point");
+@@ -1573,6 +1699,47 @@ mod tests {
          assert_eq!(a.value, b.value);
      }
  

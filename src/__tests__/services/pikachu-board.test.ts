@@ -57,7 +57,7 @@ describe('pikachu createNewBoard', () => {
       expect(count % 2).toBe(0);
     }
     expect(path).toBeTruthy();
-    assertValidPath(board, path!, 2);
+    assertValidPath(board, path, 2);
   });
 });
 
@@ -80,7 +80,7 @@ describe('pikachu changeBoard', () => {
       for (let r = 1; r <= 3; r++)
         for (let c = 1; c <= 4; c++) expect(board[r][c] > 0).toBe(currentBoard[r][c] > 0);
       for (const count of countByValue(board, 3, 4).values()) expect(count % 2).toBe(0);
-      assertValidPath(board, path!, 2);
+      assertValidPath(board, path, 2);
     }
   });
 

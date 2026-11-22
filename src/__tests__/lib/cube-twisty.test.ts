@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import { RUBIK_GUIDE } from 'src/configs/rubikGuide.config';

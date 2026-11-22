@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { ReactNode } from 'react';
 import { RUBIK_GUIDE, NOTATION_IMAGES } from 'src/configs/rubikGuide.config';
 import { defineMessages } from 'src/i18n/define';

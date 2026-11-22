@@ -23,8 +23,8 @@ export default function RunningScreen({ runningProcess }: TProps) {
 
   return (
     <div className="flex h-55 w-full gap-1 overflow-hidden">
-      <div className="bg-card relative flex flex-1 flex-col overflow-hidden rounded-lg border">
-        <div className="border-border bg-muted/50 flex items-center justify-between border-b px-3 py-2">
+      <div className="relative flex flex-1 flex-col overflow-hidden rounded-lg border bg-card">
+        <div className="flex items-center justify-between border-b border-border bg-muted/50 px-3 py-2">
           <div className="flex h-4 items-center gap-2">
             <Cpu size={16} className="text-primary" />
             <h2 className="text-xs font-bold tracking-tight uppercase">
@@ -34,10 +34,10 @@ export default function RunningScreen({ runningProcess }: TProps) {
           {runningProcess && (
             <div className="flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
-                <span className="bg-success/60 absolute inline-flex h-full w-full animate-ping rounded-full"></span>
-                <span className="bg-success relative inline-flex h-2 w-2 rounded-full"></span>
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/60"></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-success"></span>
               </span>
-              <span className="text-success text-xs font-medium uppercase">{text.core.active}</span>
+              <span className="text-xs font-medium text-success uppercase">{text.core.active}</span>
             </div>
           )}
         </div>

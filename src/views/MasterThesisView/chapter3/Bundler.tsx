@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { AppArticle } from 'src/components/box/ArticleBox';
 import { SubsectionBox } from 'src/components/Thesis/SectionBox';
 

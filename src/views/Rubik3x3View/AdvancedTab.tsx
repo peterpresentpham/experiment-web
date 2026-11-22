@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { ReactNode } from 'react';
 import { PLL_LEARNING_ORDER, RUBIK_GUIDE } from 'src/configs/rubikGuide.config';
 import { LLCase, OLL_CASES, PLL_CASES } from 'src/configs/rubikLL.config';

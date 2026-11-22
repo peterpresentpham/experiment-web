@@ -1,4 +1,3 @@
-/* eslint-disable quotes */
 import { F2LConfig } from 'src/configs/rubik3x3.config';
 import { RUBIK_GUIDE } from 'src/configs/rubikGuide.config';
 import { OLL_CASES, PLL_CASES } from 'src/configs/rubikLL.config';

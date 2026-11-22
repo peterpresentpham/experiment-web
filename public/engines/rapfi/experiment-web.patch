@@ -398,10 +398,146 @@ index b95dd27..d00a711 100644
      }
  }
 diff --git a/Rapfi/game/movegen.cpp b/Rapfi/game/movegen.cpp
-index 196f41f..645cf14 100644
+index 196f41f..d16a88f 100644
 --- a/Rapfi/game/movegen.cpp
 +++ b/Rapfi/game/movegen.cpp
-@@ -781,6 +781,11 @@ ScoredMove *generate<DEFEND_B4F3 | RULE_RENJU>(const Board &board, ScoredMove *m
+@@ -510,7 +510,7 @@ Pos findB4InLine(const Board &board, Color oppo, Pos b4Pos, int dir)
+         break;
+     }
+ 
+-    assert(false && "did not find B4 pattern pos in C_BLOCK4_FLEX3");
++    assert(R == Rule::CARO && "did not find B4 pattern pos in C_BLOCK4_FLEX3");
+     return Pos::NONE;
+ }
+ 
+@@ -581,6 +581,10 @@ ScoredMove *findB4F3Defence(const Board &board, ScoredMove *const moveList)
+             last = findF3LineDefence<R>(board, oppo, B4F3Pos, dir, last);
+         else if (pattern == B4 || pattern == B4S) {
+             Pos b4Pos = findB4InLine<R>(board, oppo, B4F3Pos, dir);
++            // Caro block fours may have no single completing square (two fives that one stone
++            // stops); the cell scan below covers that line.
++            if (R == Rule::CARO && b4Pos == Pos::NONE)
++                continue;
+ 
+             // If we have a B4 counter defence move, then direct defence
+             // to the opponent move is unnecessary.
+@@ -594,6 +598,22 @@ ScoredMove *findB4F3Defence(const Board &board, ScoredMove *const moveList)
+         }
+     }
+ 
++    // Caro: a stone just past a run blocks a five without taking its point, and the defence table
++    // keeps only the eight cells nearest the threat, so also try every empty cell within five on
++    // its lines and keep those after which the move is no longer a C threat.
++    if constexpr (R == Rule::CARO) {
++        for (Direction dir : DIRECTION) {
++            for (int i = -5; i <= 5; i++) {
++                Pos pos = B4F3Pos + i * dir;
++                if (i == 0 || !board.isInBoard(pos) || !board.isEmpty(pos))
++                    continue;
++                ScopedMove<CARO> probe(board, pos);
++                if (board.pattern4(B4F3Pos, oppo) < C_BLOCK4_FLEX3)
++                    *last++ = pos;
++            }
++        }
++    }
++
+     return last;
+ }
+ 
+@@ -745,6 +765,92 @@ ScoredMove *generate<DEFEND_FIVE>(const Board &board, ScoredMove *moveList)
+     return moveList;
+ }
+ 
++/// Caro: every move that leaves the opponent without a five-point. Taking the point is one way;
++/// the other is a stone just past the opponent's run when the cell at the run's other end is
++/// already ours, which blocks the five at both ends (and may stop two fives of one line at once).
++/// So the moves are the point and those end cells, kept when the opponent has no five after them;
++/// when none is (two fives that no single stone stops), the point alone.
++ScoredMove *generateCaroFiveDefence(const Board &board, ScoredMove *moveList)
++{
++    Color self = board.sideToMove(), oppo = ~self;
++    assert(board.p4Count(oppo, A_FIVE) > 0);
++
++    Pos five = findPattern4Pos(board, oppo, A_FIVE);
++    Pos candidates[1 + 2 * 4];
++    int count           = 0;
++    candidates[count++] = five;
++    for (Direction dir : DIRECTION) {
++        int lo = 1, hi = 1;
++        while (board.get(five - lo * dir) == oppo)
++            lo++;
++        while (board.get(five + hi * dir) == oppo)
++            hi++;
++        if (lo + hi - 1 < 5)
++            continue;
++        Pos   a = five - lo * dir, b = five + hi * dir;
++        Color ca = board.get(a), cb = board.get(b);
++        if (ca == EMPTY && cb == self)
++            candidates[count++] = a;
++        if (cb == EMPTY && ca == self)
++            candidates[count++] = b;
++    }
++
++    ScoredMove *first = moveList;
++    for (int i = 0; i < count; i++) {
++        ScopedMove<CARO> probe(board, candidates[i]);
++        if (!board.p4Count(oppo, A_FIVE))
++            *moveList++ = candidates[i];
++    }
++    // Lost anyway: still answer with the point, so a search has a move to play (and finds the
++    // loss a ply later), as with the other rules.
++    if (moveList == first)
++        *moveList++ = five;
++    return moveList;
++}
++
++/// Caro: the defences against the opponent's flex-four threat (a move that would make a four no
++/// single stone stops). Besides the freestyle ones, a stone further out can turn that four into
++/// a stoppable one by closing an end of the run (`_OOO__X` for `_OOO_`), so every empty cell
++/// within five of a threat point on its lines is tried, and kept if the opponent has no flex-four
++/// threat after it. Our own fours are left out, as elsewhere (VCF moves are generated apart).
++ScoredMove *generateCaroFourDefence(const Board &board, ScoredMove *moveList, bool includeLosing)
++{
++    Color self = board.sideToMove(), oppo = ~self;
++    assert(board.p4Count(oppo, B_FLEX4) > 0);
++
++    // Every defence stops this threat point too, so it lies on the point's lines.
++    Pos         threat = findPattern4Pos(board, oppo, B_FLEX4);
++    ScoredMove *last   = moveList;
++    auto        tryMove = [&](Pos pos) {
++        if (board.pattern4(pos, self) >= E_BLOCK4)
++            return;
++        ScopedMove<CARO> probe(board, pos);
++        if (!board.p4Count(oppo, B_FLEX4))
++            *last++ = pos;
++    };
++    tryMove(threat);
++    for (Direction dir : DIRECTION) {
++        for (int i = -5; i <= 5; i++) {
++            Pos pos = threat + i * dir;
++            if (i != 0 && board.isInBoard(pos) && board.isEmpty(pos))
++                tryMove(pos);
++        }
++    }
++
++    // Two threats no stone stops: the caller may still want the usual (losing) replies.
++    if (last == moveList && includeLosing)
++        return generateFourDefence<true>(board, moveList);
++    return last;
++}
++
++bool isCaroFiveDefence(const Board &board, Pos move)
++{
++    if (!board.isInBoard(move) || !board.isEmpty(move))
++        return false;
++    ScopedMove<CARO> probe(board, move);
++    return !board.p4Count(board.sideToMove(), A_FIVE);
++}
++
+ /// Generates defence moves for opponent B_FLEX4 pattern4.
+ /// All VCF moves of us is excluded. VCF moves should be generated
+ /// by other generator.
+@@ -781,6 +887,11 @@ ScoredMove *generate<DEFEND_B4F3 | RULE_RENJU>(const Board &board, ScoredMove *m
      return generateB4F3Defence<RENJU>(board, moveList);
  }
  
@@ -414,10 +550,10 @@ index 196f41f..645cf14 100644
  {
      // If threat is caused by White, it must be real threat
 diff --git a/Rapfi/game/movegen.h b/Rapfi/game/movegen.h
-index 1e5560c..3573c5d 100644
+index 1e5560c..d2da153 100644
 --- a/Rapfi/game/movegen.h
 +++ b/Rapfi/game/movegen.h
-@@ -112,6 +112,10 @@ ScoredMove *generateNeighbors(const Board     &board,
+@@ -112,6 +112,24 @@ ScoredMove *generateNeighbors(const Board     &board,
                                const Direction *neighbors,
                                size_t           numNeighbors);
  
@@ -425,11 +561,25 @@ index 1e5560c..3573c5d 100644
 +/// has its own entry point instead of a RULE_* value.
 +ScoredMove *generateCaroB4F3Defence(const Board &board, ScoredMove *moveList);
 +
++/// DEFEND_FIVE under the caro rule, where a five can have several defences (the point, or a stone
++/// that blocks the run at both ends) and one stone can stop two fives of one line.
++/// @return The end cursor. When no single move stops every five (a loss), the list holds just
++///     one five-point, as with the other rules; isCaroFiveDefence tells the two apart.
++ScoredMove *generateCaroFiveDefence(const Board &board, ScoredMove *moveList);
++
++/// DEFEND_FOUR under the caro rule, which has more defences against a flex-four threat than the
++/// other rules (see the definition). `includeLosing` as DEFEND_FOUR | ALL: when nothing defends,
++/// return the usual replies instead of an empty list.
++ScoredMove *generateCaroFourDefence(const Board &board, ScoredMove *moveList, bool includeLosing);
++
++/// Caro: whether `move` leaves the opponent (the side that just moved) without a five-point.
++bool isCaroFiveDefence(const Board &board, Pos move);
++
  /// Check whether the opponent's C_BLOCK4_FLEX3 move is a genuine threat under Renju (a black
  /// flex-three follow-up may be forbidden, making the move only a pseudo-threat).
  /// @return True if the threat is real, otherwise false.
 diff --git a/Rapfi/game/pattern.cpp b/Rapfi/game/pattern.cpp
-index b328ed9..3d5ed5f 100644
+index b328ed9..661ea71 100644
 --- a/Rapfi/game/pattern.cpp
 +++ b/Rapfi/game/pattern.cpp
 @@ -23,6 +23,7 @@
@@ -537,7 +687,7 @@ index b328ed9..3d5ed5f 100644
              break;
          else
              realLenInc = 0;
-@@ -216,11 +234,26 @@ constexpr Line<R> shiftLine(const Line<R> &line, int i)
+@@ -216,11 +234,66 @@ constexpr Line<R> shiftLine(const Line<R> &line, int i)
      Line<R> shiftedLine;
      for (int j = 0; j < Len; j++) {
          int idx        = j + i - Len / 2;
@@ -562,10 +712,61 @@ index b328ed9..3d5ed5f 100644
 +    return lo > 0 && line[lo - 1] == OPPO && hi < LineLen<R> - 1 && line[hi + 1] == OPPO;
 +}
 +
++/// Caro: how many empty cells of the line complete a five for self.
++template <Rule R, Color Side>
++int countFivePoints(PatternMemo<R> &patMemo, const Line<R> &line)
++{
++    constexpr auto Mid = LineLen<R> / 2;
++    int            n   = 0;
++    for (int i = 0; i < LineLen<R>; i++) {
++        if (line[i] != EMPT)
++            continue;
++        Line<R> sl = shiftLine<R>(line, i);
++        sl[Mid]    = SELF;
++        n += getPattern<R, Side>(patMemo, sl) == F5;
++    }
++    return n;
++}
++
++/// Caro: the pattern of a line with at least one five-point. Counting five-points is not enough
++/// here, because one opponent stone can stop several fives: in `XXXX_O` with an empty cell on the
++/// left (`_XXXX_O`), the left point completes `XXXXX_O` and the right one `_XXXXXO`, yet an
++/// opponent stone on the left point takes the first and blocks the second at both ends. So the
++/// four is open (F4) only if no single opponent stone on the line stops every five; otherwise it
++/// is a block four, chaining (B4S) when each stopping reply still leaves a four-making move.
++template <Rule R, Color Side>
++Pattern caroFourPattern(PatternMemo<R> &patMemo, const Line<R> &line)
++{
++    bool stoppable = false, chains = true;
++    for (int k = 0; k < LineLen<R>; k++) {
++        if (line[k] != EMPT)
++            continue;
++        Line<R> blocked = line;
++        blocked[k]      = OPPO;
++        if (countFivePoints<R, Side>(patMemo, blocked))
++            continue;
++        stoppable = true;
++        if (getPattern<R, Side>(patMemo, blocked) < B3)
++            chains = false;
++    }
++    return !stoppable ? F4 : chains ? B4S : B4;
++}
++
  template <Rule R, Color Side>
  constexpr Pattern getPattern(PatternMemo<R> &patMemo, const Line<R> &line)
  {
-@@ -262,6 +295,8 @@ constexpr Pattern getPattern(PatternMemo<R> &patMemo, const Line<R> &line)
+@@ -234,6 +307,10 @@ constexpr Pattern getPattern(PatternMemo<R> &patMemo, const Line<R> &line)
+     // 2. realLen == 5  -> five (F5)
+     // 3. fullLen <  5  -> dead (DEAD)
+     // 4. otherwise, classify by what the empty points in the span become with one more self stone:
++    //    (caro: any five-point -> F4, B4S or B4 by whether one opponent stone stops every five,
++    //     see caroFourPattern; a. and b. below are for the other rules)
++    //    (caro: any five-point -> F4, B4S or B4 by whether one opponent stone stops every
++    //     five, see caroFourPattern; a. and b. below are the other rules)
+     //    a. >= 2 five-points       -> open four (F4)
+     //    b. exactly 1 five-point   -> block it (the reply is forced); if the blocked line
+     //                                 still classifies >= B3 (an in-line four-move remains)
+@@ -262,6 +339,8 @@ constexpr Pattern getPattern(PatternMemo<R> &patMemo, const Line<R> &line)
  
      if (CheckOverline && realLen >= 6)
          p = OL;
@@ -574,7 +775,18 @@ index b328ed9..3d5ed5f 100644
      else if (realLen >= 5)
          p = F5;
      else if (fullLen < 5)
-@@ -372,8 +407,9 @@ uint32_t denseFusedIndex(uint64_t key)
+@@ -282,7 +361,9 @@ constexpr Pattern getPattern(PatternMemo<R> &patMemo, const Line<R> &line)
+             }
+         }
+ 
+-        if (patCnt[F5] >= 2) {
++        if (R == Rule::CARO && patCnt[F5])
++            p = caroFourPattern<R, Side>(patMemo, line);
++        else if (patCnt[F5] >= 2) {
+             p = F4;
+             if constexpr (R == Rule::RENJU && Side == BLACK) {
+                 // Check if the line is composed of two B4 pattern.
+@@ -372,8 +453,9 @@ uint32_t denseFusedIndex(uint64_t key)
  template <Rule R>
  void fillPattern2xLUT(Pattern2x table[DenseKeyCnt<R>])
  {
@@ -586,7 +798,7 @@ index b328ed9..3d5ed5f 100644
  
      // Dense codes and valid center-removed keys are one-to-one.
      for (int lo = 0; lo < DenseHalfCnt<R>; lo++) {
-@@ -384,8 +420,8 @@ void fillPattern2xLUT(Pattern2x table[DenseKeyCnt<R>])
+@@ -384,8 +466,8 @@ void fillPattern2xLUT(Pattern2x table[DenseKeyCnt<R>])
              assert(idx == denseFusedIndex<R>(key));
  
              Line<R> lineBlack(key, BLACK), lineWhite(key, WHITE);
@@ -668,10 +880,70 @@ index 9983178..2e6903b 100644
  
  /// Debug helper: check the two invariants every runtime line key satisfies — the center
 diff --git a/Rapfi/game/wincheck.h b/Rapfi/game/wincheck.h
-index 8659d12..9703f00 100644
+index 8659d12..9d44fda 100644
 --- a/Rapfi/game/wincheck.h
 +++ b/Rapfi/game/wincheck.h
-@@ -119,5 +119,6 @@ quickWinCheck(Rule rule, const Board &board, int ply, Value beta = VALUE_MATE_IN
+@@ -21,8 +21,11 @@
+ #include "../core/pos.h"
+ #include "../core/types.h"
+ #include "board.h"
++#include "movegen.h"
+ #include "scopedmove.h"
+ 
++#include <algorithm>
++
+ /// Statically detect a forced win or loss for the side to move from the pattern counts the board
+ /// already maintains, without searching. Cheap enough to call at every node.
+ /// @param board The board state of a position to check.
+@@ -41,10 +44,19 @@ inline Value quickWinCheck(const Board &board, int ply, Value beta = VALUE_INFIN
+         return mate_in(ply + 1);
+ 
+     // Opponent threatens a five next move: we can parry a single one, but two or more is a loss.
++    // Under caro one stone can stop two fives of one line (blocking the run at both ends), so
++    // there it is a loss only when no single move stops them all.
+     switch (board.p4Count(oppo, A_FIVE)) {
+     case 0: break;
+     case 1: return VALUE_ZERO;
+-    default: return mated_in(ply + 2);
++    default:
++        if constexpr (R == Rule::CARO) {
++            ScoredMove defences[1 + 2 * 4];
++            generateCaroFiveDefence(board, defences);
++            if (isCaroFiveDefence(board, defences[0].pos))
++                return VALUE_ZERO;
++        }
++        return mated_in(ply + 2);
+     }
+ 
+     // A flex four is an unstoppable double threat: we win in two of our moves.
+@@ -80,11 +92,21 @@ inline Value quickWinCheck(const Board &board, int ply, Value beta = VALUE_INFIN
+                 bool hasDefend, isFakeCMove;
+                 {
+                     ScopedMove<R> probe(board, pos);
+-                    Pos           defendMove = board.stateInfo().lastPattern4(self, A_FIVE);
+-                    Pattern4      defendP4   = board.pattern4(defendMove, oppo);
+-                    hasDefend                = defendP4 >= E_BLOCK4
+-                                || R == Rule::RENJU && defendP4 == FORBID
+-                                       && !board.checkForbiddenPoint(defendMove);
++                    if constexpr (R == Rule::CARO) {
++                        // The five may have several defences; any of them making a four counts.
++                        ScoredMove defences[1 + 2 * 4];
++                        ScoredMove *end = generateCaroFiveDefence(board, defences);
++                        hasDefend       = std::any_of(defences, end, [&](ScoredMove m) {
++                            return board.pattern4(m.pos, oppo) >= E_BLOCK4;
++                        });
++                    }
++                    else {
++                        Pos      defendMove = board.stateInfo().lastPattern4(self, A_FIVE);
++                        Pattern4 defendP4   = board.pattern4(defendMove, oppo);
++                        hasDefend           = defendP4 >= E_BLOCK4
++                                    || R == Rule::RENJU && defendP4 == FORBID
++                                           && !board.checkForbiddenPoint(defendMove);
++                    }
+                     // In Renju the flex three may rely on a follow-up flex four that is itself
+                     // forbidden, making this C move a false threat.
+                     isFakeCMove = R == Rule::RENJU && board.p4Count(self, B_FLEX4) == 0;
+@@ -119,5 +141,6 @@ quickWinCheck(Rule rule, const Board &board, int ply, Value beta = VALUE_MATE_IN
      case FREESTYLE: return quickWinCheck<FREESTYLE>(board, ply, beta);
      case STANDARD: return quickWinCheck<STANDARD>(board, ply, beta);
      case RENJU: return quickWinCheck<RENJU>(board, ply, beta);
@@ -906,7 +1178,7 @@ index 7b75f12..0929332 100644
      return statScore * (1.0f / (12266 + 4380 * (depth > ExtStatDepth[R])));
  }
 diff --git a/Rapfi/search/ab/search.cpp b/Rapfi/search/ab/search.cpp
-index 4167845..8cf35af 100644
+index 4167845..a2b3c90 100644
 --- a/Rapfi/search/ab/search.cpp
 +++ b/Rapfi/search/ab/search.cpp
 @@ -686,6 +686,7 @@ Value search(Rule         rule,
@@ -917,8 +1189,49 @@ index 4167845..8cf35af 100644
          }
      };
  
+@@ -2303,6 +2304,40 @@ Value vcfdefend(Board &board, SearchStack *ss, Value alpha, Value beta, Depth de
+     if (ss->ply >= MAX_PLY)
+         return Evaluation::evaluate<Rule>(board, alpha, beta);
+ 
++    // Step 3 (caro). A five can have several defences there (see generateCaroFiveDefence);
++    // search each.
++    if constexpr (Rule == Rule::CARO) {
++        ScoredMove  defences[1 + 2 * 4];
++        ScoredMove *end = generateCaroFiveDefence(board, defences);
++
++        Value bestValue = -VALUE_INFINITE;
++        for (ScoredMove *m = defences; m < end; m++) {
++            Pos move          = m->pos;
++            ss->currentMove   = move;
++            ss->moveCount     = int(m - defences) + 1;
++            ss->moveP4[BLACK] = board.pattern4(move, BLACK);
++            ss->moveP4[WHITE] = board.pattern4(move, WHITE);
++            if (PvNode)
++                (ss + 1)->pv[0] = Pos::NONE;
++
++            board.move<Rule>(move);
++            value = -vcfsearch<Rule, NT>(board, ss + 1, -beta, -alpha, depth);
++            board.undo<Rule>();
++
++            if (value > bestValue) {
++                bestValue = value;
++                if (value > alpha) {
++                    if (PvNode)
++                        ss->updatePv(move);
++                    if (value >= beta)
++                        break;
++                    alpha = value;
++                }
++            }
++        }
++        return bestValue;
++    }
++
+     // Step 3. Search the only defence move
+     Pos move = board.stateInfo().lastPattern4(oppo, A_FIVE);
+     assert(board.pattern4(move, oppo) == A_FIVE);
 diff --git a/Rapfi/search/mcts/search.cpp b/Rapfi/search/mcts/search.cpp
-index 9d066cc..9128aeb 100644
+index 9d066cc..b65ef68 100644
 --- a/Rapfi/search/mcts/search.cpp
 +++ b/Rapfi/search/mcts/search.cpp
 @@ -64,6 +64,7 @@ Value vcf(Rule rule, Board &board, int ply)
@@ -937,17 +1250,153 @@ index 9d066cc..9128aeb 100644
          default: break;
          }
      }
+@@ -203,6 +205,29 @@ Value vcfdefend(Board &board, SearchStack *ss, int ply, Value alpha, Value beta,
+     if (board.movesLeft() == 0 || board.nonPassMoveCount() >= options.maxMoves)
+         return getDrawValue(board, options, board.ply());
+ 
++    // Caro: a five can have several defences (see generateCaroFiveDefence); search each.
++    if constexpr (Rule == Rule::CARO) {
++        ScoredMove  defences[1 + 2 * 4];
++        ScoredMove *end = generateCaroFiveDefence(board, defences);
++
++        Value bestValue = -VALUE_INFINITE;
++        for (ScoredMove *m = defences; m < end; m++) {
++            Pos move              = m->pos;
++            ss[ply].moveP4[BLACK] = board.pattern4(move, BLACK);
++            ss[ply].moveP4[WHITE] = board.pattern4(move, WHITE);
++            board.move<Rule, Board::MoveType::NO_EVAL>(move);
++            Value value = -vcfsearch<Rule>(board, ss, ply + 1, -beta, -alpha, depth);
++            board.undo<Rule, Board::MoveType::NO_EVAL>();
++            if (value > bestValue) {
++                bestValue = value;
++                if (value >= beta)
++                    break;
++                alpha = std::max(alpha, value);
++            }
++        }
++        return bestValue;
++    }
++
+     // Search the only defence move
+     Pos move = board.stateInfo().lastPattern4(oppo, A_FIVE);
+     assert(board.pattern4(move, oppo) == A_FIVE);
 diff --git a/Rapfi/search/movepick.cpp b/Rapfi/search/movepick.cpp
-index 18df8ec..9862b7d 100644
+index 18df8ec..abf258a 100644
 --- a/Rapfi/search/movepick.cpp
 +++ b/Rapfi/search/movepick.cpp
-@@ -63,6 +63,7 @@ ScoredMove *generateDefendB4F3Moves(Rule rule, const Board &board, ScoredMove *m
+@@ -54,6 +54,22 @@ ScoredMove *generateVCFMoves(Rule rule, const Board &board, ScoredMove *moveList
+     return (rule == RENJU ? generate<VCF | RULE_RENJU> : generate<VCF>)(board, moveList);
+ }
+ 
++/// Append the defences against an opponent five: the five-point, or under caro every stopping
++/// move (see generateCaroFiveDefence).
++ScoredMove *generateDefendFiveMoves(Rule rule, const Board &board, ScoredMove *moveList)
++{
++    return rule == CARO ? generateCaroFiveDefence(board, moveList)
++                        : generate<DEFEND_FIVE>(board, moveList);
++}
++
++/// Whether `move` answers the opponent's five (any stopping move under caro).
++bool isFiveDefence(Rule rule, const Board &board, Pos move)
++{
++    Color oppo = ~board.sideToMove();
++    return rule == CARO ? isCaroFiveDefence(board, move)
++                        : board.pattern4(move, oppo) == A_FIVE;
++}
++
+ /// Append defence moves against an opponent B4F3 threat using the rule-correct
+ /// variant of the generator.
+ ScoredMove *generateDefendB4F3Moves(Rule rule, const Board &board, ScoredMove *moveList)
+@@ -63,6 +79,7 @@ ScoredMove *generateDefendB4F3Moves(Rule rule, const Board &board, ScoredMove *m
      case FREESTYLE: return generate<DEFEND_B4F3 | RULE_FREESTYLE>(board, moveList);
      case STANDARD: return generate<DEFEND_B4F3 | RULE_STANDARD>(board, moveList);
      case RENJU: return generate<DEFEND_B4F3 | RULE_RENJU>(board, moveList);
 +    case CARO: return generateCaroB4F3Defence(board, moveList);
      }
  }
+ 
+@@ -104,6 +121,13 @@ void markFirstMoveOneHot(ScoredMove *curMove, ScoredMove *endMove)
+         m->policy = 0.0f;
+ }
+ 
++/// Policy for forced replies: the only one gets 1, several (caro five defences) share it.
++void markForcedMoves(ScoredMove *curMove, ScoredMove *endMove)
++{
++    for (auto *m = curMove; m < endMove; ++m)
++        m->policy = 1.0f / float(endMove - curMove);
++}
++
+ }  // namespace
+ 
+ namespace Search {
+@@ -134,9 +158,9 @@ MovePicker::MovePicker(Rule rule, const Board &board, ExtraArgs<MovePicker::ROOT
+             markFirstMoveOneHot(curMove, endMove);
+     }
+     else if (board.p4Count(oppo, A_FIVE)) {
+-        endMove = generate<DEFEND_FIVE>(board, curMove);
++        endMove = generateDefendFiveMoves(rule, board, curMove);
+         if (useNormalizedPolicy)
+-            markFirstMoveOneHot(curMove, endMove);
++            markForcedMoves(curMove, endMove);
+     }
+     else if (board.p4Count(self, B_FLEX4)) {
+         endMove = generate<WINNING>(board, curMove);
+@@ -144,7 +168,8 @@ MovePicker::MovePicker(Rule rule, const Board &board, ExtraArgs<MovePicker::ROOT
+             markFirstMoveOneHot(curMove, endMove);
+     }
+     else if (board.p4Count(oppo, B_FLEX4)) {
+-        endMove = generate<DEFEND_FOUR | ALL>(board, curMove);
++        endMove = rule == CARO ? generateCaroFourDefence(board, curMove, true)
++                               : generate<DEFEND_FOUR | ALL>(board, curMove);
+         endMove = generateVCFMoves(rule, board, endMove);
+         if (useNormalizedPolicy)
+             scoreAllMoves<POLICY>();
+@@ -196,7 +221,7 @@ MovePicker::MovePicker(Rule rule, const Board &board, ExtraArgs<MovePicker::MAIN
+ 
+     if (board.p4Count(oppo, A_FIVE)) {
+         stage    = DEFENDFIVE_TT;
+-        ttmValid = board.pattern4(args.ttMove, oppo) == A_FIVE;
++        ttmValid = isFiveDefence(rule, board, args.ttMove);
+     }
+     else if (board.p4Count(oppo, B_FLEX4)) {
+         stage = DEFENDFOUR_TT;
+@@ -249,7 +274,7 @@ MovePicker::MovePicker(Rule rule, const Board &board, ExtraArgs<MovePicker::QVCF
+ 
+     if (board.p4Count(oppo, A_FIVE)) {
+         stage    = DEFENDFIVE_TT;
+-        ttmValid = board.pattern4(args.ttMove, oppo) == A_FIVE;
++        ttmValid = isFiveDefence(rule, board, args.ttMove);
+     }
+     else {
+         stage    = QVCF_TT;
+@@ -463,9 +488,16 @@ top:
+         assert(board.p4Count(~board.sideToMove(), A_FIVE));
+ 
+         curMove = moves;
+-        endMove = !ttMove ? generate<DEFEND_FIVE>(board, moves) : moves;
++        // Elsewhere the five-point is the only defence, so a TT move already covered it; under
++        // caro the other stopping moves follow it.
++        if (rule == CARO) {
++            endMove = generateCaroFiveDefence(board, moves);
++            endMove = std::remove_if(curMove, endMove, [&](ScoredMove m) { return m.pos == ttMove; });
++        }
++        else
++            endMove = !ttMove ? generate<DEFEND_FIVE>(board, moves) : moves;
+         if (useNormalizedPolicy) {
+-            markFirstMoveOneHot(curMove, endMove);
++            markForcedMoves(curMove, endMove);
+             hasPolicy = true;
+         }
+ 
+@@ -476,7 +508,8 @@ top:
+         assert(board.p4Count(~board.sideToMove(), B_FLEX4));
+ 
+         curMove = moves;
+-        endMove = generate<DEFEND_FOUR>(board, curMove);
++        endMove = rule == CARO ? generateCaroFourDefence(board, curMove, false)
++                               : generate<DEFEND_FOUR>(board, curMove);
+         endMove = generateVCFMoves(rule, board, endMove);
+         scoreAndSortMoves<MAIN_HISTORY>();
  
 diff --git a/Rapfi/tuning/dataformat.h b/Rapfi/tuning/dataformat.h
 index 6cdf2e8..4ee9c03 100644

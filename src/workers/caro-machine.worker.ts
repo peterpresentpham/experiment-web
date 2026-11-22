@@ -1,4 +1,5 @@
 import type { THellGame } from 'src/services/caro-hell/encode';
+import { logCaroEvent } from 'src/services/caro-dev-log';
 import { findMachineMove, learnFromGame, TCaroMachineRequest } from 'src/services/caro-machine';
 import {
   mergeExperience,
@@ -48,6 +49,7 @@ const loadTengen = () => import('src/services/caro-tengen/player');
 async function handle(message: TCaroMachineWorkerRequest) {
   if (message.type == 'book') {
     book = mergeExperience(new Map(), message.entries);
+    logCaroEvent({ type: 'book', lessons: book.size });
   } else if (message.type == 'move') {
     const { id, type: _type, epoch, ...request } = message;
     if (request.level == 'hell' && request.size != 3) {
@@ -59,6 +61,13 @@ async function handle(message: TCaroMachineWorkerRequest) {
       }
       const hell = await loadHell();
       const { location, available } = await hell.findHellLevelMove(request, epoch, book);
+      logCaroEvent({
+        type: 'move',
+        source: 'network',
+        location,
+        size: request.size,
+        steps: request.steps,
+      });
       reply({ type: 'hell-status', available });
       reply({ type: 'move', id, location });
     } else {
@@ -67,6 +76,7 @@ async function handle(message: TCaroMachineWorkerRequest) {
   } else if (message.type == 'learn') {
     const { record, level, winner, epoch, replay } = message;
     const entries = learnFromGame(record, book, winner >= 0 && winner != record.machineTurn);
+    logCaroEvent({ type: 'game', level, winner, record, learned: entries });
     let hellGame: THellGame | null = null;
     if (level == 'hell') {
       mergeExperience(book, entries);

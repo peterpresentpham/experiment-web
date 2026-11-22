@@ -20,13 +20,14 @@ export default function GameToolbar({
   className,
 }: TProps) {
   return (
-    <div className={cn('bg-card flex flex-col gap-3 rounded-xl border p-3', className)}>
+    <div className={cn('flex flex-col gap-3 rounded-xl border bg-card p-3', className)}>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
           {status}
         </div>
-        <div className="flex flex-wrap items-center gap-1">
+        {/* ml-auto keeps the tools on the right when they wrap below the title. */}
+        <div className="ml-auto flex flex-wrap items-center gap-1">
           {tools}
           {actions && <div className="ml-2 flex items-center gap-2">{actions}</div>}
         </div>

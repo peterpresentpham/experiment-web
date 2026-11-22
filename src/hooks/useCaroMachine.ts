@@ -65,8 +65,10 @@ export default function useCaroMachine({ isOver, move }: TParams) {
       if (state.entries != previous.entries) post(worker, { type: 'book', entries: state.entries });
     });
     const onStatus = (event: MessageEvent<TCaroMachineWorkerResponse>) => {
-      if (event.data.type != 'hell-status') return;
-      useCaroExperienceStore.getState().fn.setHellModel(event.data.available ? 'ready' : 'missing');
+      const { fn } = useCaroExperienceStore.getState();
+      if (event.data.type == 'hell-engines') fn.setHellEngines(event.data.engines);
+      if (event.data.type == 'hell-status')
+        fn.setHellModel(event.data.available ? 'ready' : 'missing');
     };
     worker.addEventListener('message', onStatus);
     return () => {

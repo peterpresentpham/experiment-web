@@ -9,6 +9,8 @@ const BASE_URL = '/engines/rapfi/';
 const CARO_URL = '/models/caro-rapfi/';
 
 let loading: Promise<TRapfi | null> | undefined;
+// What `loading` settled to; undefined while it is still loading.
+let loaded: TRapfi | null | undefined;
 let caroNetwork: Promise<TRapfiCaroNetwork> | undefined;
 
 // Development log: Rapfi's search report and weight loads since the last call.
@@ -81,9 +83,21 @@ export function getRapfi() {
       loadCaroNetwork: preloadRapfiCaroNetwork,
       onMessage: CARO_DEV_LOG ? recordTrace : undefined,
     });
-  })().catch((error) => {
-    console.error('[caro] Rapfi could not start', error);
-    return null;
-  });
+  })()
+    .catch((error) => {
+      console.error('[caro] Rapfi could not start', error);
+      return null;
+    })
+    .then((engine) => (loaded = engine));
   return loading;
+}
+
+/**
+ * The engine if it has finished loading (null where it cannot run), or undefined while it is
+ * still loading; starts loading it. Its files are about 10 MB, a minute on a slow connection, so
+ * the hell level does not wait for them: Tengen plays until Rapfi is ready.
+ */
+export function readyRapfi() {
+  void getRapfi();
+  return loaded;
 }

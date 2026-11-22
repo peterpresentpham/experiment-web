@@ -7,6 +7,7 @@ import { caroMessages } from 'src/i18n/messages/caro';
 import { useCaroExperienceStore } from 'src/states/caro-experience.state';
 import { TCaroMachineLevel } from 'src/types/caro.type';
 import { useCaroConfigContext } from './caroConfig.context';
+import HellEngineStatus from './HellEngineStatus';
 
 const LEVELS: Array<TCaroMachineLevel> = ['easy', 'medium', 'hard', 'hell'];
 
@@ -53,6 +54,7 @@ export default function MachineConfig() {
             {text.hellHint.report}
           </p>
         )}
+        {machineLevel == 'hell' && <HellEngineStatus />}
       </TitleContainer>
       <TitleContainer className="mt-2" title={text.firstMove}>
         <Button

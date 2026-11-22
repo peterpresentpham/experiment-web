@@ -7,7 +7,7 @@ import {
   TExperienceEntry,
   TGameRecord,
 } from 'src/services/caro-machine/experience';
-import { TCaroMachineLevel, TCaroWinMode } from 'src/types/caro.type';
+import { TCaroHellEngines, TCaroMachineLevel, TCaroWinMode } from 'src/types/caro.type';
 
 export type TExperienceEntries = Array<[string, TExperienceEntry]>;
 
@@ -32,7 +32,8 @@ export type TCaroMachineWorkerRequest =
 export type TCaroMachineWorkerResponse =
   | { type: 'move'; id: number; location: number }
   | { type: 'learned'; entries: TExperienceEntries; hellGame: THellGame | null }
-  | { type: 'hell-status'; available: boolean };
+  | { type: 'hell-status'; available: boolean }
+  | { type: 'hell-engines'; engines: TCaroHellEngines };
 
 // The worker keeps its own copy of the book so it is not cloned into every move request.
 let book: TExperienceBook = new Map();
@@ -87,10 +88,14 @@ async function handle(message: TCaroMachineWorkerRequest) {
     }
     reply({ type: 'learned', entries, hellGame });
   } else if (message.type == 'warm-up') {
-    if (await (await loadTengen()).warmUpTengen(message.winMode)) {
-      reply({ type: 'hell-status', available: true });
-      return;
-    }
+    const player = await loadTengen();
+    const available = await player.warmUpTengen(message.winMode, (engines) => {
+      reply({ type: 'hell-engines', engines });
+      // The level plays as soon as either engine can.
+      if (engines.rapfi == 'ready' || engines.tengen == 'ready')
+        reply({ type: 'hell-status', available: true });
+    });
+    if (available) return;
     const hell = await loadHell();
     reply({ type: 'hell-status', available: await hell.warmUpHell(message.epoch) });
   } else if (message.type == 'reload-model') {
@@ -100,8 +105,13 @@ async function handle(message: TCaroMachineWorkerRequest) {
 }
 
 // Runs the search off the main thread so the board stays responsive while the machine thinks.
-// Messages are handled one at a time, in order, even when the hell level awaits its model.
+// Messages are handled one at a time, in order, even when the hell level awaits its model. A
+// warm-up only starts downloads, so it runs beside the queue: a move must not wait for them.
 let queue = Promise.resolve();
 self.onmessage = (event: MessageEvent<TCaroMachineWorkerRequest>) => {
+  if (event.data.type == 'warm-up') {
+    handle(event.data).catch((error) => console.error(error));
+    return;
+  }
   queue = queue.then(() => handle(event.data)).catch((error) => console.error(error));
 };

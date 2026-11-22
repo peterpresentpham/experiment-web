@@ -1,5 +1,6 @@
 import { MAX_REPLAY_GAMES, THellGame } from 'src/services/caro-hell/encode';
 import { mergeExperience, TExperienceEntry } from 'src/services/caro-machine/experience';
+import { TCaroHellEngines } from 'src/types/caro.type';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -22,6 +23,8 @@ interface TCaroExperienceStateType {
   /** Bumped by "clear memory"; the personal network copy is keyed by it, so it starts over. */
   epoch: number;
   hellModel: THellModelStatus;
+  /** Loading state of the hell level's engines; null until the level first warms them up. */
+  hellEngines: TCaroHellEngines | null;
   fn: {
     /** Saves what was learned from `game` and marks that game as done. */
     finishLearning: (game: string, entries: TEntries) => void;
@@ -29,6 +32,7 @@ interface TCaroExperienceStateType {
     addHellGame: (game: THellGame) => void;
     setLearning: (isLearning: boolean) => void;
     setHellModel: (status: THellModelStatus) => void;
+    setHellEngines: (engines: TCaroHellEngines) => void;
     clear: () => void;
   };
 }
@@ -43,6 +47,7 @@ export const useCaroExperienceStore = create<TCaroExperienceStateType>()(
       hellTrainedGames: 0,
       epoch: 0,
       hellModel: 'unknown',
+      hellEngines: null,
       fn: {
         finishLearning: (game, entries) => {
           if (entries.length == 0) return set({ lastGame: game });
@@ -56,6 +61,7 @@ export const useCaroExperienceStore = create<TCaroExperienceStateType>()(
           })),
         setLearning: (isLearning) => set({ isLearning }),
         setHellModel: (hellModel) => set({ hellModel }),
+        setHellEngines: (hellEngines) => set({ hellEngines }),
         clear: () =>
           set((state) => ({
             entries: [],

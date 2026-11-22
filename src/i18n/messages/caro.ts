@@ -74,6 +74,13 @@ export const caroMessages = defineMessages({
         report:
           'Games at this level are saved anonymously (moves only) to make the machine stronger.',
       },
+      engines: {
+        label: 'Engines',
+        loading: 'loading…',
+        ready: 'ready',
+        failed: 'unavailable',
+        tengenMeanwhile: 'Tengen plays until Rapfi (the stronger engine) has loaded.',
+      },
       firstMove: 'First move',
       firstMoveYou: 'You',
       firstMoveMachine: 'Machine',
@@ -229,6 +236,13 @@ export const caroMessages = defineMessages({
         missing:
           'Engine không khởi động được trên trình duyệt này nên tạm thời mức này chơi như mức Khó.',
         report: 'Các ván ở mức này được lưu ẩn danh (chỉ các nước đi) để máy chơi mạnh hơn.',
+      },
+      engines: {
+        label: 'Engine',
+        loading: 'đang tải…',
+        ready: 'sẵn sàng',
+        failed: 'không chạy được',
+        tengenMeanwhile: 'Tengen chơi tạm cho đến khi Rapfi (engine mạnh hơn) tải xong.',
       },
       firstMove: 'Đi trước',
       firstMoveYou: 'Bạn',

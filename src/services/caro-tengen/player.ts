@@ -1,16 +1,22 @@
-import { TCaroWinMode } from 'src/types/caro.type';
+import { TCaroHellEngines, TCaroWinMode } from 'src/types/caro.type';
 import { TCaroMachineRequest } from '../caro-machine';
 import { MachineBoard } from '../caro-machine/board';
 import { lookupExperience, TExperienceBook, toStone } from '../caro-machine/experience';
 import { logCaroEvent } from 'src/services/caro-dev-log';
-import { getRapfi, preloadRapfiCaroNetwork, takeRapfiTrace } from 'src/services/caro-rapfi/browser';
+import {
+  getRapfi,
+  preloadRapfiCaroNetwork,
+  readyRapfi,
+  takeRapfiTrace,
+} from 'src/services/caro-rapfi/browser';
 import { getOpeningBook, getTengen } from './browser';
 import { findBookMove } from './opening-book';
 
 /**
  * The hell level's first choice: lessons from earlier losses, then the opening book, then the
  * engine, which searches around the moves that lost here before: Rapfi (stronger in both rules),
- * or Tengen when Rapfi cannot run. Returns null when no engine is available or every move it
+ * or Tengen when Rapfi cannot run or is still downloading (a small engine, ready in a moment, so
+ * the first moves never wait for Rapfi's files). Returns null when no engine is available or every move it
  * could play lost before, so the caller falls back to the network.
  */
 export async function findTengenMove(
@@ -52,7 +58,8 @@ export async function findTengenMove(
     return bookMove;
   }
 
-  const rapfi = await getRapfi();
+  const rapfi = readyRapfi();
+  if (rapfi === undefined) log('rapfi-loading', null);
   if (rapfi) {
     try {
       const move = await rapfi.think({ steps, size, winMode, turn, exclude: learned?.avoid });
@@ -92,11 +99,25 @@ export async function findTengenMove(
  * Starts loading the engine (and, for the blocked-ends rule, its opening book and Rapfi's
  * network) before the first move.
  */
-export async function warmUpTengen(winMode: TCaroWinMode) {
+export async function warmUpTengen(
+  winMode: TCaroWinMode,
+  /** Called with the engines' state at the start and whenever one of them finishes loading. */
+  onEngines: (engines: TCaroHellEngines) => void = () => {}
+) {
   if (winMode == 'blockOpponent') {
     void getOpeningBook();
     preloadRapfiCaroNetwork().catch(() => {});
   }
-  if ((await getRapfi()) != null) return true;
-  return (await getTengen()) != null;
+  const engines: TCaroHellEngines = { rapfi: 'loading', tengen: 'loading' };
+  onEngines({ ...engines });
+  const settle = (name: keyof TCaroHellEngines) => (engine: object | null) => {
+    engines[name] = engine ? 'ready' : 'failed';
+    onEngines({ ...engines });
+    return engine != null;
+  };
+  const [rapfi, tengen] = await Promise.all([
+    getRapfi().then(settle('rapfi')),
+    getTengen().then(settle('tengen')),
+  ]);
+  return rapfi || tengen;
 }

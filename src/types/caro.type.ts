@@ -8,6 +8,9 @@ export type TCaroGame = 'normal' | 'blind';
 export type TCaroWinMode = 'blockOpponent' | 'non-blockOpponent';
 export type TCaroSizeBoard = 3 | 10 | 15 | 20;
 export type TChat = 'yourChat' | 'friendChat';
+export type TCaroEngineLoad = 'loading' | 'ready' | 'failed';
+/** The hell level's engines in the machine worker: Tengen plays until Rapfi is ready. */
+export type TCaroHellEngines = { rapfi: TCaroEngineLoad; tengen: TCaroEngineLoad };
 
 export type TCaroWin = 'leftDiagonal' | 'rightDiagonal' | 'vertical' | 'horizontal';
 

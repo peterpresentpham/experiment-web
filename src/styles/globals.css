@@ -303,3 +303,24 @@ input[type='number'] {
   pointer-events: none;
   background-color: color-mix(in oklab, var(--background) 70%, transparent);
 }
+
+/* Thesis link targets (table of contents, references) stop below the fixed header instead of
+   under it. */
+:is(
+  .thesis-chapter,
+  .thesis-section,
+  .thesis-subsection,
+  .thesis-figure,
+  .thesis-table,
+  .thesis-equation,
+  .thesis-program,
+  .thesis-algorithm,
+  .thesis-appendix,
+  .thesis-same-chapter-appendix,
+  .thesis-cite,
+  .thesis-abstract,
+  .thesis-acknowledgement,
+  .thesis-reference
+) {
+  scroll-margin-top: calc(var(--header-height) + 1rem);
+}

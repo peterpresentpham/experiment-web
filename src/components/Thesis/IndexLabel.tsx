@@ -1,5 +1,6 @@
 'use client';
 
+import { THESIS_CLASS } from 'src/configs/thesis.constance';
 import { useThesisObject } from 'src/context/thesis-config.context';
 import { TThesisObjectModeType } from 'src/types/thesis.type';
 
@@ -23,5 +24,5 @@ export default function IndexLabel({ id, mode, prefix = '', suffix = '' }: Index
   const index = useThesisObject(id, mode)?.index;
   if (!index) return null;
 
-  return <>{`${prefix}${index}${suffix}`}</>;
+  return <span className={THESIS_CLASS.indexLabel}>{`${prefix}${index}${suffix}`}</span>;
 }

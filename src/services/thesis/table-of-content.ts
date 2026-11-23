@@ -6,27 +6,26 @@ import {
   TThesisObjectType,
   TThesisTableType,
 } from 'src/types/thesis.type';
-import { buildListOfFigures, buildListOfTables } from './list-of-objects';
+import { outsideAppendixes, readTitle } from './dom';
+import { buildListOfObjects } from './list-of-objects';
 
-function buildSubsectionTableOfContent(elements: NodeListOf<Element>): TTableOfContentType {
+function buildSubsectionTableOfContent(elements: Iterable<Element>): TTableOfContentType {
   const result: TTableOfContentType = [];
   let counter = 1;
   for (const element of elements) {
     const id = element.id;
-    const titleComponent = element.querySelector(`#${id}_title`);
-    const title = titleComponent?.textContent;
+    const title = readTitle(id);
     result.push({ id, title: title || '', index: counter++, type: 'subsection', content: [] });
   }
   return result;
 }
 
-function buildSectionTableOfContent(elements: NodeListOf<Element>): TTableOfContentType {
+function buildSectionTableOfContent(elements: Iterable<Element>): TTableOfContentType {
   const result: TTableOfContentType = [];
   let counter = 1;
   for (const element of elements) {
     const id = element.id;
-    const titleComponent = element.querySelector(`#${id}_title`);
-    const title = titleComponent?.textContent;
+    const title = readTitle(id);
     const subsectionElements = element.querySelectorAll(`.${THESIS_CLASS.subsection}`);
     const subsections = buildSubsectionTableOfContent(subsectionElements);
     result.push({
@@ -40,13 +39,12 @@ function buildSectionTableOfContent(elements: NodeListOf<Element>): TTableOfCont
   return result;
 }
 
-function buildChapterTableOfContent(elements: NodeListOf<Element>): TTableOfContentType {
+function buildChapterTableOfContent(elements: Iterable<Element>): TTableOfContentType {
   const result: TTableOfContentType = [];
   let counter = 1;
   for (const element of elements) {
     const id = element.id;
-    const titleComponent = element.querySelector(`#${id}_title`);
-    const title = titleComponent?.textContent;
+    const title = readTitle(id);
     const sectionElements = element.querySelectorAll(`.${THESIS_CLASS.section}`);
     const sections = buildSectionTableOfContent(sectionElements);
     result.push({ id, title: title || '', index: counter++, type: 'chapter', content: sections });
@@ -60,8 +58,7 @@ function buildSameChapterContent(container: HTMLElement) {
   let counter = 0;
   for (const appendix of appendixes) {
     const id = appendix.id;
-    const titleComponent = appendix.querySelector(`#${id}_title`);
-    const title = titleComponent?.textContent;
+    const title = readTitle(id);
     appendixResult.push({ id, title: title || '', index: appendixIndex[counter++] });
   }
   const abstract = container.querySelector(`.${THESIS_CLASS.abstract}`);
@@ -93,17 +90,24 @@ export function buildTableOfContent(containerId: string, firstLevel: 'chapter' |
   };
   if (container) {
     _result = buildSameChapterContent(container);
-    if (firstLevel == 'chapter') {
-      const elements = container.querySelectorAll(`.${THESIS_CLASS.chapter}`);
-      content = buildChapterTableOfContent(elements);
-      figures = buildListOfFigures(elements);
-      tables = buildListOfTables(elements);
-    } else {
-      const elements = container.querySelectorAll(`.${THESIS_CLASS.section}`);
-      content = buildSectionTableOfContent(elements);
-      figures = buildListOfFigures(elements);
-      tables = buildListOfTables(elements);
-    }
+    const elements =
+      firstLevel == 'chapter'
+        ? [...container.querySelectorAll(`.${THESIS_CLASS.chapter}`)]
+        : outsideAppendixes(container, THESIS_CLASS.section);
+    content =
+      firstLevel == 'chapter'
+        ? buildChapterTableOfContent(elements)
+        : buildSectionTableOfContent(elements);
+    // Appendixes number their figures and tables A.1, B.1, ... (as the index system does).
+    const groups = [
+      ...elements.map((element, index) => ({ element, prefix: String(index + 1) })),
+      ...[...container.querySelectorAll(`.${THESIS_CLASS.appendix}`)].map((element, index) => ({
+        element,
+        prefix: appendixIndex[index],
+      })),
+    ];
+    figures = buildListOfObjects(groups, THESIS_CLASS.figure);
+    tables = buildListOfObjects(groups, THESIS_CLASS.table);
   }
   return { content, figures, tables, ..._result };
 }

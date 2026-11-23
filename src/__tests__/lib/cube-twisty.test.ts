@@ -2,7 +2,7 @@ import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import { RUBIK_GUIDE } from 'src/configs/rubikGuide.config';
 import { OLL_CASES, PLL_CASES } from 'src/configs/rubikLL.config';
-import { TWISTY_ORIENTATION, twistyAlg, twistyMask } from 'src/lib/cube/twisty';
+import { TWISTY_ORIENTATION, twistyAlg, twistyMask, twistyMoves } from 'src/lib/cube/twisty';
 import { describe, expect, it } from 'vitest';
 
 describe('twistyAlg', () => {
@@ -17,6 +17,26 @@ describe('twistyAlg', () => {
       ...PLL_CASES.flatMap((c) => c.algs),
     ];
     for (const alg of algs) expect(() => new Alg(twistyAlg(alg)), alg).not.toThrow();
+  });
+});
+
+describe('twistyMoves', () => {
+  it('splits an algorithm into its moves', () => {
+    expect(twistyMoves("(R U R') [U]")).toEqual(['R', 'U', "R'", 'U']);
+    expect(twistyMoves("(RUR'U)")).toEqual(['R', 'U', "R'", 'U']);
+  });
+
+  // The player's move list highlights moves by the index cubing.js animates.
+  it('lists the moves cubing.js animates, for every guide algorithm', () => {
+    const algs = [
+      ...RUBIK_GUIDE.en.beginnerSteps.flatMap((step) => step.algs ?? []).map((a) => a.alg),
+      ...OLL_CASES.flatMap((c) => c.algs),
+      ...PLL_CASES.flatMap((c) => c.algs),
+    ];
+    for (const alg of algs) {
+      const leaves = [...new Alg(twistyAlg(alg)).experimentalExpand()];
+      expect(twistyMoves(alg), alg).toEqual(leaves.map(String));
+    }
   });
 });
 

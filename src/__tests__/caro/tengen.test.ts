@@ -98,6 +98,15 @@ describe('Tengen engine (single-threaded WebAssembly build)', () => {
     expect(engine.nodesPerSecond).toBeGreaterThan(0);
   });
 
+  it('keeps the faster of two measurements, then still plays', () => {
+    const first = engine.nodesPerSecond;
+    engine.remeasure();
+    expect(engine.nodesPerSecond).toBeGreaterThanOrEqual(first);
+    const steps = { 109: 0, 110: 0, 111: 0, 112: 0, 20: 1, 40: 1, 60: 1, 200: 1 } as const;
+    const move = engine.think({ steps, size: 15, winMode: 'blockOpponent', turn: 0 }, fast);
+    expect([108, 113]).toContain(move);
+  });
+
   it('wins with an open four', () => {
     // Row 7: the side to move (turn 0) has four in a row at columns 4-7, both ends open.
     const steps = { 109: 0, 110: 0, 111: 0, 112: 0, 20: 1, 40: 1, 60: 1, 200: 1 } as const;
@@ -145,5 +154,31 @@ describe('Tengen engine (single-threaded WebAssembly build)', () => {
     expect(move).toBeGreaterThanOrEqual(0);
     expect(move).toBeLessThan(100);
     expect(move).not.toBe(44);
+  });
+});
+
+describe('Tengen settings given before the first game', () => {
+  async function instantiate() {
+    const { instance } = await WebAssembly.instantiate(
+      readFileSync(join(WASM_DIR, 'tengen.wasm')),
+      { env: { tg_now: () => performance.now(), tg_info: () => {} } }
+    );
+    return instance.exports as unknown as {
+      memory: WebAssembly.Memory;
+      tg_set_hash(megabytes: number): void;
+      tg_new(size: number, rule: number): number;
+    };
+  }
+
+  // The app sets the table size before any game exists; the build used to drop it and allocate
+  // the default 64 MB anyway.
+  it('creates the first game with the requested search table', async () => {
+    const small = await instantiate();
+    small.tg_set_hash(16);
+    small.tg_new(15, 8);
+    const standard = await instantiate();
+    standard.tg_new(15, 8);
+    expect(small.memory.buffer.byteLength).toBeLessThan(32 << 20);
+    expect(standard.memory.buffer.byteLength).toBeGreaterThan(64 << 20);
   });
 });

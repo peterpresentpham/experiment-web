@@ -17,6 +17,8 @@ export const caroMessages = defineMessages({
       opponentWins: 'Opponent wins',
       machineThinking: 'Machine is thinking…',
       machineWins: 'Machine wins',
+      machineBroken: 'The machine could not move. Reload the page to play on.',
+      reload: 'Reload',
       // Shown next to the side's piece in the header; the full sentences above are announced.
       short: {
         you: 'You',
@@ -188,6 +190,8 @@ export const caroMessages = defineMessages({
       opponentWins: 'Đối thủ thắng',
       machineThinking: 'Máy đang nghĩ…',
       machineWins: 'Máy thắng',
+      machineBroken: 'Máy không đi được nước tiếp theo. Hãy tải lại trang để chơi tiếp.',
+      reload: 'Tải lại',
       // Shown next to the side's piece in the header; the full sentences above are announced.
       short: {
         you: 'Bạn',

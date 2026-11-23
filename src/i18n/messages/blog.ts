@@ -19,7 +19,22 @@ export const blogMessages = defineMessages<{
     title: string;
     description: string;
     f2lTitle: string;
-    player: { show: string; hide: string; loading: string; error: string };
+    player: {
+      show: string;
+      hide: string;
+      loading: string;
+      error: string;
+      play: string;
+      pause: string;
+      replay: string;
+      toStart: string;
+      toEnd: string;
+      stepBack: string;
+      stepForward: string;
+      progress: string;
+      speed: string;
+      moves: string;
+    };
   };
 }>({
   en: {
@@ -77,6 +92,16 @@ export const blogMessages = defineMessages<{
         hide: 'Hide 3D',
         loading: 'Loading the 3D cube...',
         error: 'The 3D cube could not load.',
+        play: 'Play',
+        pause: 'Pause',
+        replay: 'Play again',
+        toStart: 'To the start',
+        toEnd: 'To the end',
+        stepBack: 'Previous move',
+        stepForward: 'Next move',
+        progress: 'Progress',
+        speed: 'Speed',
+        moves: 'Moves',
       },
     },
   },
@@ -135,6 +160,16 @@ export const blogMessages = defineMessages<{
         hide: 'Ẩn 3D',
         loading: 'Đang tải khối 3D...',
         error: 'Không tải được khối 3D.',
+        play: 'Phát',
+        pause: 'Tạm dừng',
+        replay: 'Phát lại',
+        toStart: 'Về đầu',
+        toEnd: 'Đến cuối',
+        stepBack: 'Nước trước',
+        stepForward: 'Nước sau',
+        progress: 'Tiến độ',
+        speed: 'Tốc độ',
+        moves: 'Các nước',
       },
     },
   },

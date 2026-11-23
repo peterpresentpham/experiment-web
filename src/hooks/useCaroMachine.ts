@@ -1,16 +1,30 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { reportCaroGame } from 'src/services/caro-game-report/report';
+import {
+  createTimingLog,
+  recordEngineLoads,
+  SLOW_MOVE_MS,
+  slowestWaitMs,
+  timingOf,
+} from 'src/services/caro-game-report/timing-log';
 import { TGameRecord } from 'src/services/caro-machine/experience';
+import {
+  machineRecovery,
+  readMachineReload,
+  reloadForMachine,
+} from 'src/services/caro-machine/recovery';
+import {
+  createMachineWorker,
+  postToMachine as post,
+  TCaroMachineWorkerResponse,
+} from 'src/services/caro-machine/worker-client';
 import { soundtrack } from 'src/services/soundtrack';
 import { useCaroExperienceStore } from 'src/states/caro-experience.state';
 import { useCaroStore } from 'src/states/caro.state';
 import { TSound } from 'src/types/global';
-import type {
-  TCaroMachineWorkerRequest,
-  TCaroMachineWorkerResponse,
-} from 'src/workers/caro-machine.worker';
+import useCaroLearning from './useCaroLearning';
 
 // Easy moves are instant; a short pause makes the reply feel like a turn rather than a flicker.
 const MIN_THINKING_MS = 350;
@@ -20,19 +34,9 @@ type TParams = {
   move: (location: number) => void;
 };
 
-function createMachineWorker() {
-  return new Worker(new URL('../workers/caro-machine.worker.ts', import.meta.url), {
-    type: 'module',
-  });
-}
-
-function post(worker: Worker, request: TCaroMachineWorkerRequest) {
-  worker.postMessage(request);
-}
-
 /**
- * Plays the machine's moves in machine play mode, using a Web Worker for the search.
- * After a loss, a second worker analyses the game and the lessons go into the experience book.
+ * Plays the machine's moves in machine play mode, using a Web Worker for the search. A worker
+ * that cannot move is restarted, then the page reloaded once (see services/caro-machine/recovery).
  */
 export default function useCaroMachine({ isOver, move }: TParams) {
   const playMode = useCaroStore((state) => state.metadata.playMode);
@@ -41,22 +45,31 @@ export default function useCaroMachine({ isOver, move }: TParams) {
   const size = useCaroStore((state) => state.metadata.size);
   const winMode = useCaroStore((state) => state.metadata.winMode);
   const turn = useCaroStore((state) => state.turn);
-  const hasWinner = useCaroStore((state) => Boolean(state.winState));
   const stepCount = useCaroStore((state) => state.stepsOrder.length);
+  const epoch = useCaroExperienceStore((state) => state.epoch);
   const workerRef = useRef<Worker | null>(null);
   const requestIdRef = useRef(0);
+  const timingRef = useRef(createTimingLog());
+  // Bumped to replace a worker that could not move; failures count since the machine last moved.
+  const [generation, setGeneration] = useState(0);
+  const failuresRef = useRef(0);
 
   const isMachineMode = playMode == 'machine';
   const isMachineTurn = isMachineMode && turn == machineTurn && !isOver;
-  // Every finished game is studied: losses for the losing move, wins and draws for close calls;
-  // at the hell level the network is fine-tuned on it too. Easy is meant to stay beatable.
-  const canLearn = isMachineMode && machineLevel != 'easy' && size != 3;
-  const isFinished = canLearn && isOver;
-  const epoch = useCaroExperienceStore((state) => state.epoch);
   const isHell = isMachineMode && machineLevel == 'hell' && size != 3;
+  // The hell level's engines take hundreds of MB: leaving the level replaces the worker, which
+  // frees them, rather than keeping them for a level that does not use them.
+  const workerKind = !isMachineMode ? null : isHell ? 'hell' : 'search';
+
+  useCaroLearning({
+    // Easy is meant to stay beatable, and 3x3 has nothing to learn.
+    isFinished: isMachineMode && machineLevel != 'easy' && size != 3 && isOver,
+    workerRef,
+    timingRef,
+  });
 
   useEffect(() => {
-    if (!isMachineMode) return;
+    if (!workerKind) return;
     const worker = createMachineWorker();
     workerRef.current = worker;
     // Messages are handled in order, so the book is in place before the first move request.
@@ -64,26 +77,103 @@ export default function useCaroMachine({ isOver, move }: TParams) {
     const unsubscribe = useCaroExperienceStore.subscribe((state, previous) => {
       if (state.entries != previous.entries) post(worker, { type: 'book', entries: state.entries });
     });
-    const onStatus = (event: MessageEvent<TCaroMachineWorkerResponse>) => {
-      const { fn } = useCaroExperienceStore.getState();
-      if (event.data.type == 'hell-engines') fn.setHellEngines(event.data.engines);
-      if (event.data.type == 'hell-status')
-        fn.setHellModel(event.data.available ? 'ready' : 'missing');
+
+    const recover = () => {
+      if (workerRef.current != worker) return;
+      failuresRef.current++;
+      const now = Date.now();
+      const action = machineRecovery({
+        failures: failuresRef.current,
+        reloadedAt: readMachineReload(),
+        now,
+      });
+      console.warn('[caro] the machine could not move:', action);
+      if (action == 'restart') setGeneration((value) => value + 1);
+      else if (action == 'give-up' || !reloadForMachine(now))
+        useCaroExperienceStore.getState().fn.setMachineBroken(true);
     };
-    worker.addEventListener('message', onStatus);
+    const onMessage = (event: MessageEvent<TCaroMachineWorkerResponse>) => {
+      const { fn } = useCaroExperienceStore.getState();
+      const response = event.data;
+      if (response.type == 'hell-engines') {
+        fn.setHellEngines(response.engines);
+        recordEngineLoads(timingRef.current, response.engines, performance.now());
+      } else if (response.type == 'hell-status') {
+        fn.setHellModel(response.available ? 'ready' : 'missing');
+      } else if (response.type == 'move-failed') {
+        if (response.id == requestIdRef.current) recover();
+      } else if (response.type == 'move' && response.location >= 0) {
+        failuresRef.current = 0;
+        fn.setMachineBroken(false);
+      }
+    };
+    // A worker script that no longer exists (a tab opened before a deploy) fails here.
+    const onError = (event: Event) => {
+      event.preventDefault();
+      recover();
+    };
+    worker.addEventListener('message', onMessage);
+    worker.addEventListener('error', onError);
     return () => {
       unsubscribe();
-      worker.removeEventListener('message', onStatus);
+      worker.removeEventListener('message', onMessage);
+      worker.removeEventListener('error', onError);
       worker.terminate();
       workerRef.current = null;
     };
-  }, [isMachineMode]);
+  }, [workerKind, generation]);
 
   // Loads the hell level's engine for this rule as soon as the level is picked.
   useEffect(() => {
     const worker = workerRef.current;
-    if (isHell && worker) post(worker, { type: 'warm-up', epoch, winMode });
-  }, [isHell, epoch, winMode]);
+    if (!isHell || !worker) return;
+    // Load times count from the first time the level is picked.
+    timingRef.current.loadSince ??= performance.now();
+    post(worker, { type: 'warm-up', epoch, winMode });
+  }, [isHell, epoch, winMode, generation]);
+
+  // A new position (a move, undo or new game) ends the wait of the one before; a new game (or
+  // taking every move back) starts a new timing log. Runs before the move request below.
+  useEffect(() => {
+    const timing = timingRef.current;
+    timing.waitingSince = null;
+    if (stepCount == 0) timing.moves.clear();
+  }, [stepCount]);
+
+  // A player who gives up on a slow move leaves the page or puts the phone away: the game is
+  // reported then, unfinished, so the slow move is seen even though the game never ends.
+  useEffect(() => {
+    if (!isHell) return;
+    const reportIfSlow = () => {
+      if (document.visibilityState != 'hidden') return;
+      const timing = timingRef.current;
+      const state = useCaroStore.getState();
+      const { metadata, steps, stepsOrder } = state;
+      const isEnded =
+        Boolean(state.winState) ||
+        state.isBlindForceOver ||
+        stepsOrder.length >= metadata.size * metadata.size;
+      const now = performance.now();
+      if (isEnded || slowestWaitMs(timing, now) < SLOW_MOVE_MS) return;
+      const position = `${metadata.size}:${metadata.winMode}:${stepsOrder.join(',')}`;
+      if (timing.reported == position) return;
+      timing.reported = position;
+      const record: TGameRecord = {
+        size: metadata.size,
+        winMode: metadata.winMode,
+        machineTurn: metadata.machineTurn,
+        moves: stepsOrder.map((location) => ({ location, turn: steps[location] })),
+      };
+      const waitingMs = timing.waitingSince == null ? undefined : now - timing.waitingSince;
+      reportCaroGame(record, null, timingOf(timing, waitingMs));
+    };
+    document.addEventListener('visibilitychange', reportIfSlow);
+    window.addEventListener('pagehide', reportIfSlow);
+    return () => {
+      document.removeEventListener('visibilitychange', reportIfSlow);
+      window.removeEventListener('pagehide', reportIfSlow);
+    };
+  }, [isHell]);
 
   useEffect(() => {
     const worker = workerRef.current;
@@ -91,6 +181,9 @@ export default function useCaroMachine({ isOver, move }: TParams) {
 
     const id = ++requestIdRef.current;
     const startedAt = performance.now();
+    const timing = timingRef.current;
+    // A restarted worker keeps the wait of the move it replaces.
+    timing.waitingSince ??= startedAt;
     let isCancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -99,7 +192,17 @@ export default function useCaroMachine({ isOver, move }: TParams) {
       const response = event.data;
       if (response.type != 'move') return;
       if (isCancelled || response.id != id || response.location < 0) return;
-      const wait = Math.max(0, MIN_THINKING_MS - (performance.now() - startedAt));
+      const now = performance.now();
+      const thinkingMs = now - startedAt;
+      if (response.source)
+        timing.moves.set(stepCount, {
+          at: stepCount,
+          ms: Math.round(now - (timing.waitingSince ?? startedAt)),
+          source: response.source,
+          learning: useCaroExperienceStore.getState().isLearning,
+        });
+      timing.waitingSince = null;
+      const wait = Math.max(0, MIN_THINKING_MS - thinkingMs);
       timer = setTimeout(() => {
         if (isCancelled) return;
         soundtrack.play({ type: TSound.PLACE_OPPONENT });
@@ -122,71 +225,7 @@ export default function useCaroMachine({ isOver, move }: TParams) {
       isCancelled = true;
       clearTimeout(timer);
     };
-  }, [isMachineTurn, stepCount, size, winMode, machineTurn, machineLevel, move]);
-
-  // The analysis takes several seconds, so it runs in its own worker and survives a new game.
-  const learnersRef = useRef(new Set<Worker>());
-  const learningGameRef = useRef('');
-  useEffect(() => {
-    if (!isFinished) return;
-    const { steps, stepsOrder } = useCaroStore.getState();
-    const game = `${size}:${winMode}:${machineTurn}:${stepsOrder.join(',')}`;
-    const experience = useCaroExperienceStore.getState();
-    // `lastGame` is only saved once the analysis is done, so a reload mid-way analyses it again.
-    if (experience.lastGame == game || learningGameRef.current == game) return;
-    learningGameRef.current = game;
-
-    const record: TGameRecord = {
-      size,
-      winMode,
-      machineTurn,
-      moves: stepsOrder.map((location) => ({ location, turn: steps[location] })),
-    };
-    // On a win the store keeps the winner as `turn`.
-    const winner = hasWinner ? turn : -1;
-    if (machineLevel == 'hell') reportCaroGame(record, winner);
-    // Runs silently; the outcome only shows up as the lesson count in the caro settings.
-    experience.fn.setLearning(true);
-
-    const learner = createMachineWorker();
-    learnersRef.current.add(learner);
-    const finish = () => {
-      learner.terminate();
-      learnersRef.current.delete(learner);
-      if (learnersRef.current.size == 0) useCaroExperienceStore.getState().fn.setLearning(false);
-    };
-    learner.onmessage = (event: MessageEvent<TCaroMachineWorkerResponse>) => {
-      if (event.data.type != 'learned') return;
-      const { entries, hellGame } = event.data;
-      const { fn } = useCaroExperienceStore.getState();
-      fn.finishLearning(game, entries);
-      if (hellGame) {
-        fn.addHellGame(hellGame);
-        // The playing worker still holds the old weights in memory.
-        if (workerRef.current) post(workerRef.current, { type: 'reload-model' });
-      }
-      finish();
-    };
-    learner.onerror = finish;
-    post(learner, { type: 'book', entries: experience.entries });
-    post(learner, {
-      type: 'learn',
-      record,
-      level: machineLevel,
-      winner,
-      epoch: experience.epoch,
-      replay: experience.hellGames,
-    });
-  }, [isFinished, hasWinner, turn, size, winMode, machineTurn, machineLevel]);
-
-  useEffect(() => {
-    const learners = learnersRef.current;
-    return () => {
-      learners.forEach((learner) => learner.terminate());
-      learners.clear();
-      useCaroExperienceStore.getState().fn.setLearning(false);
-    };
-  }, []);
+  }, [isMachineTurn, stepCount, size, winMode, machineTurn, machineLevel, move, generation]);
 
   return { isMachineTurn };
 }

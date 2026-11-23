@@ -60,6 +60,13 @@ export type TRapfiRequest = {
  */
 export const RAPFI_TURN_MS = 2_000;
 
+/**
+ * How much longer than its turn Rapfi may take to answer before the move is given up on. The
+ * first search of the multi-threaded build also starts its threads, which is slow on a phone; an
+ * engine that never answers (a crashed thread, memory running out) must not stall the game.
+ */
+export const RAPFI_ANSWER_GRACE_MS = 6_000;
+
 /** A Piskvork "x,y" line as a board location, or null for any other output. */
 export function parseRapfiMove(line: string, size: number) {
   const match = /^(\d+),(\d+)$/.exec(line.trim());
@@ -99,6 +106,8 @@ export type TRapfi = {
   threads: number;
   /** Best move as a board location; rejects when Rapfi answers with an error. */
   think: (request: TRapfiRequest) => Promise<number>;
+  /** True while Rapfi owes a late answer (for good when it never comes); it is not used then. */
+  isBroken: () => boolean;
 };
 
 /**
@@ -117,11 +126,21 @@ export async function loadRapfi(
   }
 ): Promise<TRapfi> {
   let pending: { resolve: (move: string) => void; reject: (error: Error) => void } | undefined;
+  // Set while Rapfi owes the answer to a move given up on: requests are refused at once until it
+  // answers, and for the rest of the session when it never does.
+  let broken = false;
   const engine = await factory({
     arguments: [],
     locateFile: options.locateFile,
     onReceiveStdout: (line) => {
       options.onMessage?.(line);
+      // The answer to a move given up on: Rapfi was only slow (a phone that froze the tab while
+      // it searched, a slow start of its threads), not broken, so it plays again. The move itself
+      // was played by Tengen meanwhile; the next request starts a new game, as after any error.
+      if (!pending && broken && /^\d+,\d+$/.test(line.trim())) {
+        broken = false;
+        return;
+      }
       if (!pending) return;
       if (line.startsWith('ERROR')) pending.reject(new Error(`rapfi: ${line}`));
       else if (/^\d+,\d+$/.test(line.trim())) pending.resolve(line);
@@ -153,6 +172,7 @@ export async function loadRapfi(
   // The game Rapfi was set up for; a new size or rule starts a new one.
   let game = '';
   async function think(request: TRapfiRequest) {
+    if (broken) throw new Error('rapfi: stopped answering earlier');
     if (request.winMode == 'blockOpponent') await installCaroNetwork();
     const requested = `${request.size}:${request.winMode}`;
     if (requested != game) {
@@ -164,10 +184,22 @@ export async function loadRapfi(
       engine.sendCommand('INFO time_left 2147483647');
       game = requested;
     }
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const answer = new Promise<string>((resolve, reject) => (pending = { resolve, reject }));
     try {
       for (const command of rapfiCommands(request)) engine.sendCommand(command);
-      const line = await answer;
+      // The single-threaded build has answered by now; the timer only guards the threaded one.
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => {
+            // It may still be searching: it is not asked again until it answers.
+            broken = true;
+            reject(new Error('rapfi: no answer in time'));
+          },
+          (options.turnMs ?? RAPFI_TURN_MS) + RAPFI_ANSWER_GRACE_MS
+        );
+      });
+      const line = await Promise.race([answer, timeout]);
       const move = parseRapfiMove(line, request.size);
       if (move == null) throw new Error(`rapfi: bad move ${line}`);
       return move;
@@ -176,9 +208,10 @@ export async function loadRapfi(
       game = '';
       throw error;
     } finally {
+      clearTimeout(timer);
       pending = undefined;
     }
   }
 
-  return { threads: options.threads, think };
+  return { threads: options.threads, think, isBroken: () => broken };
 }

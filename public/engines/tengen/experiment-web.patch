@@ -671,10 +671,10 @@ index a0909b7..944754b 100644
          Some("bench") => {
              let depth = args.get(1).and_then(|d| d.parse().ok()).unwrap_or(7);
 diff --git a/crates/wasm/src/lib.rs b/crates/wasm/src/lib.rs
-index 3ddce0d..2b67db1 100644
+index 3ddce0d..25f398b 100644
 --- a/crates/wasm/src/lib.rs
 +++ b/crates/wasm/src/lib.rs
-@@ -61,6 +61,19 @@ struct Game {
+@@ -61,9 +61,26 @@ struct Game {
      engine: Engine,
      /// Cells of the five that ended the game, if it has ended that way.
      five: Vec<Pos>,
@@ -694,7 +694,24 @@ index 3ddce0d..2b67db1 100644
  }
  
  static GAME: Mutex<Option<Game>> = Mutex::new(None);
-@@ -122,10 +135,37 @@ pub extern "C" fn tg_new(size: u32, rule: u32) -> i32 {
++/// Settings given before the first game, for the engine [`tg_new`] creates (patch for
++/// experiment-web: they used to be dropped when no game existed yet).
++static HASH_MB: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(64);
++static THREADS: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(1);
+ static LINE: Mutex<[u16; 16]> = Mutex::new([0; 16]);
+ 
+ fn with_game<T>(default: T, f: impl FnOnce(&mut Game) -> T) -> T {
+@@ -113,7 +130,8 @@ pub extern "C" fn tg_new(size: u32, rule: u32) -> i32 {
+             old.engine
+         }
+         None => {
+-            let mut engine = Engine::new(64);
++            let mut engine = Engine::new(HASH_MB.load(std::sync::atomic::Ordering::Relaxed) as usize);
++            engine.set_threads(THREADS.load(std::sync::atomic::Ordering::Relaxed) as usize);
+             engine.set_clock(now);
+             engine
+         }
+@@ -122,10 +140,37 @@ pub extern "C" fn tg_new(size: u32, rule: u32) -> i32 {
          board: Board::with_rule(size as usize, Rule::from_piskvork(rule)),
          engine,
          five: Vec::new(),
@@ -732,7 +749,31 @@ index 3ddce0d..2b67db1 100644
  /// Use `threads` search threads. With more than one, the host must have
  /// started `threads - 1` helpers with [`tg_helper`]; builds without shared
  /// memory always search with one.
-@@ -221,6 +261,30 @@ pub extern "C" fn tg_think(ms: f64, max_depth: i32) -> i32 {
+@@ -136,6 +181,7 @@ pub extern "C" fn tg_set_threads(threads: u32) {
+     } else {
+         1
+     };
++    THREADS.store(threads, std::sync::atomic::Ordering::Relaxed);
+     with_game((), |g| g.engine.set_threads(threads as usize));
+ }
+ 
+@@ -166,10 +212,13 @@ pub extern "C" fn tg_alloc(size: u32, align: u32) -> *mut u8 {
+     }
+ }
+ 
+-/// Resize the search table.
++/// Resize the search table (64 MB by default); before the first game, it is never allocated at
++/// the default size.
+ #[unsafe(no_mangle)]
+ pub extern "C" fn tg_set_hash(megabytes: u32) {
+-    with_game((), |g| g.engine.set_hash(megabytes.clamp(1, 1024) as usize));
++    let megabytes = megabytes.clamp(1, 1024);
++    HASH_MB.store(megabytes, std::sync::atomic::Ordering::Relaxed);
++    with_game((), |g| g.engine.set_hash(megabytes as usize));
+ }
+ 
+ /// Play a stone for the side to move.
+@@ -221,6 +270,30 @@ pub extern "C" fn tg_think(ms: f64, max_depth: i32) -> i32 {
          if max_depth > 0 {
              limits.depth = Some(max_depth);
          }

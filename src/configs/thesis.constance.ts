@@ -16,6 +16,8 @@ export const THESIS_CLASS = {
   appendix: 'thesis-appendix',
   sameChapterAppendix: 'thesis-same-chapter-appendix',
   algorithm: 'thesis-algorithm',
+  /** The number in front of a title ("Figure 2.1: "), left out when the title is read. */
+  indexLabel: 'thesis-index-label',
 };
 
 export const mathJaxConfig = {

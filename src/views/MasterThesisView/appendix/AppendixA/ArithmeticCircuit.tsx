@@ -6,7 +6,7 @@ import { analyticMessageCode, guardianCode } from '../code';
 
 export default function ArithmeticCircuit() {
   return (
-    <SectionBox id="Arithmetic circuit in the Thesis" title="arithmetic-circuit-in-the-thesis">
+    <SectionBox id="arithmetic-circuit-in-the-thesis" title="Arithmetic circuit in the Thesis">
       <ProgramBox
         id="structure-of-main-arithmetic-circuit"
         title="Structure of main arithmetic circuit"

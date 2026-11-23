@@ -1,69 +1,54 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { TWISTY_ORIENTATION, twistyAlg, twistyMask } from 'src/lib/cube/twisty';
+import { useMemo, useRef } from 'react';
+import { twistyMoves } from 'src/lib/cube/twisty';
 import type { MaskName } from 'src/lib/cube/render';
 import { cn } from 'src/lib/utils';
+import CubeControls, { TCubeControlLabels } from './CubeControls';
+import { useTwistyPlayer } from './useTwistyPlayer';
 
 type TProps = {
   /** Algorithm to play; the player starts from the case it solves and ends solved. */
   alg: string;
   mask?: MaskName;
   className?: string;
-  loadingLabel: string;
-  errorLabel: string;
+  labels: TCubeControlLabels & { loading: string; error: string };
 };
 
 /**
- * A 3D cube (cubing.js `<twisty-player>`) that plays `alg` move by move, with play, step and
- * scrub controls. The cube can be dragged to look at it from any side. cubing.js is large (it
- * brings its own 3D engine), so it is imported only when a player is first shown.
+ * A 3D cube (cubing.js `<twisty-player>`) that plays `alg` move by move, with its own controls
+ * below. The cube can be dragged to look at it from any side.
  */
-export default function Cube3DPlayer({ alg, mask, className, loadingLabel, errorLabel }: TProps) {
+export default function Cube3DPlayer({ alg, mask, className, labels }: TProps) {
   const host = useRef<HTMLDivElement>(null);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-
-  useEffect(() => {
-    let cancelled = false;
-    let player: HTMLElement | undefined;
-    import('cubing/twisty')
-      .then(({ TwistyPlayer }) => {
-        if (cancelled || !host.current) return;
-        const stickering = twistyMask(mask);
-        player = new TwistyPlayer({
-          puzzle: '3x3x3',
-          alg: twistyAlg(alg),
-          // The setup is where the algorithm ends: the solved cube, yellow on top.
-          experimentalSetupAlg: TWISTY_ORIENTATION,
-          experimentalSetupAnchor: 'end',
-          ...(stickering ? { experimentalStickeringMaskOrbits: stickering } : {}),
-          background: 'none',
-          controlPanel: 'bottom-row',
-          hintFacelets: 'none',
-          backView: 'none',
-        });
-        player.style.width = '100%';
-        player.style.height = '100%';
-        host.current.replaceChildren(player);
-        setStatus('ready');
-      })
-      .catch((error) => {
-        console.error('[rubik] 3D player failed to load', error);
-        if (!cancelled) setStatus('error');
-      });
-    return () => {
-      cancelled = true;
-      player?.remove();
-    };
-  }, [alg, mask]);
+  const player = useTwistyPlayer(host, alg, mask);
+  const moves = useMemo(() => twistyMoves(alg), [alg]);
 
   return (
-    <div className={cn('relative aspect-square w-full max-w-72', className)}>
-      <div ref={host} className="size-full" />
-      {status != 'ready' && (
-        <p className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
-          {status == 'loading' ? loadingLabel : errorLabel}
-        </p>
+    <div className={cn('flex w-full max-w-80 flex-col gap-2', className)}>
+      <div className="relative aspect-square w-full">
+        <div ref={host} className="size-full cursor-grab active:cursor-grabbing" />
+        {player.status != 'ready' && (
+          <p className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
+            {player.status == 'loading' ? labels.loading : labels.error}
+          </p>
+        )}
+      </div>
+      {player.status == 'ready' && (
+        <CubeControls
+          moves={moves}
+          timeline={player.timeline}
+          isPlaying={player.isPlaying}
+          speed={player.speed}
+          labels={labels}
+          onTogglePlay={player.togglePlay}
+          onStep={player.step}
+          onSeek={player.seek}
+          onJumpToMove={player.jumpToMove}
+          onToStart={player.jumpToStart}
+          onToEnd={player.jumpToEnd}
+          onSpeed={player.setSpeed}
+        />
       )}
     </div>
   );

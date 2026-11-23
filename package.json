@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "caro:fetch-games": "node --env-file-if-exists=.env.local --import tsx scripts/caro-hell/fetch-games.ts",
+    "caro:mobile-check": "node --import tsx scripts/caro-hell/mobile-check/index.ts",
     "dev": "next dev -p 3007",
     "build": "next build",
     "start": "next start -p 3007",
@@ -95,6 +96,7 @@
     "husky": "^9.1.6",
     "jsdom": "^27.1.0",
     "lint-staged": "^17.6.1",
+    "playwright-core": "1.56.1",
     "postcss": "^8",
     "prettier": "^3.9.10",
     "prettier-plugin-tailwindcss": "^0.6.14",

@@ -12,6 +12,7 @@ import {
   TThesisSubsectionType,
   TThesisTableType,
 } from 'src/types/thesis.type';
+import { outsideAppendixes, readTitle } from './dom';
 
 function buildCiteContent(element: HTMLElement, result: { [key: string]: TThesisCiteIndexType }) {
   const items = element.querySelectorAll(`.${THESIS_CLASS.cite}`);
@@ -31,8 +32,7 @@ function buildSubsectionContent(
   let _counter = 1;
   for (const item of items) {
     const id = item.id;
-    const titleComponent = element.querySelector(`#${id}_title`);
-    const title = titleComponent?.textContent;
+    const title = readTitle(id);
     result[id] = { id, title: title || '', index: `${counter}.${_counter++}` };
   }
 }
@@ -47,8 +47,7 @@ function _buildSectionContent(
   let _counter = 1;
   for (const item of items) {
     const id = item.id;
-    const titleComponent = element.querySelector(`#${id}_title`);
-    const title = titleComponent?.textContent;
+    const title = readTitle(id);
     const _index = `${counter}.${_counter++}`;
     buildSubsectionContent(item, _index, subsectionResult);
     result[id] = { id, title: title || '', index: _index };
@@ -64,8 +63,7 @@ function buildFigureContent(
   let _counter = 1;
   for (const item of items) {
     const id = item.id;
-    const titleComponent = element.querySelector(`#${id}_title`);
-    const title = titleComponent?.textContent;
+    const title = readTitle(id);
     result[id] = { id, title: title || '', index: `${counter}.${_counter++}` };
   }
 }
@@ -79,8 +77,7 @@ function buildProgramContent(
   let _counter = 1;
   for (const item of items) {
     const id = item.id;
-    const titleComponent = element.querySelector(`#${id}_title`);
-    const title = titleComponent?.textContent;
+    const title = readTitle(id);
     result[id] = { id, title: title || '', index: `${counter}.${_counter++}` };
   }
 }
@@ -94,8 +91,7 @@ function buildTableContent(
   let _counter = 1;
   for (const item of items) {
     const id = item.id;
-    const titleComponent = element.querySelector(`#${id}_title`);
-    const title = titleComponent?.textContent;
+    const title = readTitle(id);
     result[id] = { id, title: title || '', index: `${counter}.${_counter++}` };
   }
 }
@@ -109,8 +105,7 @@ function buildAlgorithmContent(
   let _counter = 1;
   for (const item of items) {
     const id = item.id;
-    const titleComponent = element.querySelector(`#${id}_title`);
-    const title = titleComponent?.textContent;
+    const title = readTitle(id);
     result[id] = { id, title: title || '', index: `${counter}.${_counter++}` };
   }
 }
@@ -143,8 +138,7 @@ function buildAppendixContent(
   let counter = 0;
   for (const element of elements) {
     const id = element.id;
-    const titleComponent = element.querySelector(`#${id}_title`);
-    const title = titleComponent?.textContent;
+    const title = readTitle(id);
 
     _buildSectionContent(element, appendixIndex[counter], sections, subsections);
     buildFigureContent(element, appendixIndex[counter], figures);
@@ -171,8 +165,7 @@ function buildChapterContent(container: HTMLElement): TContentType {
   let counter = 1;
   for (const element of elements) {
     const id = element.id;
-    const titleComponent = element.querySelector(`#${id}_title`);
-    const title = titleComponent?.textContent;
+    const title = readTitle(id);
 
     _buildSectionContent(element, counter, sections, subsections);
     buildFigureContent(element, counter, figures);
@@ -208,7 +201,8 @@ function buildChapterContent(container: HTMLElement): TContentType {
 }
 
 function buildSectionContent(container: HTMLElement): TContentType {
-  const elements = container.querySelectorAll(`.${THESIS_CLASS.section}`);
+  // Sections of an appendix are numbered with it (A.1, ...), not as top-level sections.
+  const elements = outsideAppendixes(container, THESIS_CLASS.section);
   const sections: { [key: string]: TThesisSectionType } = {};
   const subsections: { [key: string]: TThesisSubsectionType } = {};
   const figures: { [key: string]: TThesisFigureType } = {};
@@ -220,8 +214,7 @@ function buildSectionContent(container: HTMLElement): TContentType {
   let counter = 1;
   for (const element of elements) {
     const id = element.id;
-    const titleComponent = element.querySelector(`#${id}_title`);
-    const title = titleComponent?.textContent;
+    const title = readTitle(id);
 
     buildSubsectionContent(element, counter, subsections);
     buildFigureContent(element, counter, figures);

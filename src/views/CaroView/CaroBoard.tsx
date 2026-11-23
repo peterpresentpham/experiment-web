@@ -1,10 +1,10 @@
 'use client';
 
 import { ComponentProps, useCallback, useEffect, useMemo, useRef } from 'react';
-import useFitBoard from 'src/hooks/useFitBoard';
-import useKeepCellInView from 'src/hooks/useKeepCellInView';
 import { MAX_CARO_BOARD_SIZE, MIN_CARO_CELL_SIZE } from 'src/configs/constance';
 import { useCaroStateContext } from 'src/context/caro-state.context';
+import useFitBoard from 'src/hooks/useFitBoard';
+import useKeepCellInView from 'src/hooks/useKeepCellInView';
 import { cn } from 'src/lib/utils';
 import { soundtrack } from 'src/services/soundtrack';
 import { useCaroStore } from 'src/states/caro.state';

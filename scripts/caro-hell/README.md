@@ -116,9 +116,43 @@ near-empty board (80/80 in a test), so plain matches cannot tell two builds apar
 Finished hell-level games are posted anonymously (moves, rule, result only) to `/api/caro/games`
 and stored in a Vercel Blob store, one file per game: `caro-games/<hash>.json`.
 
+Each game also carries a `timing` record, to find what makes the machine slow on players'
+devices:
+
+- the device kind (`ios`, `android` or `desktop`; nothing else about it) and the thread count;
+- when each engine finished loading (`loaded`, in ms after the level was picked; -1 means it
+  failed);
+- every machine move: its time as the player waited for it, which part chose it (`lesson`,
+  `book`, `rapfi`, `tengen`, `search` (the hard search, when Tengen had no answer) or
+  `network`), and whether the previous game was still being analysed
+  meanwhile.
+
+A game the player left (page closed or hidden) after a machine move of 10 s or more is posted
+too, unfinished. Such a game has `winner: null`, and `timing.waitingMs` holds how long the
+unanswered move had waited.
+
 1. Vercel dashboard → Storage → Create → Blob, **private**, connected to the project. Vercel sets
    `BLOB_STORE_ID` and signs in with OIDC (older stores set `BLOB_READ_WRITE_TOKEN`). With
    neither, the route answers 404 and stores nothing.
 2. Download them: `vercel env pull .env.local`, then `pnpm caro:fetch-games` (into
    `ml-data/caro-games/prod/`; games already there are skipped). The OIDC token expires after a
    few hours: pull again.
+
+## Checking the machine on phones
+
+`docs/plans/caro-mobile-risks.md` lists what made the machine slow or stuck on phones and the
+checks K0-K9 that prove each one gone. The browser checks (K1-K9) drive Chrome with a phone's
+screen and user agent against a production build:
+
+```bash
+pnpm build && pnpm exec next start -p 3007
+taskpolicy -b pnpm caro:mobile-check --slow-cpu --baseline-url https://the-deployed-site   # all, ~30 min
+pnpm caro:mobile-check --only K9      # the interface delay, on the normal cores
+taskpolicy -b pnpm caro:mobile-check --slow-cpu --only K1,K3
+```
+
+`taskpolicy -b` keeps Chrome on the efficiency cores, nearer a phone, but there headless Chrome,
+which draws pages on the CPU, shows long tasks on any page (even without the engines), so
+`--slow-cpu` reports K9's interface delay without judging it. Each check prints ĐẠT
+(passed), TRƯỢT (failed) or BỎ QUA (skipped) with its numbers; `--baseline-url` gives K5 the
+build to compare memory with. Set `CHROME_PATH` when Chrome is not in `/Applications`.

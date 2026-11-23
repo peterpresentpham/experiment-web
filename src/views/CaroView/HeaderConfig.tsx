@@ -14,6 +14,7 @@ import { commonMessages } from 'src/i18n/messages/common';
 import { useCaroStore } from 'src/states/caro.state';
 import CaroGameInfo from './CaroGameInfo';
 import HellEngineStatus from './HellEngineStatus';
+import MachineBrokenNotice from './MachineBrokenNotice';
 import { TSound } from 'src/types/global';
 
 export default function HeaderConfig(props: ComponentProps<'div'>) {
@@ -91,6 +92,7 @@ export default function HeaderConfig(props: ComponentProps<'div'>) {
         </>
       }
     >
+      <MachineBrokenNotice />
       <CaroGameInfo className="w-full lg:hidden" />
       {gameType == 'blind' && (
         <div className="flex flex-wrap items-center gap-2">

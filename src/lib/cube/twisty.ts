@@ -48,3 +48,11 @@ export function twistyAlg(alg: string) {
     .replace(/ \)/g, ')')
     .trim();
 }
+
+/**
+ * The moves of an algorithm one by one, as the 3D player animates them (brackets and
+ * parentheses only group): `"(R U R') [U]"` gives `["R", "U", "R'", "U"]`.
+ */
+export function twistyMoves(alg: string) {
+  return twistyAlg(alg).replace(/[()]/g, ' ').split(/\s+/).filter(Boolean);
+}

@@ -23,6 +23,9 @@ later (see `LICENSE` in this folder).
     are tried up to five cells from a threat instead of four.
   - makes rule 8 the app's caro rule: five or more wins unless both ends are blocked by stones
     (upstream let six or more win even when blocked).
+  - keeps `tg_set_threads` and `tg_set_hash` given before the first `tg_new` (2026-11-23):
+    they were dropped while no game existed, so the browser always searched on one thread with
+    the default 64 MB table.
 
 Build (Rust stable with the `wasm32-unknown-unknown` target and the `rust-src` component), from
 the Tengen checkout with the patch applied:

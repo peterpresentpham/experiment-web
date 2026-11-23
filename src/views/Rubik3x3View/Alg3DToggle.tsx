@@ -24,15 +24,7 @@ export default function Alg3DToggle({ alg, mask }: TProps) {
         <Box className="size-4" />
         {open ? player.hide : player.show}
       </Button>
-      {open && (
-        <Cube3DPlayer
-          alg={alg}
-          mask={mask}
-          className="mt-2"
-          loadingLabel={player.loading}
-          errorLabel={player.error}
-        />
-      )}
+      {open && <Cube3DPlayer alg={alg} mask={mask} className="mt-2" labels={player} />}
     </div>
   );
 }

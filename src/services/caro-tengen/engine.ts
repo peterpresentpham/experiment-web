@@ -22,6 +22,7 @@ type TExports = {
   tg_think_dynamic(optimumMs: number, hardMs: number, depth: number): number;
   tg_set_variety(margin: number, seed: number): void;
   tg_exclude(x: number, y: number): number;
+  tg_set_hash(megabytes: number): void;
 };
 
 export type TTengenSource = {
@@ -67,12 +68,16 @@ export type TTengenOptions = {
   varietyPlies?: number;
   /** Seeds the random choice (not 0). */
   seed?: number;
+  /** Size of the search table; the engine's own default (64 MB) when left out. */
+  hashMb?: number;
 };
 
 /** Piskvork rule numbers: freestyle, and "freestyle caro" (a five blocked at both ends does not win). */
 const RULE: Record<TCaroWinMode, number> = { 'non-blockOpponent': 0, blockOpponent: 8 };
 
 const HELPER_STACK = 2 << 20;
+/** 2 MB, above the 19 pages `tengen-mt.wasm` declares as its minimum. */
+const SHARED_INITIAL_PAGES = 32;
 
 /** A quiet middle-game position, alternating from Black, as (x, y). */
 const CALIBRATION_STONES: Array<[number, number]> = [
@@ -118,13 +123,31 @@ export function tengenThreads(env: {
   maxTouchPoints: number;
 }) {
   if (!env.isolated) return 1;
-  const appleMobile =
-    /iPhone|iPad|iPod/.test(env.userAgent) ||
-    (/Macintosh/.test(env.userAgent) && env.maxTouchPoints > 1);
-  if (appleMobile) return 1;
-  const mobile = /Android|Mobile/.test(env.userAgent);
-  return Math.max(1, Math.min(mobile ? 2 : 4, (env.cores || 1) - 1));
+  if (isAppleMobile(env)) return 1;
+  return Math.max(1, Math.min(isPhone(env) ? 2 : 4, (env.cores || 1) - 1));
 }
+
+type TDeviceEnv = { userAgent: string; maxTouchPoints: number };
+
+/** iPhones and iPads (an iPad's Safari presents itself as a Mac with a touch screen). */
+function isAppleMobile(env: TDeviceEnv) {
+  return (
+    /iPhone|iPad|iPod/.test(env.userAgent) ||
+    (/Macintosh/.test(env.userAgent) && env.maxTouchPoints > 1)
+  );
+}
+
+/** A phone or tablet: less memory and heat to spare than a computer. */
+export function isPhone(env: TDeviceEnv) {
+  return isAppleMobile(env) || /Android|Mobile/.test(env.userAgent);
+}
+
+/**
+ * Search table on a phone: 32 MB instead of 64. A phone's search in its 1.5-4 s fills less than
+ * that, and the rest only took memory the phone needed elsewhere (16 MB measured weaker in a
+ * native match, 32 MB within noise, see docs/plans/caro-mobile-risks.md, R5).
+ */
+export const PHONE_HASH_MB = 32;
 
 /**
  * The stones in an order Tengen accepts, alternating from Black. Black is whoever moved first:
@@ -155,6 +178,12 @@ export type TTengen = {
   timing: TTengenTiming;
   /** Best move as a board location, or -1 when the engine has none (game over, full board). */
   think: (request: TTengenRequest, timing?: TTengenTiming) => number;
+  /**
+   * Measures the speed again and keeps the faster result. The first measurement runs while the
+   * page is still starting (Rapfi loading, on a phone that is a lot): too low, it gave every
+   * move the longest thinking time for the whole session.
+   */
+  remeasure: () => void;
 };
 
 export async function loadTengen(
@@ -165,9 +194,11 @@ export async function loadTengen(
   const useThreads = threads > 1 && source.spawnHelper != undefined;
   const wasm = await source.compile(useThreads ? 'tengen-mt.wasm' : 'tengen.wasm');
   // The threaded module imports its memory, shared so helpers can join; 256 MB holds the hash
-  // table and the helpers' stacks.
+  // table and the helpers' stacks. It starts small: the allocator always grows the memory for
+  // what it needs and never uses pages it did not grow, so a larger start is only wasted (a
+  // 64 MB start cost 64 MB on every device).
   const shared = useThreads
-    ? new WebAssembly.Memory({ initial: 1024, maximum: 4096, shared: true })
+    ? new WebAssembly.Memory({ initial: SHARED_INITIAL_PAGES, maximum: 4096, shared: true })
     : null;
   let lastInfo = { nodes: 0 };
   const instance = await WebAssembly.instantiate(wasm, {
@@ -198,22 +229,38 @@ export async function loadTengen(
     }
   }
   engine.tg_set_threads(count);
+  if (options.hashMb) engine.tg_set_hash(options.hashMb);
 
   // A short search of a fixed middle-game position measures this device's speed (the empty
   // board is answered almost at once, so it says nothing).
-  engine.tg_new(15, RULE.blockOpponent);
-  for (const [x, y] of CALIBRATION_STONES) engine.tg_play(x, y);
-  const startedAt = performance.now();
-  engine.tg_think(CALIBRATION_MS, 0);
-  const elapsedMs = performance.now() - startedAt;
-  const nodesPerSecond = elapsedMs > 0 ? (lastInfo.nodes / elapsedMs) * 1_000 : 0;
-  const timing = tengenTiming(nodesPerSecond);
+  function measureSpeed() {
+    engine.tg_set_variety(0, 0);
+    engine.tg_new(15, RULE.blockOpponent);
+    for (const [x, y] of CALIBRATION_STONES) engine.tg_play(x, y);
+    const startedAt = performance.now();
+    engine.tg_think(CALIBRATION_MS, 0);
+    const elapsedMs = performance.now() - startedAt;
+    return elapsedMs > 0 ? (lastInfo.nodes / elapsedMs) * 1_000 : 0;
+  }
+  const result: TTengen = {
+    threads: count,
+    nodesPerSecond: measureSpeed(),
+    timing: tengenTiming(0),
+    think,
+    remeasure() {
+      // The faster of the two: a measurement is only ever too low, when something else was
+      // busy meanwhile.
+      result.nodesPerSecond = Math.max(result.nodesPerSecond, measureSpeed());
+      result.timing = tengenTiming(result.nodesPerSecond);
+    },
+  };
+  result.timing = tengenTiming(result.nodesPerSecond);
   // Seeded after the calibration, which must measure a plain search.
   const variety = options.variety ?? TENGEN_VARIETY;
   const varietyPlies = options.varietyPlies ?? TENGEN_VARIETY_PLIES;
   engine.tg_set_variety(0, options.seed ?? 1 + Math.random() * 2 ** 32);
 
-  function think(request: TTengenRequest, moveTiming = timing) {
+  function think(request: TTengenRequest, moveTiming = result.timing) {
     const order = tengenMoveOrder(request.steps, request.turn);
     if (!order) throw new Error('tengen: impossible position');
     if (engine.tg_new(request.size, RULE[request.winMode]) != 0)
@@ -230,5 +277,5 @@ export async function loadTengen(
     return (packed >> 8) * request.size + (packed & 0xff);
   }
 
-  return { threads: count, nodesPerSecond, timing, think };
+  return result;
 }

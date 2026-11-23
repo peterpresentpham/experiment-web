@@ -1,3 +1,4 @@
+import type { TCaroMoveSource } from 'src/services/caro-game-report/validate';
 import type { THellGame } from 'src/services/caro-hell/encode';
 import { logCaroEvent } from 'src/services/caro-dev-log';
 import { findMachineMove, learnFromGame, TCaroMachineRequest } from 'src/services/caro-machine';
@@ -23,6 +24,10 @@ export type TCaroMachineWorkerRequest =
       epoch: number;
       /** Recent hell games, replayed while fine-tuning the network. */
       replay: Array<THellGame>;
+      /** Hell level: whether to fine-tune the network (only when it is what plays). */
+      fineTune: boolean;
+      /** How long the analysis may take. */
+      budgetMs: number;
     }
   /** Hell level: load the engine for this rule (or the network) before the first move. */
   | { type: 'warm-up'; epoch: number; winMode: TCaroWinMode }
@@ -30,7 +35,10 @@ export type TCaroMachineWorkerRequest =
   | { type: 'reload-model' };
 
 export type TCaroMachineWorkerResponse =
-  | { type: 'move'; id: number; location: number }
+  /** `source`: which part of the hell level chose the move (other levels leave it out). */
+  | { type: 'move'; id: number; location: number; source?: TCaroMoveSource }
+  /** The move could not be found: the page restarts the worker or reloads. */
+  | { type: 'move-failed'; id: number }
   | { type: 'learned'; entries: TExperienceEntries; hellGame: THellGame | null }
   | { type: 'hell-status'; available: boolean }
   | { type: 'hell-engines'; engines: TCaroHellEngines };
@@ -44,53 +52,87 @@ function reply(response: TCaroMachineWorkerResponse) {
 
 // TensorFlow.js and the network are only loaded once the hell level actually needs them: the
 // level plays Tengen (a WebAssembly engine) and keeps the network as its fallback.
-const loadHell = () => import('src/services/caro-hell/worker-runtime');
+let hellRuntime: Promise<typeof import('src/services/caro-hell/worker-runtime')> | undefined;
+const loadHell = () => (hellRuntime ??= import('src/services/caro-hell/worker-runtime'));
 const loadTengen = () => import('src/services/caro-tengen/player');
+
+// What the header shows: the last engine report, kept up to date after each move.
+let engines: TCaroHellEngines | null = null;
+function reportEngines(next: TCaroHellEngines) {
+  engines = next;
+  reply({ type: 'hell-engines', engines: next });
+}
+
+/** Finds and sends the machine's move. */
+async function playMove(message: Extract<TCaroMachineWorkerRequest, { type: 'move' }>) {
+  const { id, type: _type, epoch, ...request } = message;
+  if (request.level == 'hell' && request.size != 3) {
+    const player = await loadTengen();
+    const found = await player.findTengenMove(request, book);
+    // Once the warm-up reported them, the header follows the engines' later changes.
+    const now = player.engineLoads();
+    if (engines && (now.rapfi != engines.rapfi || now.tengen != engines.tengen)) reportEngines(now);
+    if (found != null) {
+      reply({ type: 'hell-status', available: true });
+      reply({ type: 'move', id, ...found });
+      if (found.source == 'tengen') player.remeasureTengenOnce();
+      return;
+    }
+    const hell = await loadHell();
+    const { location, available } = await hell.findHellLevelMove(request, epoch, book);
+    logCaroEvent({
+      type: 'move',
+      source: 'network',
+      location,
+      size: request.size,
+      steps: request.steps,
+    });
+    reply({ type: 'hell-status', available });
+    reply({ type: 'move', id, location, source: 'network' });
+  } else {
+    reply({ type: 'move', id, location: findMachineMove({ ...request, book }) });
+  }
+}
+
+/** Studies a finished game: lessons for the book and, when asked, a fine-tune of the network. */
+async function learn(message: Extract<TCaroMachineWorkerRequest, { type: 'learn' }>) {
+  const { record, level, winner, epoch, replay, fineTune, budgetMs } = message;
+  const didMachineLose = winner >= 0 && winner != record.machineTurn;
+  const entries = learnFromGame(record, book, didMachineLose, budgetMs);
+  logCaroEvent({ type: 'game', level, winner, record, learned: entries });
+  let hellGame: THellGame | null = null;
+  if (level == 'hell' && fineTune) {
+    mergeExperience(book, entries);
+    const hell = await loadHell();
+    hellGame = await hell.learnHellGame(record, winner, { book, replay, epoch }).catch(() => null);
+  }
+  return { entries, hellGame };
+}
 
 async function handle(message: TCaroMachineWorkerRequest) {
   if (message.type == 'book') {
     book = mergeExperience(new Map(), message.entries);
     logCaroEvent({ type: 'book', lessons: book.size });
   } else if (message.type == 'move') {
-    const { id, type: _type, epoch, ...request } = message;
-    if (request.level == 'hell' && request.size != 3) {
-      const tengen = await (await loadTengen()).findTengenMove(request, book);
-      if (tengen != null) {
-        reply({ type: 'hell-status', available: true });
-        reply({ type: 'move', id, location: tengen });
-        return;
-      }
-      const hell = await loadHell();
-      const { location, available } = await hell.findHellLevelMove(request, epoch, book);
-      logCaroEvent({
-        type: 'move',
-        source: 'network',
-        location,
-        size: request.size,
-        steps: request.steps,
-      });
-      reply({ type: 'hell-status', available });
-      reply({ type: 'move', id, location });
-    } else {
-      reply({ type: 'move', id, location: findMachineMove({ ...request, book }) });
+    try {
+      await playMove(message);
+    } catch (error) {
+      // A chunk that no longer exists (a tab opened before a deploy), an engine that crashed:
+      // the page must hear of it, or the machine never moves and nothing says why.
+      reply({ type: 'move-failed', id: message.id });
+      throw error;
     }
   } else if (message.type == 'learn') {
-    const { record, level, winner, epoch, replay } = message;
-    const entries = learnFromGame(record, book, winner >= 0 && winner != record.machineTurn);
-    logCaroEvent({ type: 'game', level, winner, record, learned: entries });
-    let hellGame: THellGame | null = null;
-    if (level == 'hell') {
-      mergeExperience(book, entries);
-      const hell = await loadHell();
-      hellGame = await hell
-        .learnHellGame(record, winner, { book, replay, epoch })
-        .catch(() => null);
-    }
-    reply({ type: 'learned', entries, hellGame });
+    // Always answers, so the page's queue of games to study moves on.
+    const result = await learn(message).catch((error: unknown) => {
+      console.error('[caro] could not study the game', error);
+      return { entries: [], hellGame: null };
+    });
+    reply({ type: 'learned', ...result });
   } else if (message.type == 'warm-up') {
     const player = await loadTengen();
     const available = await player.warmUpTengen(message.winMode, (engines) => {
-      reply({ type: 'hell-engines', engines });
+      reportEngines(engines);
       // The level plays as soon as either engine can.
       if (engines.rapfi == 'ready' || engines.tengen == 'ready')
         reply({ type: 'hell-status', available: true });
@@ -99,8 +141,9 @@ async function handle(message: TCaroMachineWorkerRequest) {
     const hell = await loadHell();
     reply({ type: 'hell-status', available: await hell.warmUpHell(message.epoch) });
   } else if (message.type == 'reload-model') {
-    const hell = await loadHell();
-    hell.resetHellModel();
+    // Only a network this worker already loaded holds old weights. Loading TensorFlow.js here
+    // just to drop nothing would hold up the next move.
+    if (hellRuntime) (await hellRuntime).resetHellModel();
   }
 }
 

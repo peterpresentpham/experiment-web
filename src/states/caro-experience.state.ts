@@ -25,6 +25,8 @@ interface TCaroExperienceStateType {
   hellModel: THellModelStatus;
   /** Loading state of the hell level's engines; null until the level first warms them up. */
   hellEngines: TCaroHellEngines | null;
+  /** The machine could not move even after its worker was restarted and the page reloaded. */
+  isMachineBroken: boolean;
   fn: {
     /** Saves what was learned from `game` and marks that game as done. */
     finishLearning: (game: string, entries: TEntries) => void;
@@ -33,6 +35,7 @@ interface TCaroExperienceStateType {
     setLearning: (isLearning: boolean) => void;
     setHellModel: (status: THellModelStatus) => void;
     setHellEngines: (engines: TCaroHellEngines) => void;
+    setMachineBroken: (isMachineBroken: boolean) => void;
     clear: () => void;
   };
 }
@@ -48,6 +51,7 @@ export const useCaroExperienceStore = create<TCaroExperienceStateType>()(
       epoch: 0,
       hellModel: 'unknown',
       hellEngines: null,
+      isMachineBroken: false,
       fn: {
         finishLearning: (game, entries) => {
           if (entries.length == 0) return set({ lastGame: game });
@@ -62,6 +66,7 @@ export const useCaroExperienceStore = create<TCaroExperienceStateType>()(
         setLearning: (isLearning) => set({ isLearning }),
         setHellModel: (hellModel) => set({ hellModel }),
         setHellEngines: (hellEngines) => set({ hellEngines }),
+        setMachineBroken: (isMachineBroken) => set({ isMachineBroken }),
         clear: () =>
           set((state) => ({
             entries: [],

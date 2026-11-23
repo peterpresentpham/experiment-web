@@ -1,5 +1,13 @@
-import { loadTengen, TTengen, TTengenHelperSetup, tengenThreads } from './engine';
+import {
+  isPhone,
+  loadTengen,
+  PHONE_HASH_MB,
+  TTengen,
+  TTengenHelperSetup,
+  tengenThreads,
+} from './engine';
 import { parseOpeningBook, TOpeningBook, TOpeningBookFile } from './opening-book';
+import { createRetryingLoad } from './retrying-load';
 
 /** Browser (worker) side of Tengen: loads the WebAssembly build from /engines/tengen once. */
 
@@ -7,11 +15,16 @@ const BASE_URL = '/engines/tengen/';
 
 async function compile(file: string) {
   const url = BASE_URL + file;
+  // A failed download must not reach the compiler, which would call it a module this browser
+  // cannot run and the engine would not be tried again.
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
   try {
-    return await WebAssembly.compileStreaming(fetch(url));
-  } catch {
+    return await WebAssembly.compileStreaming(response.clone());
+  } catch (error) {
+    if (error instanceof WebAssembly.CompileError) throw error;
     // Servers that do not send application/wasm defeat compileStreaming.
-    return WebAssembly.compile(await (await fetch(url)).arrayBuffer());
+    return WebAssembly.compile(await response.arrayBuffer());
   }
 }
 
@@ -22,11 +35,8 @@ function spawnHelper(setup: TTengenHelperSetup) {
   helper.postMessage(setup);
 }
 
-let loading: Promise<TTengen | null> | undefined;
-
-/** The engine, or null where WebAssembly cannot run it (the caller falls back to the network). */
-export function getTengen() {
-  loading ??= (async () => {
+const tengen = createRetryingLoad<TTengen>(
+  async () => {
     if (typeof WebAssembly != 'object') return null;
     const threads = tengenThreads({
       isolated: self.crossOriginIsolated && typeof SharedArrayBuffer != 'undefined',
@@ -34,33 +44,47 @@ export function getTengen() {
       userAgent: navigator.userAgent,
       maxTouchPoints: navigator.maxTouchPoints ?? 0,
     });
+    const device = {
+      userAgent: navigator.userAgent,
+      maxTouchPoints: navigator.maxTouchPoints ?? 0,
+    };
+    const options = { hashMb: isPhone(device) ? PHONE_HASH_MB : undefined };
     try {
-      return await loadTengen({ compile, spawnHelper }, threads);
+      return await loadTengen({ compile, spawnHelper }, threads, options);
     } catch (error) {
       if (threads == 1) throw error;
       // Shared memory can run short; one thread always fits.
-      return loadTengen({ compile }, 1);
+      return loadTengen({ compile }, 1, options);
     }
-  })().catch((error) => {
-    console.error('[caro] Tengen could not start', error);
-    return null;
-  });
-  return loading;
-}
+  },
+  { name: 'Tengen' }
+);
+
+/**
+ * The engine, or null where WebAssembly cannot run it or its download failed (the caller falls
+ * back to the network). A failed download is tried again on the next call.
+ */
+export const getTengen = tengen.get;
+/** Whether the engine is loading, ready or unavailable, for the header. */
+export const tengenLoadState = tengen.state;
+/** The engine if it has finished loading, without waiting or starting a load. */
+export const readyTengen = tengen.peek;
 
 const BOOK_URL = '/models/caro-book/opening-block.json';
-let loadingBook: Promise<TOpeningBook> | undefined;
+const EMPTY_BOOK: TOpeningBook = new Map();
+const book = createRetryingLoad<TOpeningBook>(
+  async () => {
+    const response = await fetch(BOOK_URL);
+    if (!response.ok) throw new Error(`${BOOK_URL}: HTTP ${response.status}`);
+    return parseOpeningBook((await response.json()) as TOpeningBookFile);
+  },
+  { name: 'the opening book' }
+);
 
-/** The opening book, or an empty one when it cannot be fetched (the engine then searches). */
-export function getOpeningBook() {
-  loadingBook ??= fetch(BOOK_URL)
-    .then(async (response) => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return parseOpeningBook((await response.json()) as TOpeningBookFile);
-    })
-    .catch((error) => {
-      console.warn('[caro] opening book unavailable', error);
-      return new Map() as TOpeningBook;
-    });
-  return loadingBook;
+/**
+ * The opening book, or an empty one while it cannot be fetched (the engine then searches); a
+ * failed download is tried again on the next call.
+ */
+export async function getOpeningBook() {
+  return (await book.get()) ?? EMPTY_BOOK;
 }

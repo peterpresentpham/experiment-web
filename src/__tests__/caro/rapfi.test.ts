@@ -4,12 +4,13 @@ import { pathToFileURL } from 'node:url';
 import {
   loadRapfi,
   parseRapfiMove,
+  RAPFI_ANSWER_GRACE_MS,
   rapfiCommands,
   TRapfi,
   TRapfiCaroNetwork,
   TRapfiFactory,
 } from 'src/services/caro-rapfi/engine';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 const RAPFI_DIR = join(process.cwd(), 'public/engines/rapfi');
 const CARO_DIR = join(process.cwd(), 'public/models/caro-rapfi');
@@ -71,6 +72,57 @@ describe('parseRapfiMove', () => {
     expect(parseRapfiMove('8,7', 15)).toBe(113);
     expect(parseRapfiMove('MESSAGE Depth 12', 15)).toBeNull();
     expect(parseRapfiMove('15,0', 15)).toBeNull();
+  });
+});
+
+describe('Rapfi that stops answering', () => {
+  afterEach(() => vi.useRealTimers());
+
+  async function slowRapfi() {
+    vi.useFakeTimers();
+    const sendCommand = vi.fn();
+    let print: (line: string) => void = () => {};
+    // A threaded build whose search reports nothing until the test prints a line for it.
+    const factory: TRapfiFactory = (options) => {
+      print = options.onReceiveStdout;
+      return Promise.resolve({ sendCommand, FS_createDataFile: () => {} });
+    };
+    const engine = await loadRapfi(factory, { threads: 2, turnMs: 1_000, locateFile: (f) => f });
+    return { engine, sendCommand, print: (line: string) => print(line) };
+  }
+  const request = { steps: { 112: 0 }, size: 15, winMode: 'non-blockOpponent', turn: 1 } as const;
+
+  it('gives the move up after its turn and a grace period, then is not asked again', async () => {
+    const { engine, sendCommand } = await slowRapfi();
+    const move = engine.think(request);
+    const outcome = expect(move).rejects.toThrow(/no answer in time/);
+    await vi.advanceTimersByTimeAsync(1_000 + RAPFI_ANSWER_GRACE_MS);
+    await outcome;
+    expect(engine.isBroken()).toBe(true);
+
+    sendCommand.mockClear();
+    await expect(engine.think(request)).rejects.toThrow(/stopped answering/);
+    expect(sendCommand).not.toHaveBeenCalled();
+  });
+
+  it('plays again once the late answer arrives: it was only slow', async () => {
+    const { engine, sendCommand, print } = await slowRapfi();
+    const outcome = expect(engine.think(request)).rejects.toThrow(/no answer in time/);
+    await vi.advanceTimersByTimeAsync(1_000 + RAPFI_ANSWER_GRACE_MS);
+    await outcome;
+    // A frozen tab resumes: the search it was running finishes.
+    print('MESSAGE depth 9');
+    expect(engine.isBroken()).toBe(true);
+    print('7,8');
+    expect(engine.isBroken()).toBe(false);
+
+    sendCommand.mockClear();
+    const next = engine.think(request);
+    await vi.advanceTimersByTimeAsync(0);
+    // A new game: the state the late search left behind is not trusted.
+    expect(sendCommand).toHaveBeenCalledWith('START 15');
+    print('6,7');
+    expect(await next).toBe(7 * 15 + 6);
   });
 });
 

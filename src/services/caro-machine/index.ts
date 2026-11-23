@@ -12,6 +12,7 @@ import { CELL_FLAG } from './pattern';
 import { analyzePosition, searchBestMove, TSearchOptions } from './search';
 import { findThreatWin } from './threat';
 import { findTicTacToeMove } from './tic-tac-toe';
+import { LEARN_TIME_BUDGET_MS } from 'src/services/caro-hell/learning';
 
 export type TCaroMachineRequest = {
   steps: { [location: number]: TTurn };
@@ -43,7 +44,6 @@ const LEARN_OPTIONS: TSearchOptions = {
   vctBudget: 60_000,
   searchForced: true,
 };
-const LEARN_TIME_BUDGET_MS = 30_000;
 // Per position when looking for a missed forced win; a game has a few dozen of them.
 const CLOSE_CALL_PROBE_MS = 400;
 
@@ -155,9 +155,14 @@ function hasForcedWin(board: MachineBoard, attacker: TStone, deadline: number) {
  * - otherwise: finds moves after which the opponent had a forced win but missed it.
  * Takes several seconds, so it should run off the main thread and off the move worker.
  */
-export function learnFromGame(record: TGameRecord, book: TExperienceBook, didMachineLose: boolean) {
+export function learnFromGame(
+  record: TGameRecord,
+  book: TExperienceBook,
+  didMachineLose: boolean,
+  budgetMs = LEARN_TIME_BUDGET_MS
+) {
   if (record.size == 3) return [];
-  const deadline = performance.now() + LEARN_TIME_BUDGET_MS;
+  const deadline = performance.now() + budgetMs;
   const analyze = (board: MachineBoard, side: TStone, exclude: ReadonlySet<number>) =>
     analyzePosition(board, side, LEARN_OPTIONS, exclude);
   if (didMachineLose) return learnFromLoss(record, book, { deadline, analyze });

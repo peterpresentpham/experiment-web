@@ -7,11 +7,14 @@ import {
   lookupExperience,
   mergeExperience,
   positionKey,
+  rekeyExperience,
   TExperienceBook,
+  TExperienceEntry,
   TGameRecord,
   toStone,
   transformIndex,
 } from 'src/services/caro-machine/experience';
+import { experienceFrame } from 'src/services/caro-machine/experience-key';
 import { analyzePosition } from 'src/services/caro-machine/search';
 import { findThreatWin } from 'src/services/caro-machine/threat';
 import { TCaroMachineLevel, TCaroSizeBoard, TTurn } from 'src/types/caro.type';
@@ -86,6 +89,90 @@ describe('caro machine experience: symmetry', () => {
   });
 });
 
+describe('caro machine experience: shapes away from the edges', () => {
+  // A position in the middle of the board: what a player shifted by a cell to replay a win.
+  const shape: TGameRecord['moves'] = [
+    { location: at(20, 10, 10), turn: 0 },
+    { location: at(20, 9, 9), turn: 1 },
+    { location: at(20, 9, 11), turn: 0 },
+  ];
+  const shifted = (moves: TGameRecord['moves'], size: number, dr: number, dc: number) =>
+    moves.map((move) => {
+      const [row, column] = [Math.floor(move.location / 20) + dr, (move.location % 20) + dc];
+      return { ...move, location: at(size, row, column) };
+    });
+
+  it('applies a lesson to the same shape elsewhere on the board and on another size', () => {
+    const avoided = at(20, 11, 9);
+    const best = at(20, 8, 12);
+    const book: TExperienceBook = new Map(
+      learnFromLoss(
+        {
+          size: 20,
+          winMode: 'blockOpponent',
+          machineTurn: 1,
+          moves: [...shape, { location: avoided, turn: 1 }],
+        },
+        new Map(),
+        { analyze: () => ({ move: best, score: 10 }) }
+      )
+    );
+    for (const [size, dr, dc] of [
+      [20, 0, -1],
+      [20, 3, 2],
+      [15, -3, -4],
+    ]) {
+      const learned = lookupExperience(book, boardOf(size, shifted(shape, size, dr, dc)), 2);
+      expect(learned?.best).toBe(at(size, 8 + dr, 12 + dc));
+      expect(learned?.avoid).toEqual(new Set([at(size, 11 + dr, 9 + dc)]));
+    }
+  });
+
+  it('keys a position near an edge by the whole board', () => {
+    const nearEdge = boardOf(20, shifted(shape, 20, -8, 0));
+    const middle = boardOf(20, shape);
+    const frame = (board: MachineBoard) => experienceFrame(board.cells, 20, 'blockOpponent', 2);
+    expect(frame(nearEdge).key).toBe(positionKey(nearEdge.cells, 20, 'blockOpponent', 2).key);
+    expect(frame(middle).key).not.toBe(positionKey(middle.cells, 20, 'blockOpponent', 2).key);
+  });
+
+  it('drops a learned cell that falls off a smaller board', () => {
+    const frame = experienceFrame(boardOf(20, shape).cells, 20, 'blockOpponent', 2);
+    const small = boardOf(15, shifted(shape, 15, -6, -6));
+    const smallFrame = experienceFrame(small.cells, 15, 'blockOpponent', 2);
+    expect(smallFrame.key).toBe(frame.key);
+    expect(smallFrame.toReal(frame.toCanonical(at(20, 1, 1)))).toBe(-1);
+  });
+});
+
+describe('caro machine experience: lessons saved under whole-board keys', () => {
+  it('moves them to shape keys away from the edges and leaves the rest', () => {
+    const middle = boardOf(20, [
+      { location: at(20, 10, 10), turn: 0 },
+      { location: at(20, 9, 9), turn: 1 },
+      { location: at(20, 9, 11), turn: 0 },
+    ]);
+    const edge = boardOf(20, [{ location: at(20, 0, 5), turn: 0 }]);
+    // Old entries: whole-board keys, cells in the key's own (canonical) board.
+    const old = (board: MachineBoard, avoid: number, best: number) => {
+      const { key, transform } = positionKey(board.cells, 20, 'blockOpponent', 2);
+      const turn = (index: number) => transformIndex(transform, index, 20);
+      return [key, { avoid: [turn(avoid)], best: turn(best) }] as [string, TExperienceEntry];
+    };
+    const entries = [
+      old(middle, at(20, 11, 9), at(20, 8, 12)),
+      old(edge, at(20, 1, 5), at(20, 1, 6)),
+    ];
+
+    const book: TExperienceBook = new Map(rekeyExperience(entries));
+    expect(book.has(entries[0][0])).toBe(false);
+    expect(book.get(entries[1][0])).toEqual(entries[1][1]);
+    const learned = lookupExperience(book, middle, 2);
+    expect(learned?.avoid).toEqual(new Set([at(20, 11, 9)]));
+    expect(learned?.best).toBe(at(20, 8, 12));
+  });
+});
+
 describe('caro machine experience: post-mortem', () => {
   const size = 10;
   // Machine (turn 1) made three decisions; the human won afterwards.
@@ -147,7 +234,7 @@ describe('caro machine experience: post-mortem', () => {
     // Only the real mistake is stored: the first machine move, with its replacement.
     const first = boardOf(size, record.moves.slice(0, 1));
     expect(changed).toHaveLength(1);
-    expect(changed[0][0]).toBe(positionKey(first.cells, size, 'blockOpponent', 2).key);
+    expect(changed[0][0]).toBe(experienceFrame(first.cells, size, 'blockOpponent', 2).key);
     expect(changed[0][1].best).toBeDefined();
   });
 

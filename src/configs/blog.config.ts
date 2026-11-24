@@ -1,6 +1,6 @@
 import { FORMAT_NUMBER_SLUGS } from './format-number.slugs';
 
-export type TBlogTopicId = 'thesis' | 'formatNumber' | 'rubik';
+export type TBlogTopicId = 'thesis' | 'formatNumber' | 'rubik' | 'chess';
 
 // Titles and descriptions live in `blogMessages.topics`, keyed by `id`.
 export type TBlogTopic = { id: TBlogTopicId; href: string };
@@ -17,6 +17,7 @@ export const BLOG_TOPICS: Array<TBlogTopic> = [
   { id: 'thesis', href: '/blog/master-thesis' },
   { id: 'formatNumber', href: '/blog/format-number/getting-started' },
   { id: 'rubik', href: '/blog/rubik3x3' },
+  { id: 'chess', href: '/blog/chess' },
 ];
 
 export const RUBIK_BASE = '/blog/rubik3x3';

@@ -108,8 +108,39 @@ near-empty board (80/80 in a test), so plain matches cannot tell two builds apar
   node --import tsx scripts/caro-hell/defense-match.ts --defender tengen-book --defender-time 1000 --attacker-time 4000 --size 15 --games 40
   ```
 
-`tengen-book` is Tengen behind the opening book (`opening-book.ts` builds it into
-`public/models/caro-book/`). The plan for further work is in `docs/plans/caro-tengen-roadmap.md`.
+`tengen-book` is Tengen behind the opening book. The blocked-ends hell level as the browser
+plays it is `rapfi-caro-book`: the book, then Rapfi with the caro network (`rapfi-caro`, which
+copies `public/models/caro-rapfi/` next to the native Rapfi). To compare two books, pass
+`--book <file>`; lost games go to `ml-data/caro-hell/defense/` with the defender's last book move:
+
+```bash
+nice node --import tsx scripts/caro-hell/defense-match.ts --defender rapfi-caro-book --attacker rapfi-caro --size 20 --games 40 --workers 2
+```
+
+### The opening book
+
+`opening-book.ts` builds `public/models/caro-book/opening-block.json` with Rapfi and the caro
+network (about an hour with these settings). Each entry keeps the moves within `--margin` of the
+best (multi-PV), one of which the machine picks at random, so a line that beat it once does not
+win again:
+
+```bash
+nice node --import tsx scripts/caro-hell/opening-book.ts --depth 3 --radius 2 --time 5000 --threads 2 --workers 3
+```
+
+When the machine moves second, a player who moves first and plays well wins, so its first two
+replies decide how hard that win is to find. `book-deepen.ts` re-chooses them with longer
+searches (30 s for the candidates, 15 s for the player's answer to each), preferring replies the
+player has no forced win against; run `opening-book.ts` again afterwards to fill in the
+positions they lead to. `book-check.ts` measures a book where it ends (matches cannot: moving
+first wins almost every engine game here):
+
+```bash
+nice node --import tsx scripts/caro-hell/book-deepen.ts --stones 3
+nice node --import tsx scripts/caro-hell/book-check.ts --player strong --samples 60
+```
+
+The plan for further work is in `docs/plans/caro-tengen-roadmap.md`.
 
 ## Games from the deployed site
 

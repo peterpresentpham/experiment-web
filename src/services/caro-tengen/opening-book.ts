@@ -9,17 +9,21 @@ import { TCaroWinMode, TTurn } from 'src/types/caro.type';
  * "own" (side to move) and "other", in the transform that sorts first. That is only sound away
  * from the edges, so a position is looked up only when every stone keeps `BOOK_MARGIN` empty
  * lines to each edge. Only the blocked-ends rule has a book.
+ *
+ * An entry may list several moves the search found about equally good: one of them is picked at
+ * random, so a player cannot win by replaying a line that beat the book before.
  */
 
-/** Book entries: canonical key -> best move as [row, column] in the canonical frame. */
-export type TOpeningBook = Map<string, [number, number]>;
+/** Book entries: canonical key -> the moves to choose from, as [row, column] in the canonical frame. */
+export type TOpeningBook = Map<string, Array<[number, number]>>;
 
 export type TOpeningBookFile = {
-  version: 1;
+  /** Version 1 has one move per entry, version 2 a list (best first). */
+  version: 1 | 2;
   winMode: TCaroWinMode;
   /** How the book was built, for reference. */
   meta?: Record<string, number | string>;
-  entries: Record<string, [number, number]>;
+  entries: Record<string, [number, number] | Array<[number, number]>>;
 };
 
 export type TBookStone = { row: number; column: number; own: boolean };
@@ -71,7 +75,14 @@ export function openingKey(stones: ReadonlyArray<TBookStone>) {
 }
 
 export function parseOpeningBook(file: TOpeningBookFile): TOpeningBook {
-  return new Map(Object.entries(file.entries));
+  return new Map(
+    Object.entries(file.entries).map(([key, moves]) => [
+      key,
+      typeof moves[0] == 'number'
+        ? [moves as [number, number]]
+        : (moves as Array<[number, number]>),
+    ])
+  );
 }
 
 /**
@@ -85,9 +96,12 @@ export function findBookMove(
     size: number;
     winMode: TCaroWinMode;
     turn: TTurn;
-  }
+    /** Moves not to play, e.g. moves that lost here before. */
+    avoid?: ReadonlySet<number>;
+  },
+  random: () => number = Math.random
 ) {
-  const { steps, size, winMode, turn } = request;
+  const { steps, size, winMode, turn, avoid } = request;
   if (winMode != 'blockOpponent' || book.size == 0) return undefined;
   const stones: Array<TBookStone> = Object.entries(steps).map(([location, owner]) => ({
     row: Math.floor(Number(location) / size),
@@ -100,10 +114,13 @@ export function findBookMove(
   if (!stones.every((stone) => inside(stone.row) && inside(stone.column))) return undefined;
 
   const { key, toReal } = openingKey(stones);
-  const move = book.get(key);
-  if (!move) return undefined;
-  const [row, column] = toReal(move[0], move[1]);
-  if (row < 0 || column < 0 || row >= size || column >= size) return undefined;
-  const location = row * size + column;
-  return steps[location] == undefined ? location : undefined;
+  const choices: Array<number> = [];
+  for (const move of book.get(key) ?? []) {
+    const [row, column] = toReal(move[0], move[1]);
+    if (row < 0 || column < 0 || row >= size || column >= size) continue;
+    const location = row * size + column;
+    if (steps[location] == undefined && !avoid?.has(location)) choices.push(location);
+  }
+  if (choices.length == 0) return undefined;
+  return choices[Math.min(choices.length - 1, Math.floor(random() * choices.length))];
 }

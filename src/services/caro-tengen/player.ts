@@ -59,8 +59,8 @@ export async function findTengenMove(
   }
 
   // A book move that lost here before is skipped, like any other.
-  const bookMove = findBookMove(await getOpeningBook(), request);
-  if (bookMove != undefined && !learned?.avoid.has(bookMove)) {
+  const bookMove = findBookMove(await getOpeningBook(), { ...request, avoid: learned?.avoid });
+  if (bookMove != undefined) {
     log('book', bookMove);
     return { location: bookMove, source: 'book' };
   }

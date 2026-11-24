@@ -73,6 +73,11 @@ export default [
     },
   },
   {
+    // react-three-fiber elements take three.js props (`position`, `rotation`, `args`, ...).
+    files: ['src/components/chess/**'],
+    rules: { 'react/no-unknown-property': 'off' },
+  },
+  {
     // Board pieces are small pre-optimised PNGs, all preloaded and shown at a fixed size, so
     // next/image would only add a loader round trip per piece.
     files: ['src/views/PikachuView/**', 'src/components/AppDialog/PikachuInstructionDialog.tsx'],

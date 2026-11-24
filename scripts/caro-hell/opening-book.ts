@@ -2,22 +2,30 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { openingKey, TOpeningBookFile } from 'src/services/caro-tengen/opening-book';
+import {
+  openingKey,
+  parseOpeningBook,
+  TOpeningBook,
+  TOpeningBookFile,
+} from 'src/services/caro-tengen/opening-book';
 import { TTurn } from 'src/types/caro.type';
-import { parseNumber, ROOT } from './common';
-import { PiskvorkEngine, TEngineName } from './piskvork';
+import { isEntry, parseNumber, ROOT } from './common';
+import { PiskvorkEngine, TEngineName, TScoredMove } from './piskvork';
 
 /**
- * Builds the hell level's opening book (blocked-ends rule) with a long native engine search
- * (Tengen by default, or `--engine rapfi-classical`).
+ * Builds the hell level's opening book (blocked-ends rule) with a long native search of Rapfi
+ * with the browser's caro network (`--engine tengen` or `rapfi-classical` for the others).
  *
- *   node --import tsx scripts/caro-hell/opening-book.ts --depth 3 --radius 2 --time 10000
+ *   nice node --import tsx scripts/caro-hell/opening-book.ts --depth 3 --radius 2 --time 5000
  *
  * Walks the openings from the empty board, with the machine moving first and second: the
- * opponent may play any cell within `radius` of a stone, the machine plays Tengen's choice. Every
- * machine-to-move position up to the machine's `depth`-th move gets an entry. Resumable: entries
- * already in the output file are reused, so a rerun (or a deeper one) only searches new
- * positions.
+ * opponent may play any cell within `radius` of a stone, the machine plays the engine's choice.
+ * Every machine-to-move position up to the machine's `depth`-th move gets an entry. With Rapfi,
+ * an entry also keeps the other moves of a multi-PV search scoring within `margin` of the best
+ * (one is picked at random in play), and the walk goes on from each of them.
+ *
+ * Resumable: entries already in the output file are reused when it was built by the same engine,
+ * so a rerun (or a deeper one) only searches new positions.
  */
 
 /** Positions are laid out around the middle of a 20x20 board, far from its edges. */
@@ -26,16 +34,33 @@ const CENTER = BOARD / 2;
 
 type TMoves = Array<[number, number]>;
 
+/** Moves kept per entry at most, from a multi-PV search of this many lines. */
+const CHOICES = 3;
+
 function bookKey(moves: TMoves) {
   return openingKey(
     moves.map(([row, column], index) => ({ row, column, own: index % 2 == moves.length % 2 }))
   );
 }
 
+/**
+ * The search's choice and the other moves scoring within `margin` of it. Only the choice when it
+ * found a forced win or loss: a mate is not to be traded for a merely good move, and a lost
+ * position has nothing to vary.
+ */
+export function equallyGood(scored: Array<TScoredMove>, margin: number) {
+  const [best, ...rest] = scored;
+  if (best.isMate) return [best.move];
+  return [best, ...rest.filter((move) => !move.isMate && move.score >= best.score - margin)]
+    .slice(0, CHOICES)
+    .map((move) => move.move);
+}
+
 async function main() {
   const { values } = parseArgs({
     options: {
-      engine: { type: 'string', default: 'tengen' },
+      engine: { type: 'string', default: 'rapfi-caro' },
+      margin: { type: 'string', default: '20' },
       depth: { type: 'string', default: '3' },
       radius: { type: 'string', default: '2' },
       time: { type: 'string', default: '10000' },
@@ -50,18 +75,25 @@ async function main() {
   const timeMs = parseNumber(values.time, 10_000);
   const threads = parseNumber(values.threads, 2);
   const workers = parseNumber(values.workers, 4);
+  // Evaluation units of the side to move (Rapfi and Tengen: 200 per logistic unit).
+  const margin = parseNumber(values.margin, 20);
+  const multiPv = engineName.startsWith('rapfi');
   const out = join(ROOT, values.out);
 
-  const entries: TOpeningBookFile['entries'] = existsSync(out)
-    ? (JSON.parse(readFileSync(out, 'utf8')) as TOpeningBookFile).entries
-    : {};
+  const previous = existsSync(out)
+    ? parseOpeningBook(JSON.parse(readFileSync(out, 'utf8')) as TOpeningBookFile)
+    : undefined;
+  const previousEngine = existsSync(out)
+    ? (JSON.parse(readFileSync(out, 'utf8')) as TOpeningBookFile).meta?.engine
+    : undefined;
+  const entries: TOpeningBook = previous && previousEngine == engineName ? previous : new Map();
   const save = () => {
     mkdirSync(dirname(out), { recursive: true });
     const file: TOpeningBookFile = {
-      version: 1,
+      version: 2,
       winMode: 'blockOpponent',
-      meta: { engine: engineName, timeMs, threads, depth, radius },
-      entries,
+      meta: { engine: engineName, timeMs, threads, depth, radius, margin },
+      entries: Object.fromEntries(entries),
     };
     writeFileSync(out, JSON.stringify(file) + '\n');
   };
@@ -74,27 +106,36 @@ async function main() {
     })
   );
 
-  /** The machine's move in a position, from the book or from a search. */
-  async function machineMove(moves: TMoves, engine: PiskvorkEngine): Promise<[number, number]> {
-    if (moves.length == 0) return [CENTER, CENTER];
+  /** The machine's moves in a position, from the book or from a search. */
+  async function machineMoves(moves: TMoves, engine: PiskvorkEngine): Promise<TMoves> {
+    if (moves.length == 0) return [[CENTER, CENTER]];
     const { key, toReal, toCanonical } = bookKey(moves);
-    const known = entries[key];
-    if (known) return toReal(known[0], known[1]);
+    const known = entries.get(key);
+    if (known) return known.map(([row, column]) => toReal(row, column));
     const locations = moves.map(([row, column]) => row * BOARD + column);
-    const location = await engine.move(locations, BOARD, (moves.length % 2) as TTurn);
-    const move: [number, number] = [Math.floor(location / BOARD), location % BOARD];
-    entries[key] = toCanonical(move[0], move[1]);
-    return move;
+    const turn = (moves.length % 2) as TTurn;
+    const chosen = multiPv
+      ? equallyGood(await engine.nbest(locations, BOARD, turn, CHOICES), margin)
+      : [await engine.move(locations, BOARD, turn)];
+    const found: TMoves = chosen.map((location) => [
+      Math.floor(location / BOARD),
+      location % BOARD,
+    ]);
+    entries.set(
+      key,
+      found.map(([row, column]) => toCanonical(row, column))
+    );
+    return found;
   }
 
   // Machine first: the empty board; machine second: one opponent stone (any cell is the same).
   let level: Array<TMoves> = [[], [[CENTER, CENTER]]];
   for (let ply = 0; ply < depth; ply++) {
-    const known = level.filter((moves) => moves.length == 0 || bookKey(moves).key in entries);
+    const known = level.filter((moves) => moves.length == 0 || entries.has(bookKey(moves).key));
     console.log(
       `[book] machine move ${ply + 1}/${depth}: ${level.length} positions, ${known.length} known, ${timeMs} ms x ${threads} threads x ${workers} engines`
     );
-    const replies: Array<TMoves> = new Array(level.length);
+    const replies: Array<Array<TMoves>> = new Array(level.length);
     let next = 0;
     let done = 0;
     const startedAt = Date.now();
@@ -102,7 +143,8 @@ async function main() {
       engines.map(async (engine) => {
         for (let index = next++; index < level.length; index = next++) {
           const moves = level[index];
-          replies[index] = [...moves, await machineMove(moves, engine)];
+          const found = await machineMoves(moves, engine);
+          replies[index] = found.map((move) => [...moves, move]);
           done++;
           if (done % 20 == 0 || done == level.length) {
             save();
@@ -117,7 +159,7 @@ async function main() {
 
     // Every opponent reply near the stones, one position per canonical key.
     const positions = new Map<string, TMoves>();
-    for (const moves of replies) {
+    for (const moves of replies.flat()) {
       const taken = new Set(moves.map(([row, column]) => row * BOARD + column));
       for (const [row, column] of moves)
         for (let dr = -radius; dr <= radius; dr++)
@@ -131,9 +173,10 @@ async function main() {
     level = [...positions.values()];
   }
 
-  console.log(`[book] done: ${Object.keys(entries).length} entries in ${values.out}`);
+  const varied = [...entries.values()].filter((moves) => moves.length > 1).length;
+  console.log(`[book] done: ${entries.size} entries (${varied} with a choice) in ${values.out}`);
   for (const engine of engines) engine.stop();
   process.exit(0);
 }
 
-await main();
+if (isEntry(import.meta.url)) await main();

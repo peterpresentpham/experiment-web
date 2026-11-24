@@ -162,7 +162,12 @@ export type TPlayer = (state: {
   turn: TTurn;
 }) => TChoice | Promise<TChoice>;
 
-type TChoice = { move: number; policy?: Array<[number, number]> | null };
+type TChoice = {
+  move: number;
+  policy?: Array<[number, number]> | null;
+  /** What chose the move, for players that combine several (e.g. "book"). */
+  source?: string;
+};
 
 /** Lets pending signals and timers run between long synchronous steps. */
 export const yieldToEvents = () => new Promise((resolve) => setImmediate(resolve));
@@ -205,6 +210,37 @@ export async function playGame(
     }
   }
   return { size, winMode, moves, winner, policies };
+}
+
+/**
+ * A random empty cell within `radius` of a stone (near the centre on an empty board), as a person
+ * might open.
+ */
+export function randomNearby(
+  moves: ReadonlyArray<number>,
+  size: number,
+  radius: number,
+  random: () => number = Math.random
+) {
+  const center = Math.floor(size / 2);
+  if (moves.length == 0) {
+    const row = center + Math.floor(random() * 3) - 1;
+    const column = center + Math.floor(random() * 3) - 1;
+    return row * size + column;
+  }
+  const taken = new Set(moves);
+  const cells = new Set<number>();
+  for (const move of moves) {
+    const [row, column] = [Math.floor(move / size), move % size];
+    for (let dr = -radius; dr <= radius; dr++)
+      for (let dc = -radius; dc <= radius; dc++) {
+        const [r, c] = [row + dr, column + dc];
+        if (r >= 0 && c >= 0 && r < size && c < size && !taken.has(r * size + c))
+          cells.add(r * size + c);
+      }
+  }
+  const options = [...cells];
+  return options[Math.floor(random() * options.length)];
 }
 
 /** A few random stones near the centre, so games do not all start the same way. */

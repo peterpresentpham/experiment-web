@@ -8,13 +8,14 @@ export const blogMessages = defineMessages<{
   title: string;
   intro: string;
   home: string;
-  topics: { thesis: TTopicText; formatNumber: TTopicText; rubik: TTopicText };
+  topics: { thesis: TTopicText; formatNumber: TTopicText; rubik: TTopicText; chess: TTopicText };
   thesis: { metaTitle: string; metaDescription: string; breadcrumb: string; loading: string };
   formatNumber: {
     title: string;
     docs: string;
     pages: Record<TFormatNumberSlug, string>;
   };
+  chess: { title: string; description: string };
   rubik: {
     title: string;
     description: string;
@@ -61,6 +62,11 @@ export const blogMessages = defineMessages<{
         description:
           'Learn to solve the 3x3 cube in three levels: beginner, intermediate and advanced. All 57 OLL, 21 PLL and 41 F2L cases, with diagrams.',
       },
+      chess: {
+        title: 'Chess',
+        description:
+          'Learn chess from scratch: the rules, how every piece moves, openings, tactics and endgames, with 3D boards that play each example.',
+      },
     },
     thesis: {
       metaTitle: 'Account Abstraction Wallet with Social Recovery based on Zero-Knowledge Proof',
@@ -81,6 +87,11 @@ export const blogMessages = defineMessages<{
         format: 'Format',
         types: 'Types',
       },
+    },
+    chess: {
+      title: 'Chess',
+      description:
+        'A leveled guide to chess: the rules, how every piece moves, then openings, tactics and endgames, with 3D boards.',
     },
     rubik: {
       title: 'Rubik 3x3',
@@ -129,6 +140,11 @@ export const blogMessages = defineMessages<{
         description:
           'Học giải Rubik 3x3 theo 3 cấp độ: người mới, trung cấp, chuyên nghiệp. Đủ 57 OLL, 21 PLL, 41 F2L, có hình minh hoạ.',
       },
+      chess: {
+        title: 'Cờ vua',
+        description:
+          'Học cờ vua từ con số 0: luật chơi, cách đi từng quân, khai cuộc, chiến thuật và tàn cuộc, với bàn cờ 3D chạy từng ví dụ.',
+      },
     },
     thesis: {
       metaTitle: 'Account Abstraction Wallet with Social Recovery based on Zero-Knowledge Proof',
@@ -149,6 +165,11 @@ export const blogMessages = defineMessages<{
         format: 'Format',
         types: 'Kiểu dữ liệu',
       },
+    },
+    chess: {
+      title: 'Cờ vua',
+      description:
+        'Hướng dẫn học cờ vua theo cấp độ: luật chơi, cách đi từng quân, rồi khai cuộc, chiến thuật và tàn cuộc, với bàn cờ 3D.',
     },
     rubik: {
       title: 'Rubik 3x3',

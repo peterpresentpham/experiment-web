@@ -1,6 +1,7 @@
 import {
   findBookMove,
   openingKey,
+  parseOpeningBook,
   TBookStone,
   TOpeningBook,
 } from 'src/services/caro-tengen/opening-book';
@@ -57,7 +58,7 @@ describe('openingKey', () => {
 describe('findBookMove', () => {
   // Book built from POSITION: the move one cell below the own stone.
   const { key, toCanonical } = openingKey(POSITION);
-  const book: TOpeningBook = new Map([[key, toCanonical(2, 1)]]);
+  const book: TOpeningBook = new Map([[key, [toCanonical(2, 1)]]]);
 
   function request(stones: Array<TBookStone>, size: number) {
     const steps: { [location: number]: TTurn } = {};
@@ -85,6 +86,27 @@ describe('findBookMove', () => {
       findBookMove(book, { ...request(place(POSITION, 0, 6, 6), 15), winMode: 'non-blockOpponent' })
     ).toBeUndefined();
     expect(findBookMove(book, request(POSITION.slice(1), 15))).toBeUndefined();
+  });
+
+  it('picks among equally good moves and skips moves to avoid', () => {
+    const stones = place(POSITION, 0, 8, 9);
+    const at = (row: number, column: number) => (row + 8) * 20 + (column + 9);
+    const varied: TOpeningBook = new Map([[key, [toCanonical(2, 1), toCanonical(-1, 1)]]]);
+    expect(findBookMove(varied, request(stones, 20), () => 0)).toBe(at(2, 1));
+    expect(findBookMove(varied, request(stones, 20), () => 0.99)).toBe(at(-1, 1));
+    const avoid = new Set([at(2, 1)]);
+    expect(findBookMove(varied, { ...request(stones, 20), avoid }, () => 0)).toBe(at(-1, 1));
+    const both = new Set([at(2, 1), at(-1, 1)]);
+    expect(findBookMove(varied, { ...request(stones, 20), avoid: both })).toBeUndefined();
+  });
+
+  it('reads a version 1 book, one move per entry', () => {
+    const file = {
+      version: 1 as const,
+      winMode: 'blockOpponent' as const,
+      entries: { a: [1, 2] as [number, number] },
+    };
+    expect(parseOpeningBook(file).get('a')).toEqual([[1, 2]]);
   });
 
   it('opens in the centre', () => {

@@ -1,5 +1,6 @@
 import { TCaroWinMode, TTurn } from 'src/types/caro.type';
 import { MachineBoard, TStone } from './board';
+import { experienceFrame } from './experience-key';
 import { isLosingScore, TAnalysis } from './search';
 
 /**
@@ -9,7 +10,7 @@ import { isLosingScore, TAnalysis } from './search';
  */
 export type TExperienceEntry = { avoid: Array<number>; best?: number };
 
-/** Keyed by `positionKey`; insertion order doubles as recency for trimming. */
+/** Keyed by `experienceFrame`; insertion order doubles as recency for trimming. */
 export type TExperienceBook = Map<string, TExperienceEntry>;
 
 export type TGameRecord = {
@@ -36,71 +37,25 @@ export type TCloseCallOptions = TLearnOptions & {
   hasForcedWin: (board: MachineBoard, attacker: TStone) => boolean;
 };
 
+export { positionKey, transformIndex } from './experience-key';
+
 export const MAX_EXPERIENCE_ENTRIES = 3_000;
 
 export function toStone(turn: TTurn): TStone {
   return turn == 0 ? 1 : 2;
 }
 
-// The eight symmetries of a square board: four rotations, each optionally mirrored.
-const TRANSFORMS: Array<(row: number, column: number, last: number) => [number, number]> = [
-  (r, c) => [r, c],
-  (r, c, n) => [c, n - r],
-  (r, c, n) => [n - r, n - c],
-  (r, c, n) => [n - c, r],
-  (r, c, n) => [r, n - c],
-  (r, c, n) => [n - r, c],
-  (r, c) => [c, r],
-  (r, c, n) => [n - c, n - r],
-];
-// Index of the transform that undoes each one: the rotations by 90° swap, the rest undo themselves.
-const INVERSE = [0, 3, 2, 1, 4, 5, 6, 7];
-
-export function transformIndex(transform: number, index: number, size: number) {
-  const [row, column] = TRANSFORMS[transform](Math.floor(index / size), index % size, size - 1);
-  return row * size + column;
-}
-
-/**
- * A key shared by all eight symmetric versions of the position, plus the transform that maps
- * real cells to the canonical ones. The side to move is part of the key.
- */
-export function positionKey(
-  cells: ArrayLike<number>,
-  size: number,
-  winMode: TCaroWinMode,
-  side: TStone
-) {
-  const area = size * size;
-  let bestKey = '';
-  let bestTransform = 0;
-  const buffer = new Array<string>(area);
-  for (let transform = 0; transform < TRANSFORMS.length; transform++) {
-    for (let index = 0; index < area; index++) {
-      buffer[transform == 0 ? index : transformIndex(transform, index, size)] = String(
-        cells[index]
-      );
-    }
-    const key = buffer.join('');
-    if (transform == 0 || key < bestKey) {
-      bestKey = key;
-      bestTransform = transform;
-    }
-  }
-  const prefix = `${size}${winMode == 'blockOpponent' ? 'b' : 'n'}${side}:`;
-  return { key: prefix + bestKey, transform: bestTransform };
-}
-
 /** Real-board view of what the book knows about the current position, if anything. */
 export function lookupExperience(book: TExperienceBook, board: MachineBoard, side: TStone) {
   if (book.size == 0) return undefined;
-  const { key, transform } = positionKey(board.cells, board.size, board.winMode, side);
+  const { key, toReal } = experienceFrame(board.cells, board.size, board.winMode, side);
   const entry = book.get(key);
   if (!entry) return undefined;
-  const toReal = (index: number) => transformIndex(INVERSE[transform], index, board.size);
+  // A lesson learned elsewhere on the board may name a cell this board does not have.
+  const best = entry.best == undefined ? -1 : toReal(entry.best);
   return {
-    avoid: new Set(entry.avoid.map(toReal)),
-    best: entry.best == undefined ? undefined : toReal(entry.best),
+    avoid: new Set(entry.avoid.map(toReal).filter((index) => index >= 0)),
+    best: best >= 0 ? best : undefined,
   };
 }
 
@@ -131,11 +86,9 @@ export function learnFromLoss(
     const board = new MachineBoard(size, winMode);
     for (const move of moves.slice(0, decision)) board.place(move.location, toStone(move.turn));
 
-    const { key, transform } = positionKey(board.cells, size, winMode, side);
-    const toCanonical = (index: number) => transformIndex(transform, index, size);
-    const toReal = (index: number) => transformIndex(INVERSE[transform], index, size);
+    const { key, toCanonical, toReal } = experienceFrame(board.cells, size, winMode, side);
     const known = book.get(key);
-    const avoid = new Set((known?.avoid ?? []).map(toReal));
+    const avoid = new Set((known?.avoid ?? []).map(toReal).filter((index) => index >= 0));
     avoid.add(moves[decision].location);
 
     const result = options.analyze(board, side, avoid);
@@ -202,4 +155,44 @@ export function mergeExperience(book: TExperienceBook, entries: Array<[string, T
     book.delete(oldest);
   }
   return book;
+}
+
+/**
+ * Lessons saved under the old whole-board keys, moved to the keys `experienceFrame` gives now,
+ * so a lesson learned away from the edges also covers the same shape elsewhere. Two lessons that
+ * now share a key are merged: the moves to avoid of both, the later best move.
+ */
+export function rekeyExperience(entries: Array<[string, TExperienceEntry]>) {
+  const book: TExperienceBook = new Map();
+  for (const [key, entry] of entries) {
+    const match = /^(\d+)([bn])([12]):([012]+)$/.exec(key);
+    const size = Number(match?.[1]);
+    let moved: [string, TExperienceEntry] = [key, entry];
+    if (match && match[4].length == size * size) {
+      // The key spells out its own canonical board, the frame the entry's cells are in.
+      const cells = [...match[4]].map(Number);
+      const winMode: TCaroWinMode = match[2] == 'b' ? 'blockOpponent' : 'non-blockOpponent';
+      const frame = experienceFrame(cells, size, winMode, Number(match[3]) as TStone);
+      moved = [
+        frame.key,
+        {
+          avoid: entry.avoid.map(frame.toCanonical),
+          ...(entry.best != undefined && { best: frame.toCanonical(entry.best) }),
+        },
+      ];
+    }
+    const known = book.get(moved[0]);
+    book.set(
+      moved[0],
+      known
+        ? {
+            avoid: [...new Set([...known.avoid, ...moved[1].avoid])],
+            ...((moved[1].best ?? known.best) != undefined && {
+              best: moved[1].best ?? known.best,
+            }),
+          }
+        : moved[1]
+    );
+  }
+  return [...book];
 }

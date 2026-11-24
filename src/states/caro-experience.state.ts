@@ -1,5 +1,9 @@
 import { MAX_REPLAY_GAMES, THellGame } from 'src/services/caro-hell/encode';
-import { mergeExperience, TExperienceEntry } from 'src/services/caro-machine/experience';
+import {
+  mergeExperience,
+  rekeyExperience,
+  TExperienceEntry,
+} from 'src/services/caro-machine/experience';
 import { TCaroHellEngines } from 'src/types/caro.type';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -79,15 +83,17 @@ export const useCaroExperienceStore = create<TCaroExperienceStateType>()(
     }),
     {
       name: 'experiment.caro.experience',
-      version: 3,
+      version: 4,
       // Version 3 starts every player over, as "clear memory" does: lessons and games from before
       // the blocked-ends rule fix are dropped, and the bumped epoch retires the personal network.
+      // Version 4 keys lessons away from the edges by their shape (experience-key.ts).
       migrate: (persisted, version) => {
         const state = persisted as Pick<
           TCaroExperienceStateType,
           'entries' | 'lastGame' | 'hellGames' | 'hellTrainedGames' | 'epoch'
         >;
-        if (version >= 3) return state;
+        if (version >= 4) return state;
+        if (version == 3) return { ...state, entries: rekeyExperience(state.entries ?? []) };
         return {
           entries: [],
           lastGame: '',

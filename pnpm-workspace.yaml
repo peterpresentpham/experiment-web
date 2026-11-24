@@ -4,3 +4,6 @@ allowBuilds:
   '@tensorflow/tfjs-node': false
   core-js: false
   esbuild: true
+overrides:
+  # cubing.js pins an older @types/three; two copies make r3f prop types incompatible.
+  '@types/three': 0.170.0

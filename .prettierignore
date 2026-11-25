@@ -7,3 +7,4 @@ pnpm-lock.yaml
 /ml-data
 /public/engines
 /public/models
+/src/lib/cube/vendor/*.js

@@ -149,8 +149,9 @@ const pikachuMachine = setup({
       always: [
         {
           guard: 'isOutOfMove',
-          target: PikachuMachineState.OUT_OF_MOVE,
-          actions: 'notifyOutOfMove',
+          // No pair is left: reshuffle automatically instead of waiting for the player.
+          target: PikachuMachineState.PLAYING,
+          actions: ['changeBoard', 'notifyOutOfMove'],
         },
         {
           guard: and(['isCleared', 'isRandomMode']),
@@ -164,18 +165,6 @@ const pikachuMachine = setup({
         },
         { target: PikachuMachineState.PLAYING },
       ],
-    },
-    [PikachuMachineState.OUT_OF_MOVE]: {
-      on: {
-        [PikachuMachineEvent.CHANGE]: {
-          target: PikachuMachineState.PLAYING,
-          actions: ['changeBoard', 'resetSelection'],
-        },
-        [PikachuMachineEvent.CREATE]: {
-          target: PikachuMachineState.PLAYING,
-          actions: ['createBoard', 'resetSelection'],
-        },
-      },
     },
   },
 });

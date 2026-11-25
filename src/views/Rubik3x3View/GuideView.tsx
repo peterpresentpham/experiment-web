@@ -1,3 +1,6 @@
+import { Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { RUBIK_BASE } from 'src/configs/blog.config';
 import { defineMessages } from 'src/i18n/define';
 import { getLocale } from 'src/i18n/server';
 import AdvancedTab from './AdvancedTab';
@@ -18,6 +21,7 @@ const SOURCE_URLS = [
 const TEXT = defineMessages<{
   title: string;
   intro: string;
+  solver: string;
   levels: Record<'beginner' | 'intermediate' | 'advanced', { label: string; hint: string }>;
   sourcesTitle: string;
   // Same order as `SOURCE_URLS`.
@@ -27,6 +31,7 @@ const TEXT = defineMessages<{
     title: 'Learn to solve the Rubik 3x3 from scratch',
     intro:
       'A 3x3 cube has about 43 quintillion states, yet every one of them can be solved in at most 20 moves. You do not need to remember states: you only need a method that breaks the solve into steps. Pick the tab for your level. Every picture is drawn automatically from its own algorithm, and every algorithm has been checked in a simulation.',
+    solver: 'Have a scrambled cube? Paint or scan it and get a solution in 3D',
     levels: {
       beginner: { label: '1. Beginner', hint: 'LBL · 7 steps · ~7 algorithms' },
       intermediate: { label: '2. Intermediate', hint: 'CFOP 4-look · 17 algorithms' },
@@ -47,6 +52,7 @@ const TEXT = defineMessages<{
     title: 'Học giải Rubik 3x3 từ con số 0',
     intro:
       'Rubik 3x3 có khoảng 43 tỷ tỷ trạng thái, nhưng mọi trạng thái đều giải được trong tối đa 20 nước. Bạn không cần nhớ trạng thái: chỉ cần một phương pháp chia nhỏ thành các bước. Chọn tab theo trình độ. Mọi hình minh hoạ được vẽ tự động từ chính công thức, và mọi công thức đều đã được kiểm tra bằng mô phỏng.',
+    solver: 'Có khối đang xáo? Tô màu hoặc quét bằng camera để xem lời giải 3D',
     levels: {
       beginner: { label: '1. Người mới', hint: 'LBL · 7 bước · ~7 công thức' },
       intermediate: { label: '2. Trung cấp', hint: 'CFOP 4-look · 17 công thức' },
@@ -77,6 +83,13 @@ export default async function GuideView({ level }: { level?: string }) {
     <div>
       <h1 className="text-3xl font-bold sm:text-4xl">{t.title}</h1>
       <p className="mt-3 leading-relaxed">{t.intro}</p>
+      <Link
+        href={`${RUBIK_BASE}/solver`}
+        className="mt-3 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
+      >
+        <Sparkles className="size-4" />
+        {t.solver}
+      </Link>
 
       <RubikTabs panels={panels} defaultLevel={level} />
 

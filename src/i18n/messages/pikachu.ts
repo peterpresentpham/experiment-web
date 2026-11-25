@@ -10,7 +10,6 @@ export const pikachuMessages = defineMessages<{
   hint: string;
   changeBoard: string;
   outOfMove: string;
-  outOfMoveOverlay: string;
   win: string;
   piece: (value: number, row: number, column: number) => string;
   config: {
@@ -57,8 +56,7 @@ export const pikachuMessages = defineMessages<{
     randomType: (transform) => `Type · ${transform}`,
     hint: 'Hint',
     changeBoard: 'Change board',
-    outOfMove: 'No moves left, please change the board',
-    outOfMoveOverlay: 'No more moves. Change the board to continue.',
+    outOfMove: 'No moves left, the board was shuffled',
     win: 'You win!',
     piece: (value, row, column) => `Piece ${value}, row ${row}, column ${column}`,
     config: {
@@ -107,8 +105,7 @@ export const pikachuMessages = defineMessages<{
     randomType: (transform) => `Kiểu · ${transform}`,
     hint: 'Gợi ý',
     changeBoard: 'Đổi bàn',
-    outOfMove: 'Hết nước đi, hãy đổi bàn',
-    outOfMoveOverlay: 'Hết nước đi. Đổi bàn để chơi tiếp.',
+    outOfMove: 'Hết nước đi, đã tự động đổi bàn',
     win: 'Bạn thắng!',
     piece: (value, row, column) => `Hình ${value}, hàng ${row}, cột ${column}`,
     config: {

@@ -54,7 +54,6 @@ export enum PikachuMachineState {
   MATCHED = 'matched',
   // Transient state that routes to the next state once a match has been committed.
   RESOLVING = 'resolving',
-  OUT_OF_MOVE = 'out-of-move',
 }
 
 export enum PikachuMachineEvent {

@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       (href) => !href.startsWith(FORMAT_NUMBER_BASE)
     ),
     `${RUBIK_BASE}/f2l`,
+    `${RUBIK_BASE}/solver`,
     ...FORMAT_NUMBER_PAGES.map((page) => `${FORMAT_NUMBER_BASE}/${page.slug}`),
   ];
   return [{ url: SITE_URL }, ...hrefs.map((href) => ({ url: `${SITE_URL}${href}` }))];

@@ -21,7 +21,7 @@ export type Sticker = {
 
 export type CubeState = Array<Sticker>;
 
-const FACE_NORMALS: Record<Face, Vec> = {
+export const FACE_NORMALS: Record<Face, Vec> = {
   U: [0, 1, 0],
   D: [0, -1, 0],
   F: [0, 0, 1],
@@ -30,7 +30,7 @@ const FACE_NORMALS: Record<Face, Vec> = {
   L: [-1, 0, 0],
 };
 
-const FACES: Array<Face> = ['U', 'D', 'F', 'B', 'R', 'L'];
+export const FACES: Array<Face> = ['U', 'D', 'F', 'B', 'R', 'L'];
 
 export function solvedCube(): CubeState {
   const stickers: CubeState = [];
@@ -182,42 +182,48 @@ export function caseFromAlg(alg: string, setup = ''): CubeState {
   return normalizeOrientation(applyAlg(applyAlg(solvedCube(), setup), invertAlg(alg)));
 }
 
+/** How each face is laid out in the standard net, seen from outside: its up and right directions. */
+const FACE_FRAMES: Record<Face, [Vec, Vec]> = {
+  U: [
+    [0, 0, -1],
+    [1, 0, 0],
+  ],
+  D: [
+    [0, 0, 1],
+    [1, 0, 0],
+  ],
+  F: [
+    [0, 1, 0],
+    [1, 0, 0],
+  ],
+  B: [
+    [0, 1, 0],
+    [-1, 0, 0],
+  ],
+  R: [
+    [0, 1, 0],
+    [0, 0, -1],
+  ],
+  L: [
+    [0, 1, 0],
+    [0, 0, 1],
+  ],
+};
+
+/** Cubie position of sticker `index` (0-8, row by row in the standard net) on `face`. */
+export function faceletPosition(face: Face, index: number): Vec {
+  const n = FACE_NORMALS[face];
+  const [up, right] = FACE_FRAMES[face];
+  const row = Math.floor(index / 3);
+  const column = index % 3;
+  return [0, 1, 2].map((k) => n[k] + up[k] * (1 - row) + right[k] * (column - 1)) as Vec;
+}
+
 /** Read a face as 9 colours, row by row as seen from outside (standard net orientation). */
 export function readFace(state: CubeState, face: Face): Array<Face> {
   const n = FACE_NORMALS[face];
-  const frames: Record<Face, [Vec, Vec]> = {
-    U: [
-      [0, 0, -1],
-      [1, 0, 0],
-    ],
-    D: [
-      [0, 0, 1],
-      [1, 0, 0],
-    ],
-    F: [
-      [0, 1, 0],
-      [1, 0, 0],
-    ],
-    B: [
-      [0, 1, 0],
-      [-1, 0, 0],
-    ],
-    R: [
-      [0, 1, 0],
-      [0, 0, -1],
-    ],
-    L: [
-      [0, 1, 0],
-      [0, 0, 1],
-    ],
-  };
-  const [up, right] = frames[face];
-  const out: Array<Face> = [];
-  for (let i = 0; i < 3; i++) {
-    for (let j = 0; j < 3; j++) {
-      const pos = [0, 1, 2].map((k) => n[k] + up[k] * (1 - i) + right[k] * (j - 1)) as Vec;
-      out.push(stickerAt(state, pos, n).color);
-    }
-  }
-  return out;
+  return Array.from(
+    { length: 9 },
+    (_, index) => stickerAt(state, faceletPosition(face, index), n).color
+  );
 }

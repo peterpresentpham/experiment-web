@@ -111,7 +111,7 @@ describe('pikachu game flow', () => {
     expect(usePikachuStore.getState().board[1].slice(1, 5)).toEqual([0, 0, 2, 2]);
   });
 
-  it('stops when no move is left and recovers after changing the board', () => {
+  it('reshuffles automatically when no move is left', () => {
     // After the 1s go, the 2s and 3s block each other on the diagonals.
     const actor = loadBoard([
       [1, 1, 0, 0, 0, 0],
@@ -120,13 +120,6 @@ describe('pikachu game flow', () => {
       [0, 0, 0, 0, 0, 0],
     ]);
     match(actor, [1, 1], [1, 2]);
-    expect(actor.getSnapshot().value).toBe(PikachuMachineState.OUT_OF_MOVE);
-
-    // Clicks are ignored until the board is changed.
-    actor.send({ type: PikachuMachineEvent.MOVE, position: [2, 3] });
-    expect(actor.getSnapshot().context.position).toBeUndefined();
-
-    actor.send({ type: PikachuMachineEvent.CHANGE });
     expect(actor.getSnapshot().value).toBe(PikachuMachineState.PLAYING);
     const { board, suggestion } = usePikachuStore.getState();
     const [first, last] = [suggestion[0], suggestion[suggestion.length - 1]];

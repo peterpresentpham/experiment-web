@@ -9,7 +9,16 @@ import tseslint from 'typescript-eslint';
 
 export default [
   {
-    ignores: ['dist', '.next', 'coverage', 'ml-data/**', 'public/**', 'next-env.d.ts'],
+    ignores: [
+      'dist',
+      '.next',
+      'coverage',
+      'ml-data/**',
+      'public/**',
+      'next-env.d.ts',
+      // Third-party code copied unchanged.
+      'src/lib/cube/vendor/*.js',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

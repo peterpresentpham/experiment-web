@@ -1,6 +1,6 @@
 import { CubeState, Face, Sticker, Vec } from './cube';
 
-const STICKER_COLORS: Record<Face, string> = {
+export const STICKER_COLORS: Record<Face, string> = {
   U: '#FFD500',
   D: '#FFFFFF',
   F: '#009B48',

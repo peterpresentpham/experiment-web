@@ -4,28 +4,22 @@ import { motion } from 'motion/react';
 import { useCallback, useMemo } from 'react';
 import { PikachuMachineContext, usePikachuSend } from 'src/state-machine/pikachu.state-machine';
 import { usePikachuStore } from 'src/states/pikachu.state';
-import { PikachuMachineEvent, PikachuMachineState } from 'src/types/pikachu.type';
+import { PikachuMachineEvent } from 'src/types/pikachu.type';
 import PathDraw from './PathDraw';
 import PikachuCell from './PikachuCell';
 import SuggestionDraw from './SuggestionDraw';
-import { useMessages } from 'src/i18n/client';
-import { pikachuMessages } from 'src/i18n/messages/pikachu';
 
 type TProps = {
   size: number;
 };
 
 export default function PikachuBoard({ size }: TProps) {
-  const { outOfMoveOverlay } = useMessages(pikachuMessages);
   const send = usePikachuSend();
   const position = PikachuMachineContext.useSelector((snapshot) => snapshot.context.position);
   const selectedPath = PikachuMachineContext.useSelector(
     (snapshot) => snapshot.context.selectedPath
   );
   const hintRunning = PikachuMachineContext.useSelector((snapshot) => snapshot.context.hintRunning);
-  const isOutOfMove = PikachuMachineContext.useSelector(
-    (snapshot) => snapshot.value === PikachuMachineState.OUT_OF_MOVE
-  );
   const board = usePikachuStore((state) => state.board);
   const numberOfRows = usePikachuStore((state) => state.metadata.numberOfRows);
   const numberOfColumns = usePikachuStore((state) => state.metadata.numberOfColumns);
@@ -59,14 +53,6 @@ export default function PikachuBoard({ size }: TProps) {
       className="relative flex h-fit w-fit flex-col items-center gap-y-px"
       style={{ padding: `${size}px` }}
     >
-      {isOutOfMove && (
-        <div
-          role="status"
-          className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-foreground/60 text-center text-sm font-medium text-background dark:bg-black/70 dark:text-foreground"
-        >
-          {outOfMoveOverlay}
-        </div>
-      )}
       {Array.from({ length: numberOfRows }, (_, rowIndex) => {
         const row = rowIndex + 1;
         return (

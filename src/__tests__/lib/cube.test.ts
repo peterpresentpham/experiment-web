@@ -1,4 +1,10 @@
 import { F2LConfig } from 'src/configs/rubik3x3.config';
+import {
+  CORNER_CASES,
+  CROSS_EDGE_CASES,
+  LEFT_CORNER_CASES,
+  TFirstLayerCase,
+} from 'src/configs/rubikFirstLayer.config';
 import { RUBIK_GUIDE } from 'src/configs/rubikGuide.config';
 import { OLL_CASES, PLL_CASES } from 'src/configs/rubikLL.config';
 import {
@@ -175,3 +181,75 @@ function solvedColor(s: CubeState[number]): Face {
   const [x, y, z] = s.normal;
   return x === 1 ? 'R' : x === -1 ? 'L' : y === 1 ? 'U' : y === -1 ? 'D' : z === 1 ? 'F' : 'B';
 }
+
+/** Where the stickers of the piece whose home is `home` are, to compare one piece in two states. */
+const piecePlace = (state: CubeState, home: [number, number, number]) =>
+  state
+    .filter((s) => s.home.join() === home.join())
+    .map((s) => `${s.color}@${s.pos}/${s.normal}`)
+    .sort()
+    .join(' ');
+
+/** True when every sticker of the piece whose home is `home` sits at home with its own colour. */
+function pieceSolved(state: CubeState, home: [number, number, number]): boolean {
+  const solved = solvedCube();
+  return state
+    .filter((s) => s.home.join() === home.join())
+    .every((s) =>
+      solved.some(
+        (o) =>
+          o.pos.join() === s.pos.join() &&
+          o.normal.join() === s.normal.join() &&
+          o.color === s.color
+      )
+    );
+}
+
+describe('fast white face cases', () => {
+  const crossEdges: Array<[number, number, number]> = [
+    [0, -1, 1],
+    [1, -1, 0],
+    [0, -1, -1],
+    [-1, -1, 0],
+  ];
+  const bottomCorners: Array<[number, number, number]> = [
+    [1, -1, 1],
+    [-1, -1, 1],
+    [1, -1, -1],
+    [-1, -1, -1],
+  ];
+
+  function check(
+    cases: Array<TFirstLayerCase>,
+    target: [number, number, number],
+    keep: typeof crossEdges
+  ) {
+    for (const c of cases) {
+      const state = caseFromAlg(c.algs[0]);
+      expect(pieceSolved(state, target), c.id).toBe(false);
+      for (const home of keep) expect(pieceSolved(state, home), `${c.id} keeps ${home}`).toBe(true);
+      for (const alt of c.algs.slice(1))
+        expect(piecePlace(caseFromAlg(alt), target), alt).toBe(piecePlace(state, target));
+    }
+  }
+
+  it('drops each cross edge in without breaking the others', () => {
+    // The wrong-slot case moves the right edge too, so only the back and left ones must stay.
+    const normal = CROSS_EDGE_CASES.filter((c) => c.id !== 'bottomWrongSlot');
+    check(normal, crossEdges[0], crossEdges.slice(1));
+    check(
+      CROSS_EDGE_CASES.filter((c) => c.id === 'bottomWrongSlot'),
+      crossEdges[0],
+      crossEdges.slice(2)
+    );
+  });
+
+  it('inserts each corner without breaking the cross or other corners', () => {
+    check(CORNER_CASES, bottomCorners[0], [...crossEdges, ...bottomCorners.slice(1)]);
+    check(LEFT_CORNER_CASES, bottomCorners[1], [
+      ...crossEdges,
+      bottomCorners[0],
+      ...bottomCorners.slice(2),
+    ]);
+  });
+});

@@ -3,6 +3,7 @@ import { RUBIK_GUIDE, NOTATION_IMAGES } from 'src/configs/rubikGuide.config';
 import { defineMessages } from 'src/i18n/define';
 import { getLocale } from 'src/i18n/server';
 import BeginnerCompare from './BeginnerCompare';
+import FastFirstLayer from './FastFirstLayer';
 import { AlgRow, Bullets, Callout, CubePicture, H2, H3, P } from './parts';
 
 const TEXT = defineMessages<{
@@ -199,6 +200,8 @@ export default async function BeginnerTab() {
       ))}
 
       <BeginnerCompare />
+
+      <FastFirstLayer />
 
       <H2 id="beginner-tips">{t.tips}</H2>
       <Bullets items={t.tipList} />

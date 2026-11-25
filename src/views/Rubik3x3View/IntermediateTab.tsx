@@ -12,6 +12,8 @@ const TEXT = defineMessages<{
   cross: string;
   crossCaption: string;
   crossTips: Array<string>;
+  crossCases: (link: ReactNode) => ReactNode;
+  crossCasesLink: string;
   f2l: string;
   f2lIntro: string;
   f2lTips: Array<string>;
@@ -52,6 +54,10 @@ const TEXT = defineMessages<{
       'How to practise: first build the cross on top (where you can see it), then gradually move it to the bottom. Each day, plan 20 crosses by looking only, without turning, then do them and check.',
       'Place the edges in the right order relative to each other (for example green next to red), then fix them all with one D turn, instead of aligning each edge on its own.',
     ],
+    crossCases: (link) => (
+      <>Every way a cross edge can sit, with its moves and a picture, is in {link}.</>
+    ),
+    crossCasesLink: 'Beginner tab: Solving the white face fast',
     f2l: 'Step 2: Intuitive F2L',
     f2lIntro:
       'Instead of doing the white corners and then the middle edges separately, F2L joins a white corner with its matching middle edge into a "pair" in the top layer, then inserts the whole pair into its slot at once. There are 4 slots, one pair each.',
@@ -112,6 +118,8 @@ const TEXT = defineMessages<{
       'Cách tập: lúc đầu làm cross ở trên (nhìn được), rồi chuyển dần xuống dưới. Mỗi ngày giải 20 cross chỉ nhìn, không xoay, rồi mới làm và kiểm tra.',
       'Ưu tiên đặt các cạnh theo thứ tự tương đối với nhau (ví dụ xanh lá cạnh đỏ) rồi xoay D một lần, thay vì căn từng cạnh.',
     ],
+    crossCases: (link) => <>Mọi vị trí của cạnh dấu cộng, kèm cách xoay và hình, có ở {link}.</>,
+    crossCasesLink: 'tab Người mới: Giải mặt trắng nhanh',
     f2l: 'Bước 2: F2L trực quan',
     f2lIntro:
       'Thay vì làm góc trắng rồi cạnh tầng giữa riêng, F2L ghép 1 góc trắng với cạnh tầng giữa tương ứng thành một "cặp" ở tầng trên, rồi chèn cả cặp vào khe cùng lúc. Có 4 khe, mỗi khe một cặp.',
@@ -168,6 +176,13 @@ export default async function IntermediateTab() {
         <CubePicture image={{ kind: 'iso', view: 'x2', mask: 'cross', caption: t.crossCaption }} />
         <div className="min-w-64 flex-1">
           <Bullets items={t.crossTips} />
+          <P>
+            {t.crossCases(
+              <Link href={`${RUBIK_BASE}?level=beginner#fast-white-face`} className="underline">
+                {t.crossCasesLink}
+              </Link>
+            )}
+          </P>
         </div>
       </div>
 

@@ -1,16 +1,14 @@
 import { defineMessages } from 'src/i18n/define';
 import { getLocale } from 'src/i18n/server';
-import { Callout, P } from './parts';
+import { P } from './parts';
 
 const TEXT = defineMessages<{
-  compareTitle: string;
   compareIntro: string;
   compareHead: [string, string, string];
   compareRows: Array<[string, string, string]>;
   compareNote: string;
 }>({
   en: {
-    compareTitle: 'Why do other guides use different algorithms?',
     compareIntro:
       'Layer by layer has several variants. The first 3 steps are nearly the same everywhere; guides differ mostly in the top layer, in the order of the steps and the algorithms. None of them is wrong: just follow one guide all the way and do not mix steps from different guides.',
     compareHead: ['Top layer', 'This guide', 'A common variant'],
@@ -28,7 +26,6 @@ const TEXT = defineMessages<{
       'This guide picks the variant with the fewest algorithms to remember: the last step only repeats one 4-move algorithm.',
   },
   vi: {
-    compareTitle: 'Vì sao công thức ở đây khác một số trang khác?',
     compareIntro:
       'Phương pháp từng tầng có nhiều biến thể. 3 bước đầu gần như giống nhau ở mọi nơi; khác nhau chủ yếu ở tầng trên cùng, về thứ tự các bước và công thức. Không bên nào sai: chỉ cần theo trọn một hướng dẫn, đừng trộn bước của hướng dẫn này với hướng dẫn khác.',
     compareHead: ['Tầng trên', 'Hướng dẫn này', 'Một biến thể phổ biến'],
@@ -49,13 +46,14 @@ const TEXT = defineMessages<{
 
 /**
  * Why the beginner algorithms differ from other guides: layer-by-layer variants mostly differ in
- * the top layer, and readers comparing guides tend to think one of them is wrong.
+ * the top layer, and readers comparing guides tend to think one of them is wrong. The heading is
+ * rendered by the chapter.
  */
 export default async function BeginnerCompare() {
   const t = TEXT[await getLocale()];
 
   return (
-    <Callout title={t.compareTitle}>
+    <div>
       <P className="mt-0">{t.compareIntro}</P>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full border text-left text-sm">
@@ -82,6 +80,6 @@ export default async function BeginnerCompare() {
         </table>
       </div>
       <P>{t.compareNote}</P>
-    </Callout>
+    </div>
   );
 }

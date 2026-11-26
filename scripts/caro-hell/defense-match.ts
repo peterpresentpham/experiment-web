@@ -13,8 +13,9 @@ import { makeEnginePlayer, OPENING_BOOK_FILE } from './piskvork';
  *
  *   node --import tsx scripts/caro-hell/defense-match.ts --defender tengen-book --games 40
  *
- * The blocked-ends hell level as the browser plays it is `--defender rapfi-caro-book --attacker
- * rapfi-caro --size 20`; `--book` swaps in another opening book file to compare two books.
+ * The blocked-ends hell level as the browser plays it is `--defender rapfi-classical-book
+ * --attacker rapfi-classical --size 20` (`rapfi-caro` adds the caro network, which the browser has
+ * switched off); `--book` swaps in another opening book file to compare two books.
  *
  * Reports the defender's non-loss rate (with a 95% interval) and how long it lasted. Lost games
  * are appended to ml-data/caro-hell/defense/<defender>-<book>.jsonl with which moves came from

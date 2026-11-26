@@ -19,7 +19,9 @@ export const blogMessages = defineMessages<{
   rubik: {
     title: string;
     description: string;
-    f2lTitle: string;
+    algorithmsTitle: string;
+    algorithmsDescription: string;
+    algorithmsBreadcrumb: string;
     player: {
       show: string;
       hide: string;
@@ -97,7 +99,10 @@ export const blogMessages = defineMessages<{
       title: 'Rubik 3x3',
       description:
         'A leveled guide to solving the 3x3 cube: beginner, intermediate and advanced. Full OLL, PLL and F2L, with diagrams.',
-      f2lTitle: 'Rubik 3x3 | F2L',
+      algorithmsTitle: 'Rubik 3x3 | Algorithm lookup',
+      algorithmsDescription:
+        'Search every Rubik 3x3 OLL, PLL and F2L case by name, number or moves, with a picture and algorithms for each.',
+      algorithmsBreadcrumb: 'Algorithm lookup',
       player: {
         show: 'Watch in 3D',
         hide: 'Hide 3D',
@@ -175,7 +180,10 @@ export const blogMessages = defineMessages<{
       title: 'Rubik 3x3',
       description:
         'Hướng dẫn giải Rubik 3x3 theo cấp độ: người mới, trung cấp, chuyên nghiệp. Đủ OLL, PLL, F2L, có hình minh hoạ.',
-      f2lTitle: 'Rubik 3x3 | F2L',
+      algorithmsTitle: 'Rubik 3x3 | Tra cứu công thức',
+      algorithmsDescription:
+        'Tìm mọi ca OLL, PLL và F2L của Rubik 3x3 theo tên, số hoặc các nước, kèm hình và công thức.',
+      algorithmsBreadcrumb: 'Tra cứu công thức',
       player: {
         show: 'Xem 3D',
         hide: 'Ẩn 3D',

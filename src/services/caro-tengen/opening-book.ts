@@ -1,7 +1,7 @@
 import { TCaroWinMode, TTurn } from 'src/types/caro.type';
 
 /**
- * Opening book for the hell level, built offline by a long Tengen search
+ * Opening book for the hell level, built offline by a long Rapfi search (classical evaluation)
  * (`scripts/caro-hell/opening-book.ts`).
  *
  * Positions are keyed independently of where they sit on the board and of the eight symmetries,

@@ -14,7 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...BLOG_TOPICS.map((topic) => topic.href).filter(
       (href) => !href.startsWith(FORMAT_NUMBER_BASE)
     ),
-    `${RUBIK_BASE}/f2l`,
+    `${RUBIK_BASE}/algorithms`,
     `${RUBIK_BASE}/solver`,
     ...FORMAT_NUMBER_PAGES.map((page) => `${FORMAT_NUMBER_BASE}/${page.slug}`),
   ];

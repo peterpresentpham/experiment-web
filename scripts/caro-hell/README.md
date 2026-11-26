@@ -1,13 +1,28 @@
-# Caro "Hell" level — training the network
+# Caro "Hell" level — engines, network and data
 
-The hell level (`Địa ngục`) plays with a small AlphaZero-style network
-(`src/services/caro-hell`): a fully convolutional residual net (64 filters × 6 blocks, ~450k
-parameters) that outputs a move policy and a win estimate, guided by PUCT tree search and wrapped
-in the classic engine's exact tactics (five, forced block, VCF, and a VCF safety check).
+The hell level (`Địa ngục`) is played by engines that run in the browser. For each machine move
+`src/services/caro-tengen/player.ts` tries, in this order:
 
-Until `public/models/caro-hell/model.json` exists, the hell level plays like **Hard**. Once a
-model is deployed, every browser fine-tunes its own copy after each hell game (IndexedDB,
-`indexeddb://caro-hell-*`), replaying recent games so it does not forget; "Clear memory" resets it.
+1. a **lesson** from an earlier lost game, then the **opening book** (blocked-ends rule only);
+2. **Rapfi** (WebAssembly, both rules): the engine that plays almost every move;
+3. **Tengen** (WebAssembly) while Rapfi is still downloading, when Rapfi does not answer or
+   fails, or where it cannot run;
+4. the **hard search** (`search`), when Tengen has no answer either;
+5. the **network** below (`network`), only when no engine can run in the browser at all.
+
+The sections after 3 cover the engines, the opening book, the games stored from the deployed site
+and the phone checks. Sections 1–3 train the network, which is now just the last fallback.
+
+The network (`src/services/caro-hell`) is a small AlphaZero-style one: a fully convolutional
+residual net (64 filters × 6 blocks, ~450k parameters) that outputs a move policy and a win
+estimate, guided by PUCT tree search and wrapped in the classic engine's exact tactics (five,
+forced block, VCF, and a VCF safety check).
+
+Until `public/models/caro-hell/model.json` exists, the network plays like **Hard**. Once a model
+is deployed, a browser that has to use it fine-tunes its own copy after each hell game (IndexedDB,
+`indexeddb://caro-hell-*`), replaying recent games so it does not forget; "Clear memory" resets
+it. Only a browser where both engines failed to load fine-tunes it, since only there is the
+network played.
 
 ## 1. One-off setup: native TensorFlow (CPU, no GPU needed)
 
@@ -74,14 +89,28 @@ new base model. `ml-data/` stays local (gitignored); delete it to start over.
 Single-purpose tools also exist: `pnpm hell:generate` (teacher games only) and `pnpm hell:train`
 (one-off training on recorded games).
 
-## Tengen: the engine the hell level plays
+## Rapfi and Tengen: the engines the hell level plays
 
-Since the network plateaued around "a bit stronger than Hard", the hell level plays
-[Tengen](https://github.com/SXKA/tengen) (GPL-3.0), a classical caro engine compiled to WebAssembly
-(`public/engines/tengen/`, with its NOTICE, licence and our patch). The network stays as the
-fallback when WebAssembly cannot run. The site sends cross-origin isolation headers
-(`next.config.ts`) so the engine can search on several threads; `src/services/caro-tengen/engine.ts`
-picks the thread count and measures the device to set the time per move.
+Since the network plateaued around "a bit stronger than Hard", the hell level plays engines
+compiled to WebAssembly. The site sends cross-origin isolation headers (`next.config.ts`) so they
+can search on several threads.
+
+- **[Rapfi](https://github.com/dhbloo/rapfi)** (GPL-3.0, `public/engines/rapfi/`, with its NOTICE,
+  licence and our patch) plays both rules, thinking 2 s a move (`RAPFI_TURN_MS`). Our patch adds a
+  caro rule (`INFO rule 8`) for the blocked-ends rule. The free rule uses Rapfi's own network. The
+  blocked-ends rule plays the **classical evaluation**: the caro network of
+  `public/models/caro-rapfi/` is switched off (`CARO_NETWORK_ENABLED` in
+  `src/services/caro-rapfi/browser.ts`), because the shipped one loses to the classical evaluation
+  since the rule fix. When Rapfi has not answered 6 s after its time, Tengen plays that move; Rapfi
+  plays again once its late answer arrives.
+- **[Tengen](https://github.com/SXKA/tengen)** (GPL-3.0, `public/engines/tengen/`) is the
+  fallback. It is small and ready in a moment, so it plays the first moves while Rapfi's files
+  download, and it takes over when Rapfi fails or cannot run.
+  `src/services/caro-tengen/engine.ts` picks its thread count and measures the device to set its
+  time per move.
+
+The `source` of each move in the stored games (below) tells which part played it: a game with
+`tengen` moves is one where Rapfi was missing at that moment.
 
 To measure engines natively against our players (engines built into `ml-data/engines/bin/`):
 
@@ -109,20 +138,23 @@ near-empty board (80/80 in a test), so plain matches cannot tell two builds apar
   ```
 
 `tengen-book` is Tengen behind the opening book. The blocked-ends hell level as the browser
-plays it is `rapfi-caro-book`: the book, then Rapfi with the caro network (`rapfi-caro`, which
-copies `public/models/caro-rapfi/` next to the native Rapfi). To compare two books, pass
+plays it is `rapfi-classical-book`: the book, then Rapfi with its classical evaluation. The
+variant `rapfi-caro-book` adds the caro network (`rapfi-caro` copies `public/models/caro-rapfi/`
+next to the native Rapfi), which the browser has switched off. To compare two books, pass
 `--book <file>`; lost games go to `ml-data/caro-hell/defense/` with the defender's last book move:
 
 ```bash
-nice node --import tsx scripts/caro-hell/defense-match.ts --defender rapfi-caro-book --attacker rapfi-caro --size 20 --games 40 --workers 2
+nice node --import tsx scripts/caro-hell/defense-match.ts --defender rapfi-classical-book --attacker rapfi-classical --size 20 --games 40 --workers 2
 ```
 
 ### The opening book
 
-`opening-book.ts` builds `public/models/caro-book/opening-block.json` with Rapfi and the caro
-network (about an hour with these settings). Each entry keeps the moves within `--margin` of the
-best (multi-PV), one of which the machine picks at random, so a line that beat it once does not
-win again:
+`opening-book.ts` builds `public/models/caro-book/opening-block.json` with a long native search of
+Rapfi: by default with the caro network (`--engine rapfi-caro`), or with its classical evaluation
+(`--engine rapfi-classical`, which is what the browser plays while the network is switched off)
+or with Tengen (`--engine tengen`). The `meta` of the book file records the engine and settings
+that built it. Each entry keeps the moves within `--margin` of the best (multi-PV), one of which
+the machine picks at random, so a line that beat it once does not win again:
 
 ```bash
 nice node --import tsx scripts/caro-hell/opening-book.ts --depth 3 --radius 2 --time 5000 --threads 2 --workers 3
@@ -154,8 +186,8 @@ devices:
 - when each engine finished loading (`loaded`, in ms after the level was picked; -1 means it
   failed);
 - every machine move: its time as the player waited for it, which part chose it (`lesson`,
-  `book`, `rapfi`, `tengen`, `search` (the hard search, when Tengen had no answer) or
-  `network`), and whether the previous game was still being analysed
+  `book`, `rapfi`, `tengen` (Rapfi was not there to answer), `search` (the hard search, when
+  Tengen had no answer) or `network`), and whether the previous game was still being analysed
   meanwhile.
 
 A game the player left (page closed or hidden) after a machine move of 10 s or more is posted

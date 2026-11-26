@@ -12,14 +12,18 @@ import Alg3DToggle from './Alg3DToggle';
 
 export function H2({ id, children }: { id?: string; children: ReactNode }) {
   return (
-    <h2 id={id} className="mt-12 scroll-mt-20 border-b pb-2 text-2xl font-bold sm:text-3xl">
+    <h2 id={id} className="mt-12 scroll-mt-24 border-b pb-2 text-2xl font-bold sm:text-3xl">
       {children}
     </h2>
   );
 }
 
-export function H3({ children }: { children: ReactNode }) {
-  return <h3 className="mt-8 mb-2 text-xl font-semibold">{children}</h3>;
+export function H3({ id, children }: { id?: string; children: ReactNode }) {
+  return (
+    <h3 id={id} className="mt-8 mb-2 scroll-mt-24 text-xl font-semibold">
+      {children}
+    </h3>
+  );
 }
 
 export function P({ children, className }: { children: ReactNode; className?: string }) {

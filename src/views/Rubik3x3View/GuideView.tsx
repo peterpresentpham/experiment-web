@@ -1,125 +1,39 @@
-import { Sparkles } from 'lucide-react';
-import Link from 'next/link';
-import { RUBIK_BASE } from 'src/configs/blog.config';
-import { defineMessages } from 'src/i18n/define';
+import { rubikBookMessages } from 'src/i18n/messages/rubikBook';
 import { getLocale } from 'src/i18n/server';
-import AdvancedTab from './AdvancedTab';
-import BeginnerTab from './BeginnerTab';
-import IntermediateTab from './IntermediateTab';
-import RubikTabs, { RubikPanel } from './RubikTabs';
+import BasicsChapter from './chapters/BasicsChapter';
+import CrossChapter from './chapters/CrossChapter';
+import F2lChapter from './chapters/F2lChapter';
+import { getBookToc } from './chapters/headings';
+import LblChapter from './chapters/LblChapter';
+import OllChapter from './chapters/OllChapter';
+import PathChapter from './chapters/PathChapter';
+import PlanChapter from './chapters/PlanChapter';
+import PllChapter from './chapters/PllChapter';
+import SkillsChapter from './chapters/SkillsChapter';
+import RubikToc from './RubikToc';
 
-const SOURCE_URLS = [
-  'https://www.cubeskills.com/tutorials',
-  'https://www.cubeskills.com/blog/lookahead-progression-framework',
-  'https://ruwix.com/the-rubiks-cube/how-to-solve-the-rubiks-cube-beginners-method/',
-  'https://www.speedsolving.com/wiki/',
-  'https://jperm.net',
-  'https://www.cubeskills.com/tutorials/optimising-the-beginners-method',
-  'https://cubefreak.net/speed/cfop/cross.php',
-  'https://en.wikibooks.org/wiki/How_to_solve_the_Rubik%27s_Cube/Beginner',
-  'https://mrlhumphreys.github.io/twisty_guide_j/guides/3x3x3-beginners',
-  'https://www.gancube.com/pages/how-to-solve-3x3-cube-for-beginners',
-  'https://cstimer.net',
-  'https://www.worldcubeassociation.org',
-];
-
-const TEXT = defineMessages<{
-  title: string;
-  intro: string;
-  solver: string;
-  levels: Record<'beginner' | 'intermediate' | 'advanced', { label: string; hint: string }>;
-  sourcesTitle: string;
-  // Same order as `SOURCE_URLS`.
-  sources: Array<string>;
-}>({
-  en: {
-    title: 'Learn to solve the Rubik 3x3 from scratch',
-    intro:
-      'A 3x3 cube has about 43 quintillion states, yet every one of them can be solved in at most 20 moves. You do not need to remember states: you only need a method that breaks the solve into steps. Pick the tab for your level. Every picture is drawn automatically from its own algorithm, and every algorithm has been checked in a simulation.',
-    solver: 'Have a scrambled cube? Paint or scan it and get a solution in 3D',
-    levels: {
-      beginner: { label: '1. Beginner', hint: 'LBL · 7 steps · ~7 algorithms' },
-      intermediate: { label: '2. Intermediate', hint: 'CFOP 4-look · 17 algorithms' },
-      advanced: { label: '3. Advanced', hint: 'Full OLL/PLL · F2L · lookahead' },
-    },
-    sourcesTitle: 'References',
-    sources: [
-      'CubeSkills: OLL/PLL sheets (Feliks Zemdegs, Andy Klise)',
-      'CubeSkills: Lookahead Progression Framework',
-      'Ruwix: beginner method and CFOP',
-      'Speedsolving Wiki',
-      'J Perm (video tutorials from beginner to advanced)',
-      "CubeSkills: Optimising the Beginner's Method (cross on the bottom, flipped edge, choosing corners)",
-      'Cubefreak: planning the cross',
-      'Wikibooks: beginner method (white on top)',
-      'Twisty Guide: 3x3 beginner method',
-      'GAN Cube: beginner guide',
-      'csTimer (timer and WCA-standard scrambles)',
-      'World Cube Association: rules and records',
-    ],
-  },
-  vi: {
-    title: 'Học giải Rubik 3x3 từ con số 0',
-    intro:
-      'Rubik 3x3 có khoảng 43 tỷ tỷ trạng thái, nhưng mọi trạng thái đều giải được trong tối đa 20 nước. Bạn không cần nhớ trạng thái: chỉ cần một phương pháp chia nhỏ thành các bước. Chọn tab theo trình độ. Mọi hình minh hoạ được vẽ tự động từ chính công thức, và mọi công thức đều đã được kiểm tra bằng mô phỏng.',
-    solver: 'Có khối đang xáo? Tô màu hoặc quét bằng camera để xem lời giải 3D',
-    levels: {
-      beginner: { label: '1. Người mới', hint: 'LBL · 7 bước · ~7 công thức' },
-      intermediate: { label: '2. Trung cấp', hint: 'CFOP 4-look · 17 công thức' },
-      advanced: { label: '3. Chuyên nghiệp', hint: 'Full OLL/PLL · F2L · lookahead' },
-    },
-    sourcesTitle: 'Nguồn tham khảo',
-    sources: [
-      'CubeSkills: bảng OLL/PLL (Feliks Zemdegs, Andy Klise)',
-      'CubeSkills: Lookahead Progression Framework',
-      'Ruwix: phương pháp người mới và CFOP',
-      'Speedsolving Wiki',
-      'J Perm (video hướng dẫn từ người mới đến nâng cao)',
-      "CubeSkills: Optimising the Beginner's Method (cross ở mặt dưới, cạnh bị lật, chọn góc)",
-      'Cubefreak: cách tính trước dấu cộng',
-      'Wikibooks: phương pháp người mới (trắng ở trên)',
-      'Twisty Guide: phương pháp người mới 3x3',
-      'GAN Cube: hướng dẫn người mới',
-      'csTimer (bấm giờ, xáo trộn chuẩn WCA)',
-      'World Cube Association: luật và kỷ lục',
-    ],
-  },
-});
-
-export default async function GuideView({ level }: { level?: string }) {
-  const t = TEXT[await getLocale()];
-  const panels: Array<RubikPanel> = [
-    { value: 'beginner', ...t.levels.beginner, content: <BeginnerTab /> },
-    { value: 'intermediate', ...t.levels.intermediate, content: <IntermediateTab /> },
-    { value: 'advanced', ...t.levels.advanced, content: <AdvancedTab /> },
-  ];
+/** The Rubik guide as one book: contents on the side, chapters in reading order. */
+export default async function GuideView() {
+  const { title, contents, contentsOpen } = rubikBookMessages[await getLocale()];
+  const toc = await getBookToc();
 
   return (
     <div>
-      <h1 className="text-3xl font-bold sm:text-4xl">{t.title}</h1>
-      <p className="mt-3 leading-relaxed">{t.intro}</p>
-      <Link
-        href={`${RUBIK_BASE}/solver`}
-        className="mt-3 inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted"
-      >
-        <Sparkles className="size-4" />
-        {t.solver}
-      </Link>
-
-      <RubikTabs panels={panels} defaultLevel={level} />
-
-      <section className="mt-16 border-t pt-4 text-sm">
-        <p className="font-semibold">{t.sourcesTitle}</p>
-        <ul className="mt-2 list-disc space-y-1 pl-6">
-          {SOURCE_URLS.map((href, i) => (
-            <li key={href}>
-              <a href={href} target="_blank" rel="noreferrer" className="underline">
-                {t.sources[i]}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <h1 className="text-3xl font-bold sm:text-4xl">{title}</h1>
+      <div className="mt-4 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-10">
+        <RubikToc chapters={toc} labels={{ contents, open: contentsOpen }} />
+        <article className="min-w-0 pb-16">
+          <PathChapter />
+          <BasicsChapter />
+          <LblChapter />
+          <CrossChapter />
+          <F2lChapter />
+          <OllChapter />
+          <PllChapter />
+          <SkillsChapter />
+          <PlanChapter />
+        </article>
+      </div>
     </div>
   );
 }

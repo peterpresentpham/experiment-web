@@ -23,12 +23,14 @@ export type TEngineName = 'tengen' | 'rapfi' | 'rapfi-classical' | 'rapfi-caro';
 const ENGINES: Record<TEngineName, { dir: string; file: string; args: Array<string> }> = {
   tengen: { dir: 'tengen', file: 'pbrain-tengen', args: [] },
   rapfi: { dir: 'rapfi', file: 'pbrain-rapfi', args: ['--config', 'config.toml'] },
+  // Classical evaluation: what the browser plays in the blocked-ends rule while its caro network
+  // is switched off (CARO_NETWORK_ENABLED in src/services/caro-rapfi/browser.ts).
   'rapfi-classical': {
     dir: 'rapfi',
     file: 'pbrain-rapfi',
     args: ['--config', 'config-classical.toml'],
   },
-  // Rapfi with the caro network, as the browser plays the blocked-ends rule.
+  // Rapfi with the caro network of public/models/caro-rapfi.
   'rapfi-caro': { dir: 'rapfi', file: 'pbrain-rapfi', args: ['--config', 'config-caro.toml'] },
 };
 
@@ -190,7 +192,8 @@ export const OPENING_BOOK_FILE = join(ROOT, 'public/models/caro-book/opening-blo
 /**
  * A player backed by an engine process. A "-book" suffix puts the engine behind the hell level's
  * opening book (`bookFile`, the deployed one by default), as the browser plays it:
- * "rapfi-caro-book" is the blocked-ends hell level, "tengen-book" its Tengen fallback.
+ * "rapfi-classical-book" is the blocked-ends hell level as it plays today ("rapfi-caro-book" adds
+ * the caro network, which the browser has switched off), "tengen-book" its Tengen fallback.
  */
 export async function makeEnginePlayer(
   name: string,

@@ -51,7 +51,8 @@ function reply(response: TCaroMachineWorkerResponse) {
 }
 
 // TensorFlow.js and the network are only loaded once the hell level actually needs them: the
-// level plays Tengen (a WebAssembly engine) and keeps the network as its fallback.
+// level plays Rapfi (a WebAssembly engine), with Tengen standing in for it, and keeps the
+// network as the last fallback, for browsers where neither engine can run.
 let hellRuntime: Promise<typeof import('src/services/caro-hell/worker-runtime')> | undefined;
 const loadHell = () => (hellRuntime ??= import('src/services/caro-hell/worker-runtime'));
 const loadTengen = () => import('src/services/caro-tengen/player');

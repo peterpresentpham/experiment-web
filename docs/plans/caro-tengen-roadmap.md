@@ -1,6 +1,6 @@
 # Kế hoạch tăng sức mạnh cấp Địa ngục (Tengen)
 
-Cập nhật: 2026-11-20. Mọi thay đổi về engine phải thắng SPRT (`tengen-arena`, luật
+Cập nhật: 2026-11-26 (mục Hiện trạng; các mục đánh số bên dưới là nhật ký theo ngày). Mọi thay đổi về engine phải thắng SPRT (`tengen-arena`, luật
 `freestyle-caro`) trước khi lên web.
 
 ## Mục tiêu
@@ -15,16 +15,25 @@ nên mục tiêu thực tế là khiến việc tìm ra đường thắng khó t
 
 ## Hiện trạng
 
-- Cấp Địa ngục chạy Tengen (GPL-3.0) bằng WebAssembly trong worker: 1 luồng (Safari, iPhone) đến
-  4 luồng (Chrome, Firefox), khoảng 1,5–4 giây mỗi nước tuỳ máy.
-- Luật chặn hai đầu (Piskvork rule 8) dùng trọng số đã tinh chỉnh
-  `weights-freestyle-caro.txt`: +10,8 ± 8,8 Elo so với bản gốc (3.100 ván). Luật không chặn dùng
-  bản gốc.
-- Search: PVS + Lazy SMP; quiescence chỉ xét nước bốn (VCF), **chưa có VCT**. Tham số search
-  (`tuning/spsa.txt`) được tinh chỉnh cho freestyle, **chưa tinh chỉnh cho luật chặn hai đầu**.
-- Build WASM **chưa bật SIMD** (`+simd128`); worker không đặt kích thước bảng băm (`tg_set_hash`).
-- Sách khai cuộc: 743 thế cờ (3 nước đầu của máy, Tengen 10 giây × 2 luồng), dùng chung cho
-  15×15 và 20×20.
+- Cấp Địa ngục chơi bằng **Rapfi** (GPL-3.0, WebAssembly trong worker, luật `CARO` do ta thêm,
+  xem mục 9), 2 giây mỗi nước, 1 luồng (Safari, iPhone) đến 4 luồng (Chrome, Firefox). Luật chặn
+  hai đầu đang dùng đánh giá cổ điển vì mạng vòng 0 bị tắt (xem "Dọn các lỗi còn lại").
+- **Tengen** (GPL-3.0) là dự phòng: chơi khi Rapfi còn đang tải, lỗi hoặc không chạy được. Sau đó
+  là search `hard` của app, và mạng TF.js chỉ khi không engine nào chạy được. Thứ tự này nằm ở
+  `src/services/caro-tengen/player.ts`.
+- Dữ liệu ván thật đến 2026-11-26 (34 ván): cả 216 nước có đo thời gian đều do Rapfi chọn, không
+  có nước nào do Tengen, search hay mạng chơi; nước chậm nhất 2,25 giây.
+- Các mục dưới về Tengen (trọng số, search, build) chỉ còn ảnh hưởng tới bản dự phòng này:
+  - Luật chặn hai đầu (Piskvork rule 8) dùng trọng số đã tinh chỉnh
+    `weights-freestyle-caro.txt`: +10,8 ± 8,8 Elo so với bản gốc (3.100 ván). Luật không chặn
+    dùng bản gốc.
+  - Search: PVS + Lazy SMP; quiescence chỉ xét nước bốn (VCF), **chưa có VCT**. Tham số search
+    (`tuning/spsa.txt`) được tinh chỉnh cho freestyle, **chưa tinh chỉnh cho luật chặn hai đầu**.
+  - Build WASM **chưa bật SIMD** (`+simd128`; bước 2 đo không có tác dụng). Bảng băm: điện thoại
+    đặt 32 MB (`tg_set_hash`), máy tính để mặc định 64 MB.
+- Sách khai cuộc: 2.489 mục (3 nước đầu của máy), dùng chung cho 15×15 và 20×20. `meta` của file
+  ghi engine `rapfi-caro`, 5 giây × 2 luồng; mục "Dọn các lỗi còn lại" ghi đã tạo lại bằng Rapfi
+  cổ điển 10 giây, hai chỗ chưa khớp nhau: cần kiểm tra file nào đúng.
 - Sổ kinh nghiệm (`src/services/caro-machine/experience.ts`) học từ ván thua, nhưng **riêng
   từng trình duyệt** (localStorage), không chia sẻ giữa người chơi.
 

@@ -14,7 +14,9 @@ import { PiskvorkEngine, TEngineName, TScoredMove } from './piskvork';
 
 /**
  * Builds the hell level's opening book (blocked-ends rule) with a long native search of Rapfi
- * with the browser's caro network (`--engine tengen` or `rapfi-classical` for the others).
+ * with the caro network of public/models/caro-rapfi (`--engine rapfi-classical` for its
+ * classical evaluation, which is what the browser plays while the network is switched off, or
+ * `tengen`). The engine and settings that built a book are saved in its `meta`.
  *
  *   nice node --import tsx scripts/caro-hell/opening-book.ts --depth 3 --radius 2 --time 5000
  *

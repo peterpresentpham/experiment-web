@@ -1,6 +1,6 @@
 # Kế hoạch sửa rủi ro của caro cấp Địa ngục trên điện thoại
 
-Cập nhật: 2026-11-23.
+Cập nhật: 2026-11-26 (kết quả ván thật ở cuối).
 
 ## Bối cảnh
 
@@ -16,7 +16,7 @@ Hai lỗi được báo từ điện thoại:
 - Trên điện thoại, máy không bao giờ đứng im không đi.
 - Máy không làm điện thoại chậm.
 
-## Đã sửa (chưa commit)
+## Đã sửa (đã commit trong `bd1599d`, 2026-11-23)
 
 |     | Thay đổi                                                                                                                                | File                                                                                                            |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -207,3 +207,13 @@ Ghi kết quả từng lần chạy vào bảng dưới, kể cả lần trượ
   - `loaded.tengen` < 10 s.
 - Nếu có ván không đạt, thêm rủi ro mới vào tài liệu này và chạy lại vòng kiểm tra.
 - Nhờ người chơi đã báo lỗi thử lại trên đúng điện thoại của họ.
+
+### Kết quả trên ván thật (2026-11-26)
+
+34 ván đã lưu (22–26/11), 20 ván có `timing` (13 máy tính, 7 iPhone; chưa có ván Android nào), `pnpm caro:fetch-games`:
+
+- Không nước nào > 10 s: nước chậm nhất 2,25 giây (267 nước có đo, không nước nào chậm hơn 2,3 giây).
+- Không nước nào `source: network`; mọi nước tính toán đều do `rapfi` chọn (216 nước), ngoài ra là `book`.
+- `loaded.tengen` lớn nhất 1,65 s, `loaded.rapfi` 1,55 s (19 ván có số đo), đều dưới 10 s.
+- **Một ván không đạt** (2026-11-25 07:53, máy tính, build `32b181f`): bỏ ngang sau nước đầu của người chơi, máy chờ 41,6 s, `loaded` rỗng (không engine nào báo tải xong). Chưa rõ nguyên nhân. Điểm đáng nghi: nước đầu của máy luôn đợi `getOpeningBook()` trước khi tới engine, và các `fetch` của sách, Rapfi và Tengen không có timeout. Đây là rủi ro mới (R9) cần xử lý hoặc loại trừ.
+- Chưa có ván Android nào, nên nhóm máy này chưa được kiểm chứng ngoài đời. Cần nhờ người chơi đã báo lỗi thử lại trên đúng điện thoại của họ.

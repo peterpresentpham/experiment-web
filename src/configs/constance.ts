@@ -17,6 +17,7 @@ export enum DIALOG_KEY {
   caroInstructionDialog = 'caroInstructionDialog',
   pikachuConfigDialog = 'pikachuConfigDialog',
   pikachuInstructionDialog = 'pikachuInstructionDialog',
+  sudokuInstructionDialog = 'sudokuInstructionDialog',
   changeBoardConfirmDialog = 'changeBoardConfirmDialog',
   globalConfigDialog = 'globalConfigDialog',
 }

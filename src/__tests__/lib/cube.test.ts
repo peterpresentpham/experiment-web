@@ -1,5 +1,11 @@
 import { F2LConfig } from 'src/configs/rubik3x3.config';
 import {
+  BEGINNER_OPTIONS,
+  OLL_EDGE_EXTRA_OPTIONS,
+  PLL_EXTRA_OPTIONS,
+  TAlgOption,
+} from 'src/configs/rubikAlgOptions.config';
+import {
   CORNER_CASES,
   CROSS_EDGE_CASES,
   LEFT_CORNER_CASES,
@@ -251,5 +257,110 @@ describe('fast white face cases', () => {
       bottomCorners[0],
       ...bottomCorners.slice(2),
     ]);
+  });
+});
+
+describe('all options found for each step', () => {
+  const homes = (filter: (h: [number, number, number]) => boolean) => {
+    const list: Array<[number, number, number]> = [];
+    for (const x of [-1, 0, 1])
+      for (const y of [-1, 0, 1])
+        for (const z of [-1, 0, 1]) {
+          const nonZero = [x, y, z].filter((v) => v !== 0).length;
+          if (nonZero >= 2 && filter([x, y, z])) list.push([x, y, z]);
+        }
+    return list;
+  };
+  const crossEdges = homes((h) => h[1] === -1 && h.filter((v) => v !== 0).length === 2);
+  const bottomCorners = homes((h) => h[1] === -1 && h.every((v) => v !== 0));
+  const middleEdges = homes((h) => h[1] === 0);
+  /** Case an option solves, in this page's grip (white bottom). */
+  const optionCase = (o: TAlgOption) =>
+    caseFromAlg(o.grip ? `${o.grip} ${o.alg} ${o.grip}` : o.alg);
+  const unsolved = (state: CubeState, list: Array<[number, number, number]>) =>
+    list.filter((h) => !pieceSolved(state, h)).length;
+  const withImage = (step: number) => BEGINNER_OPTIONS[step].options.filter((o) => !o.noImage);
+
+  it('step 1: each cross option places one edge (the CFOP example places all)', () => {
+    for (const o of withImage(0)) {
+      const expected = o.alg === 'F R2 D2' ? crossEdges.length : 1;
+      expect(unsolved(optionCase(o), crossEdges), o.alg).toBe(expected);
+    }
+  });
+
+  it('step 2: each corner option keeps the cross and places one corner', () => {
+    for (const o of withImage(1)) {
+      const state = optionCase(o);
+      expect(unsolved(state, crossEdges), o.alg).toBe(0);
+      expect(unsolved(state, bottomCorners), o.alg).toBe(1);
+    }
+  });
+
+  it('step 3: each middle-layer option places one edge without breaking the cross', () => {
+    for (const o of withImage(2)) {
+      const state = optionCase(o);
+      expect(unsolved(state, crossEdges), o.alg).toBe(0);
+      expect(unsolved(state, middleEdges), o.alg).toBe(1);
+      // Wikibooks solves middle edges before the corner below them.
+      const emptyCorner = o.source === 'wikibooks' ? 1 : 0;
+      expect(unsolved(state, bottomCorners), o.alg).toBe(emptyCorner);
+    }
+  });
+
+  it('last-layer steps: every option keeps the first two layers', () => {
+    for (const step of [3, 4, 5, 6]) {
+      for (const o of withImage(step)) expect(bottomSolved(optionCase(o), 1), o.alg).toBe(true);
+    }
+  });
+
+  it('step 7: the worked examples only twist corners', () => {
+    for (const o of withImage(6)) {
+      const state = optionCase(o);
+      const lastLayer = homes((h) => h[1] === 1);
+      for (const home of lastLayer) {
+        const pieces = state.filter((s) => s.home.join() === home.join());
+        expect(
+          pieces.every((p) => p.pos.join() === home.join()),
+          o.alg
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('repeated building blocks return to solved after 6 times', () => {
+    for (const alg of ["R' D' R D", "D R' D' R", "R U R' U'"]) {
+      expect(isSolved(applyAlg(solvedCube(), `(${alg})×6`)), alg).toBe(true);
+    }
+  });
+
+  it('extra PLL options solve the same case as the CubeSkills algorithm', () => {
+    for (const [id, options] of Object.entries(PLL_EXTRA_OPTIONS)) {
+      const main = PLL_CASES.find((c) => c.id === id)!;
+      const expected = caseSignatures(main.algs[0], false);
+      for (const o of options) {
+        const found = [...caseSignatures(o.alg, false)].some((sig) => expected.has(sig));
+        expect(found, `${id}: ${o.alg}`).toBe(true);
+      }
+    }
+  });
+
+  it('extra OLL edge options solve the same edge shape', () => {
+    const edgeShape = (alg: string) => {
+      const shapes = new Set<string>();
+      for (const pre of AUF) {
+        const u = readFace(applyAlg(caseFromAlg(alg), pre), 'U');
+        shapes.add([1, 3, 5, 7].map((i) => (u[i] === 'U' ? 'Y' : '.')).join(''));
+      }
+      return shapes;
+    };
+    RUBIK_GUIDE.en.ollEdges2Look.forEach((main, i) => {
+      const expected = edgeShape(main.alg);
+      for (const o of OLL_EDGE_EXTRA_OPTIONS[i]) {
+        expect(
+          [...edgeShape(o.alg)].some((sh) => expected.has(sh)),
+          o.alg
+        ).toBe(true);
+      }
+    });
   });
 });

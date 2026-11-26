@@ -2,7 +2,10 @@ import { ReactNode } from 'react';
 import { ContainerClipboard } from 'src/components/CopyClipboard';
 import CubeIso from 'src/components/rubik/CubeIso';
 import CubeTop from 'src/components/rubik/CubeTop';
+import { ALG_SOURCES, TAlgOption, TAlgSource } from 'src/configs/rubikAlgOptions.config';
 import { AlgType, CubeImage } from 'src/configs/rubikGuide.config';
+import { defineMessages } from 'src/i18n/define';
+import { getLocale } from 'src/i18n/server';
 import { applyAlg, caseFromAlg, solvedCube } from 'src/lib/cube/cube';
 import { cn } from 'src/lib/utils';
 import Alg3DToggle from './Alg3DToggle';
@@ -86,17 +89,73 @@ export function AlgText({ alg, main = true }: { alg: string; main?: boolean }) {
   );
 }
 
-export function AlgRow({ name, alg, note, image, mask }: AlgType) {
+const TEXT = defineMessages<{ derived: string }>({
+  en: { derived: 'Worked out here, checked in simulation' },
+  vi: { derived: 'Tự suy ra, đã kiểm bằng mô phỏng' },
+});
+
+/** Link to where an algorithm was found. */
+export async function SourceTag({ source }: { source: TAlgSource }) {
+  if (source === 'derived') {
+    const t = TEXT[await getLocale()];
+    return <span className="text-xs text-muted-foreground">{t.derived}</span>;
+  }
+  const { name, url } = ALG_SOURCES[source];
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className="text-xs text-muted-foreground underline"
+    >
+      {name}
+    </a>
+  );
+}
+
+/** Extra algorithms for one case, each with its source and note. */
+export async function AlgOptionList({ options }: { options: Array<TAlgOption> }) {
+  const locale = await getLocale();
+  return (
+    <ul className="mt-2 flex flex-col gap-2">
+      {options.map((o) => (
+        <li key={o.alg} className="flex flex-col gap-0.5">
+          <AlgText alg={o.alg} main={false} />
+          <span className="flex flex-wrap items-baseline gap-2">
+            <SourceTag source={o.source} />
+            {o.note && <span className="text-xs text-muted-foreground">{o.note[locale]}</span>}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function AlgRow({
+  name,
+  alg,
+  note,
+  image,
+  mask,
+  options,
+  sources,
+}: AlgType & { options?: Array<TAlgOption>; sources?: Array<TAlgSource> }) {
   return (
     <div className="mt-4 flex items-center gap-4">
       {image && <CubePicture image={image} size={image.kind === 'iso' ? 90 : 80} />}
       <div className="min-w-0">
-        <p className="text-sm font-semibold">{name}</p>
+        <p className="flex flex-wrap items-baseline gap-2 text-sm font-semibold">
+          {name}
+          {sources?.map((source) => (
+            <SourceTag key={source} source={source} />
+          ))}
+        </p>
         <div className="mt-1">
           <AlgText alg={alg} />
         </div>
         {note && <p className="mt-1 text-sm text-muted-foreground">{note}</p>}
         <Alg3DToggle alg={alg} mask={mask ?? image?.mask} />
+        {options && options.length > 0 && <AlgOptionList options={options} />}
       </div>
     </div>
   );
@@ -108,12 +167,18 @@ export function CaseCard({
   subtitle,
   image,
   algs,
+  options,
+  sources,
   note,
 }: {
   title: string;
   subtitle?: string;
+  /** Where the main algorithms come from, when not from the CubeSkills sheets. */
+  sources?: Array<TAlgSource>;
   image: CubeImage;
   algs: Array<string>;
+  /** Further algorithms for the same case, shown with their source. */
+  options?: Array<TAlgOption>;
   note?: string;
 }) {
   return (
@@ -123,10 +188,18 @@ export function CaseCard({
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
       </div>
       <CubePicture image={image} size={96} />
+      {sources && (
+        <p className="flex flex-wrap justify-center gap-2">
+          {sources.map((source) => (
+            <SourceTag key={source} source={source} />
+          ))}
+        </p>
+      )}
       <div className="flex w-full flex-col items-center gap-1">
         {algs.map((a, i) => (
           <AlgText key={a} alg={a} main={i === 0} />
         ))}
+        {options && options.length > 0 && <AlgOptionList options={options} />}
       </div>
       {note && <p className="text-center text-xs text-muted-foreground">{note}</p>}
     </div>

@@ -261,7 +261,9 @@ function CaseGrid({ cases, text }: { cases: Array<TFirstLayerCase>; text: TCaseT
           key={c.id}
           title={text[c.id].title}
           image={c.image}
-          algs={c.algs}
+          algs={[c.algs[0]]}
+          sources={[c.sources[0]]}
+          options={c.algs.slice(1).map((alg, i) => ({ alg, source: c.sources[i + 1] }))}
           note={text[c.id].note}
         />
       ))}

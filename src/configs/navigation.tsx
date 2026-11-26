@@ -1,6 +1,6 @@
-import { BookOpen, Cpu, Gamepad2, LucideIcon, Puzzle } from 'lucide-react';
+import { BookOpen, Cpu, Gamepad2, Grid3x3, LucideIcon, Puzzle } from 'lucide-react';
 
-export type TNavId = 'caro' | 'pikachu' | 'blog' | 'process';
+export type TNavId = 'caro' | 'pikachu' | 'sudoku' | 'blog' | 'process';
 
 // Titles, descriptions and tags live in `commonMessages.nav`, keyed by `id`.
 export type TNavItem = {
@@ -12,6 +12,7 @@ export type TNavItem = {
 export const NAV_ITEMS: Array<TNavItem> = [
   { id: 'caro', href: '/caro', icon: Gamepad2 },
   { id: 'pikachu', href: '/pikachu', icon: Puzzle },
+  { id: 'sudoku', href: '/sudoku', icon: Grid3x3 },
   { id: 'blog', href: '/blog', icon: BookOpen },
   { id: 'process', href: '/process', icon: Cpu },
 ];

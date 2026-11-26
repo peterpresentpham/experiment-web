@@ -1,6 +1,12 @@
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { RUBIK_BASE } from 'src/configs/blog.config';
+import {
+  F2L_BASIC_SOURCES,
+  OLL_EDGE_EXTRA_OPTIONS,
+  OLL_EDGE_SOURCES,
+  PLL_EXTRA_OPTIONS,
+} from 'src/configs/rubikAlgOptions.config';
 import { RUBIK_GUIDE } from 'src/configs/rubikGuide.config';
 import { OLL_CASES, PLL_CASES } from 'src/configs/rubikLL.config';
 import { defineMessages } from 'src/i18n/define';
@@ -27,6 +33,7 @@ const TEXT = defineMessages<{
   ollCornersIntro: string;
   pll: string;
   pllIntro: string;
+  sourcesNote: string;
   tips: string;
   fingerTricks: string;
   fingerTips: Array<string>;
@@ -82,6 +89,8 @@ const TEXT = defineMessages<{
     pll: 'Step 4: 2-look PLL (7 algorithms)',
     pllIntro:
       'Look 1: put the 4 corners in place (A or Y). Look 2: put the 4 edges in place (U, H or Z). Arrows show where each piece goes when you do the algorithm. After each algorithm you may need a U turn to align.',
+    sourcesNote:
+      'Algorithms without a source label come from the CubeSkills sheets. The smaller ones under them are the other options found, with their source: pick the one that feels best in your hands.',
     tips: 'Tips and tricks at this level',
     fingerTricks: 'Basic finger tricks',
     fingerTips: [
@@ -142,6 +151,8 @@ const TEXT = defineMessages<{
     pll: 'Bước 4: 2-look PLL (7 công thức)',
     pllIntro:
       'Lần 1: đặt 4 góc đúng chỗ (A hoặc Y). Lần 2: đặt 4 cạnh (U, H hoặc Z). Mũi tên cho biết mảnh sẽ đi đâu khi làm công thức. Sau mỗi công thức có thể cần xoay U để căn.',
+    sourcesNote:
+      'Công thức không ghi nguồn lấy từ bảng CubeSkills. Các dòng nhỏ bên dưới là những phương án khác tìm được, kèm nguồn: chọn cái bạn thấy xoay thuận tay nhất.',
     tips: 'Tip và trick ở cấp này',
     fingerTricks: 'Finger tricks cơ bản',
     fingerTips: [
@@ -190,8 +201,8 @@ export default async function IntermediateTab() {
       <P>{t.f2lIntro}</P>
       <Bullets items={t.f2lTips} />
       <P>{t.f2lBasic}</P>
-      {f2lBasic.map((a) => (
-        <AlgRow key={a.alg} {...a} />
+      {f2lBasic.map((a, i) => (
+        <AlgRow key={a.alg} {...a} sources={F2L_BASIC_SOURCES[i]} />
       ))}
       <P>
         {t.f2lMore(
@@ -203,10 +214,18 @@ export default async function IntermediateTab() {
 
       <H2 id="inter-oll">{t.oll}</H2>
       <P>{t.ollIntro}</P>
+      <P>{t.sourcesNote}</P>
       <H3>{t.ollEdges}</H3>
       <CardGrid>
-        {ollEdges2Look.map((a) => (
-          <CaseCard key={a.alg} title={a.name} image={a.image!} algs={[a.alg]} />
+        {ollEdges2Look.map((a, i) => (
+          <CaseCard
+            key={a.alg}
+            title={a.name}
+            image={a.image!}
+            algs={[a.alg]}
+            sources={OLL_EDGE_SOURCES[i]}
+            options={OLL_EDGE_EXTRA_OPTIONS[i]}
+          />
         ))}
       </CardGrid>
       <H3>{t.ollCorners}</H3>
@@ -220,7 +239,7 @@ export default async function IntermediateTab() {
               title={c.name}
               subtitle={`OLL ${c.id}`}
               image={{ kind: 'top', alg: data.algs[0], mask: 'oll' }}
-              algs={[data.algs[0]]}
+              algs={data.algs}
               note={c.note}
             />
           );
@@ -237,7 +256,8 @@ export default async function IntermediateTab() {
               key={c.id}
               title={`${c.id}-perm`}
               image={{ kind: 'top', alg: data.algs[0], arrows: true }}
-              algs={[data.algs[0]]}
+              algs={data.algs}
+              options={PLL_EXTRA_OPTIONS[c.id]}
               note={c.note}
             />
           );

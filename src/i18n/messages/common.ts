@@ -5,7 +5,13 @@ type TNavText = { title: string; description: string; tag: string };
 
 export const commonMessages = defineMessages<{
   site: { description: string };
-  nav: { caro: TNavText; pikachu: TNavText; blog: TNavText; process: TNavText };
+  nav: {
+    caro: TNavText;
+    pikachu: TNavText;
+    sudoku: TNavText;
+    blog: TNavText;
+    process: TNavText;
+  };
   header: {
     homeLabel: string;
     mainNav: string;
@@ -77,6 +83,12 @@ export const commonMessages = defineMessages<{
       pikachu: {
         title: 'Pikachu',
         description: 'Match pairs of tiles across a board that shifts as you clear it.',
+        tag: 'Game',
+      },
+      sudoku: {
+        title: 'Sudoku',
+        description:
+          'Classic number puzzle with four difficulty levels, a daily puzzle and hints that teach.',
         tag: 'Game',
       },
       blog: {
@@ -187,6 +199,12 @@ export const commonMessages = defineMessages<{
       pikachu: {
         title: 'Pikachu',
         description: 'Nối các cặp hình giống nhau trên bàn cờ thay đổi sau mỗi lần ăn cặp.',
+        tag: 'Trò chơi',
+      },
+      sudoku: {
+        title: 'Sudoku',
+        description:
+          'Trò giải đố số kinh điển với bốn mức độ khó, bàn hằng ngày và gợi ý có giải thích.',
         tag: 'Trò chơi',
       },
       blog: {

@@ -1,7 +1,9 @@
 import { ReactNode } from 'react';
+import { BEGINNER_OPTIONS } from 'src/configs/rubikAlgOptions.config';
 import { RUBIK_GUIDE, NOTATION_IMAGES } from 'src/configs/rubikGuide.config';
 import { defineMessages } from 'src/i18n/define';
 import { getLocale } from 'src/i18n/server';
+import { AlgOptionGrid } from './AlgOptions';
 import BeginnerCompare from './BeginnerCompare';
 import FastFirstLayer from './FastFirstLayer';
 import { AlgRow, Bullets, Callout, CubePicture, H2, H3, P } from './parts';
@@ -176,7 +178,7 @@ export default async function BeginnerTab() {
       <Bullets items={t.gripTips} />
 
       <H2 id="beginner-steps">{t.steps}</H2>
-      {beginnerSteps.map((step) => (
+      {beginnerSteps.map((step, index) => (
         <section key={step.title}>
           <H3>{step.title}</H3>
           <P>
@@ -196,6 +198,7 @@ export default async function BeginnerTab() {
           {step.algs?.map((a) => (
             <AlgRow key={a.alg} {...a} />
           ))}
+          <AlgOptionGrid group={BEGINNER_OPTIONS[index]} />
         </section>
       ))}
 

@@ -57,6 +57,8 @@ export type GuideStep = {
 const DAISY = 'F2 R2 B2 L2';
 const SEXY = "R U R' U'";
 const EDGE_CYCLE = "R U' R U R U R U' R' U' R2";
+// Same cycle the other way round (Ub), so that case takes 1 algorithm instead of EDGE_CYCLE twice.
+const EDGE_CYCLE_BACK = "R2 U R U R' U' R' U' R' U R'";
 const CORNER_CYCLE = "U R U' L' U R' U' L";
 
 /**
@@ -108,9 +110,9 @@ const BEGINNER_SHAPE: Array<{
   {
     images: [
       { kind: 'top', alg: EDGE_CYCLE, mask: 'llEdges', arrows: true },
-      { kind: 'top', alg: `${EDGE_CYCLE} ${EDGE_CYCLE}`, mask: 'llEdges', arrows: true },
+      { kind: 'top', alg: EDGE_CYCLE_BACK, mask: 'llEdges', arrows: true },
     ],
-    algs: [EDGE_CYCLE],
+    algs: [EDGE_CYCLE, EDGE_CYCLE_BACK],
     mask: 'llEdges',
   },
   {
@@ -287,15 +289,16 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
         goal: 'Swap the yellow edges so their side colours match the centres.',
         hold: 'Yellow on top. The one edge that already matches its centre is at the back.',
         captions: [
-          '1 time: the other 3 edges cycle along the arrows',
-          'Cycling the other way: 2 times',
+          'Ua: the other 3 edges cycle along the arrows',
+          'Ub: the same cycle the other way',
         ],
         tips: [
           'Turn U and count how many edges match their centres. You can always turn it so at least 1 edge matches.',
-          'Exactly 1 edge matches: hold that edge at the back and do the algorithm. The other 3 cycle; do it a second time if they cycled the wrong way.',
-          'Two matching edges, opposite or next to each other: do the algorithm once from any side to get the case with only 1 matching edge.',
+          'Exactly 1 edge matches: hold that edge at the back. Compare with the arrows: if the edges must cycle like the first picture, do Ua; like the second picture, do Ub. Each one is done once.',
+          'Ua and Ub mirror each other: Ua ends with R2, Ub starts with R2. If you only remember Ua, doing it twice gives the same result as Ub, just slower.',
+          'Two matching edges, opposite or next to each other: do Ua once from any side to get the case with only 1 matching edge.',
         ],
-        algNames: ['Cycle 3 edges (Ua)'],
+        algNames: ['Cycle 3 edges (Ua)', 'Cycle 3 edges the other way (Ub)'],
       },
       {
         title: 'Step 6: Place the yellow corners',
@@ -480,15 +483,16 @@ const GUIDE_TEXT = defineMessages<TGuideText>({
         goal: 'Đổi chỗ các cạnh vàng sao cho màu bên của chúng trùng với tâm.',
         hold: 'Vàng ở trên. Cạnh duy nhất đã khớp tâm nằm ở phía sau.',
         captions: [
-          '1 lần: 3 cạnh còn lại xoay vòng theo mũi tên',
-          'Xoay vòng chiều ngược lại: 2 lần',
+          'Ua: 3 cạnh còn lại xoay vòng theo mũi tên',
+          'Ub: xoay vòng theo chiều ngược lại',
         ],
         tips: [
           'Xoay U và đếm có bao nhiêu cạnh khớp tâm. Luôn có cách xoay để ít nhất 1 cạnh khớp.',
-          'Nếu đúng 1 cạnh khớp: để cạnh đó ở phía sau, làm công thức. 3 cạnh còn lại xoay vòng; làm lại lần 2 nếu vòng sai chiều.',
-          'Nếu 2 cạnh khớp nằm đối diện hoặc kề nhau: làm công thức một lần ở góc bất kỳ, sẽ ra trường hợp chỉ có 1 cạnh khớp.',
+          'Nếu đúng 1 cạnh khớp: để cạnh đó ở phía sau. So với mũi tên: cạnh cần xoay vòng như hình đầu thì làm Ua, như hình thứ hai thì làm Ub. Mỗi công thức chỉ làm 1 lần.',
+          'Ua và Ub là cặp đối nhau: Ua kết thúc bằng R2, Ub bắt đầu bằng R2. Nếu chỉ nhớ Ua, làm Ua 2 lần cũng ra kết quả như Ub, chỉ chậm hơn.',
+          'Nếu 2 cạnh khớp nằm đối diện hoặc kề nhau: làm Ua một lần ở phía bất kỳ, sẽ ra trường hợp chỉ có 1 cạnh khớp.',
         ],
-        algNames: ['Xoay vòng 3 cạnh (Ua)'],
+        algNames: ['Xoay vòng 3 cạnh (Ua)', 'Xoay vòng 3 cạnh chiều ngược lại (Ub)'],
       },
       {
         title: 'Bước 6: Đặt góc vàng đúng chỗ',

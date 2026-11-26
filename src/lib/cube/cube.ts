@@ -91,10 +91,16 @@ type Move = { base: string; turns: number };
 
 const TOKEN = /([RLUDFBMESxyzXYZrludfb])(w?)(\d*)('?)(\d*)/g;
 
-/** Parse an algorithm string. Brackets, parentheses and spaces are ignored. */
+/**
+ * Parse an algorithm string. Brackets, parentheses and spaces are ignored.
+ * `(R' D' R D)×3` repeats the group; `×` is used because `x3` would read as a cube rotation.
+ */
 export function parseAlg(alg: string): Array<Move> {
   const moves: Array<Move> = [];
-  const clean = alg.replace(/[()[\]{}]/g, ' ');
+  const expanded = alg.replace(/\(([^()]*)\)\s*×\s*(\d+)/g, (_, body: string, times: string) =>
+    ` ${body} `.repeat(Number(times))
+  );
+  const clean = expanded.replace(/[()[\]{}]/g, ' ');
   for (const m of clean.matchAll(TOKEN)) {
     let base = m[1];
     if ('XYZ'.includes(base)) base = base.toLowerCase();

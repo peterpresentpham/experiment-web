@@ -8,7 +8,13 @@ export const blogMessages = defineMessages<{
   title: string;
   intro: string;
   home: string;
-  topics: { thesis: TTopicText; formatNumber: TTopicText; rubik: TTopicText; chess: TTopicText };
+  topics: {
+    thesis: TTopicText;
+    formatNumber: TTopicText;
+    rubik: TTopicText;
+    chess: TTopicText;
+    caro: TTopicText;
+  };
   thesis: { metaTitle: string; metaDescription: string; breadcrumb: string; loading: string };
   formatNumber: {
     title: string;
@@ -16,6 +22,7 @@ export const blogMessages = defineMessages<{
     pages: Record<TFormatNumberSlug, string>;
   };
   chess: { title: string; description: string };
+  caro: { title: string; description: string };
   rubik: {
     title: string;
     description: string;
@@ -69,6 +76,11 @@ export const blogMessages = defineMessages<{
         description:
           'Learn chess from scratch: the rules, how every piece moves, openings, tactics and endgames, with 3D boards that play each example.',
       },
+      caro: {
+        title: 'Caro',
+        description:
+          'Learn caro (five in a row) under the blocked-ends rule: the shapes, double threats and VCF, and what the Hell level engine taught us about openings.',
+      },
     },
     thesis: {
       metaTitle: 'Account Abstraction Wallet with Social Recovery based on Zero-Knowledge Proof',
@@ -94,6 +106,11 @@ export const blogMessages = defineMessages<{
       title: 'Chess',
       description:
         'A leveled guide to chess: the rules, how every piece moves, then openings, tactics and endgames, with 3D boards.',
+    },
+    caro: {
+      title: 'Learn caro',
+      description:
+        'A leveled guide to caro (five in a row) with the blocked-ends rule: shapes, defence, double threats, VCF, and openings from the Hell level engine.',
     },
     rubik: {
       title: 'Rubik 3x3',
@@ -150,6 +167,11 @@ export const blogMessages = defineMessages<{
         description:
           'Học cờ vua từ con số 0: luật chơi, cách đi từng quân, khai cuộc, chiến thuật và tàn cuộc, với bàn cờ 3D chạy từng ví dụ.',
       },
+      caro: {
+        title: 'Cờ caro',
+        description:
+          'Học chơi caro theo luật chặn hai đầu: các thế cờ, đòn đôi, chuỗi bốn (VCF), và những gì engine cấp Địa ngục cho thấy về khai cuộc.',
+      },
     },
     thesis: {
       metaTitle: 'Account Abstraction Wallet with Social Recovery based on Zero-Knowledge Proof',
@@ -175,6 +197,11 @@ export const blogMessages = defineMessages<{
       title: 'Cờ vua',
       description:
         'Hướng dẫn học cờ vua theo cấp độ: luật chơi, cách đi từng quân, rồi khai cuộc, chiến thuật và tàn cuộc, với bàn cờ 3D.',
+    },
+    caro: {
+      title: 'Học chơi cờ caro',
+      description:
+        'Hướng dẫn chơi caro theo cấp độ với luật chặn hai đầu: các thế cờ, phòng thủ, đòn đôi, VCF, và khai cuộc từ engine cấp Địa ngục.',
     },
     rubik: {
       title: 'Rubik 3x3',

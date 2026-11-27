@@ -132,6 +132,13 @@ export default function useCaroMachine({ isOver, move }: TParams) {
     post(worker, { type: 'warm-up', epoch, winMode });
   }, [isHell, epoch, winMode, generation]);
 
+  // Easy to hard play Tengen on boards above 3x3: its download starts when the level is picked.
+  useEffect(() => {
+    const worker = workerRef.current;
+    if (workerKind != 'search' || size == 3 || !worker) return;
+    post(worker, { type: 'preload-levels' });
+  }, [workerKind, size, generation]);
+
   // A new position (a move, undo or new game) ends the wait of the one before; a new game (or
   // taking every move back) starts a new timing log. Runs before the move request below.
   useEffect(() => {

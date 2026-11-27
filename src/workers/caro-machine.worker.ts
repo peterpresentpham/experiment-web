@@ -32,7 +32,9 @@ export type TCaroMachineWorkerRequest =
   /** Hell level: load the engine for this rule (or the network) before the first move. */
   | { type: 'warm-up'; epoch: number; winMode: TCaroWinMode }
   /** Hell level: the learner saved new weights, drop the cached network. */
-  | { type: 'reload-model' };
+  | { type: 'reload-model' }
+  /** Easy to hard on boards above 3x3: start loading Tengen and the book before the first move. */
+  | { type: 'preload-levels' };
 
 export type TCaroMachineWorkerResponse =
   /** `source`: which part of the hell level chose the move (other levels leave it out). */
@@ -56,6 +58,7 @@ function reply(response: TCaroMachineWorkerResponse) {
 let hellRuntime: Promise<typeof import('src/services/caro-hell/worker-runtime')> | undefined;
 const loadHell = () => (hellRuntime ??= import('src/services/caro-hell/worker-runtime'));
 const loadTengen = () => import('src/services/caro-tengen/player');
+const loadLevels = () => import('src/services/caro-tengen/levels');
 
 // What the header shows: the last engine report, kept up to date after each move.
 let engines: TCaroHellEngines | null = null;
@@ -90,6 +93,10 @@ async function playMove(message: Extract<TCaroMachineWorkerRequest, { type: 'mov
     });
     reply({ type: 'hell-status', available });
     reply({ type: 'move', id, location, source: 'network' });
+  } else if (request.level != 'hell' && request.size != 3) {
+    const { findLevelMove } = await loadLevels();
+    const { location } = await findLevelMove({ ...request, level: request.level }, book);
+    reply({ type: 'move', id, location });
   } else {
     reply({ type: 'move', id, location: findMachineMove({ ...request, book }) });
   }
@@ -141,6 +148,8 @@ async function handle(message: TCaroMachineWorkerRequest) {
     if (available) return;
     const hell = await loadHell();
     reply({ type: 'hell-status', available: await hell.warmUpHell(message.epoch) });
+  } else if (message.type == 'preload-levels') {
+    (await loadLevels()).preloadLevels();
   } else if (message.type == 'reload-model') {
     // Only a network this worker already loaded holds old weights. Loading TensorFlow.js here
     // just to drop nothing would hold up the next move.
@@ -150,10 +159,11 @@ async function handle(message: TCaroMachineWorkerRequest) {
 
 // Runs the search off the main thread so the board stays responsive while the machine thinks.
 // Messages are handled one at a time, in order, even when the hell level awaits its model. A
-// warm-up only starts downloads, so it runs beside the queue: a move must not wait for them.
+// warm-up or preload only starts downloads, so it runs beside the queue: a move must not wait
+// for them.
 let queue = Promise.resolve();
 self.onmessage = (event: MessageEvent<TCaroMachineWorkerRequest>) => {
-  if (event.data.type == 'warm-up') {
+  if (event.data.type == 'warm-up' || event.data.type == 'preload-levels') {
     handle(event.data).catch((error) => console.error(error));
     return;
   }

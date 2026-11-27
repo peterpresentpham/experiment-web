@@ -42,6 +42,17 @@ export type TTengenHelperSetup = {
 
 export type TTengenTiming = { optimumMs: number; hardMs: number };
 
+/**
+ * A weaker search for one move, for the levels below hell: a depth cap and its own variety in
+ * place of the engine's (see `TENGEN_VARIETY`).
+ */
+export type TTengenLimits = {
+  /** Deepest iteration of the search; 0 for no cap. */
+  depth?: number;
+  variety?: number;
+  varietyPlies?: number;
+};
+
 export type TTengenRequest = {
   steps: { [location: number]: TTurn };
   size: number;
@@ -177,7 +188,7 @@ export type TTengen = {
   nodesPerSecond: number;
   timing: TTengenTiming;
   /** Best move as a board location, or -1 when the engine has none (game over, full board). */
-  think: (request: TTengenRequest, timing?: TTengenTiming) => number;
+  think: (request: TTengenRequest, timing?: TTengenTiming, limits?: TTengenLimits) => number;
   /**
    * Measures the speed again and keeps the faster result. The first measurement runs while the
    * page is still starting (Rapfi loading, on a phone that is a lot): too low, it gave every
@@ -260,7 +271,7 @@ export async function loadTengen(
   const varietyPlies = options.varietyPlies ?? TENGEN_VARIETY_PLIES;
   engine.tg_set_variety(0, options.seed ?? 1 + Math.random() * 2 ** 32);
 
-  function think(request: TTengenRequest, moveTiming = result.timing) {
+  function think(request: TTengenRequest, moveTiming = result.timing, limits: TTengenLimits = {}) {
     const order = tengenMoveOrder(request.steps, request.turn);
     if (!order) throw new Error('tengen: impossible position');
     if (engine.tg_new(request.size, RULE[request.winMode]) != 0)
@@ -269,10 +280,15 @@ export async function loadTengen(
       if (engine.tg_play(location % request.size, Math.floor(location / request.size)) < 0)
         throw new Error('tengen: illegal position');
     }
-    engine.tg_set_variety(order.length < varietyPlies ? variety : 0, 0);
+    const plies = limits.varietyPlies ?? varietyPlies;
+    engine.tg_set_variety(order.length < plies ? (limits.variety ?? variety) : 0, 0);
     for (const location of request.exclude ?? [])
       engine.tg_exclude(location % request.size, Math.floor(location / request.size));
-    const packed = engine.tg_think_dynamic(moveTiming.optimumMs, moveTiming.hardMs, 0);
+    const packed = engine.tg_think_dynamic(
+      moveTiming.optimumMs,
+      moveTiming.hardMs,
+      limits.depth ?? 0
+    );
     if (packed < 0) return -1;
     return (packed >> 8) * request.size + (packed & 0xff);
   }

@@ -96,7 +96,7 @@ export const caroMessages = defineMessages({
       memory: 'Machine memory',
       memoryCount: (count: number) =>
         count == 0
-          ? 'No lessons yet: the machine learns from its losses and from games it nearly lost.'
+          ? 'No lessons yet: the machine learns from its losses and from games it nearly lost, and plays the lessons on the Hard and Hell levels.'
           : `Learned from its losses and close calls: ${count} ${count == 1 ? 'position' : 'positions'} it now plays differently.`,
       memoryLearning: 'Analysing the last game…',
       clearMemory: 'Clear memory',
@@ -268,7 +268,7 @@ export const caroMessages = defineMessages({
       memory: 'Trí nhớ của máy',
       memoryCount: (count: number) =>
         count == 0
-          ? 'Chưa có bài học nào: máy học từ các ván thua và cả những ván suýt thua.'
+          ? 'Chưa có bài học nào: máy học từ các ván thua và cả những ván suýt thua, rồi dùng bài học ở cấp Khó và Địa ngục.'
           : `Đã rút kinh nghiệm từ các ván thua và suýt thua: ${count} thế cờ máy sẽ đánh khác đi.`,
       memoryLearning: 'Đang phân tích ván vừa rồi…',
       clearMemory: 'Xoá trí nhớ',

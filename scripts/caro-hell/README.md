@@ -103,7 +103,9 @@ can search on several threads.
   `src/services/caro-rapfi/browser.ts`), because the shipped one loses to the classical evaluation
   since the rule fix. When Rapfi has not answered 6 s after its time, Tengen plays that move; Rapfi
   plays again once its late answer arrives.
-- **[Tengen](https://github.com/SXKA/tengen)** (GPL-3.0, `public/engines/tengen/`) is the
+- **[Tengen](https://github.com/SXKA/tengen)** (GPL-3.0, `public/engines/tengen/`) also plays
+  the easy, medium and hard levels on boards above 3x3, with a depth cap per level
+  (`src/services/caro-tengen/levels.ts`). For the hell level it is the
   fallback. It is small and ready in a moment, so it plays the first moves while Rapfi's files
   download, and it takes over when Rapfi fails or cannot run.
   `src/services/caro-tengen/engine.ts` picks its thread count and measures the device to set its
@@ -170,6 +172,27 @@ first wins almost every engine game here):
 ```bash
 nice node --import tsx scripts/caro-hell/book-deepen.ts --stones 3
 nice node --import tsx scripts/caro-hell/book-check.ts --player strong --samples 60
+```
+
+### Attacking the hell level
+
+`hell-attack.ts` plays a stronger Rapfi (4 s a move) first against the hell level as the browser
+plays it (`rapfi-classical-book`, 2 s, 1 thread), with random near-best choices for its first
+moves; games are appended to `ml-data/caro-hell/attack/games.jsonl` and a rerun goes on until
+`--games` are stored. `hell-attack-report.ts` prints the analysis and saves it next to the games
+for later training rounds:
+
+- `analysis.json`: summary, opening tree and every game in cell names (latest run);
+- `mistakes.jsonl`: per won game, the position before the hell move that let the attacker first
+  see a forced win, that move, its source (`book` or `engine`) and the attacker's reply. Moves are
+  turned so the machine's first reply is j10. These are the positions to give a longer search
+  (new book entries) when making the level stronger;
+- `history.jsonl`: one summary line per report, with the opening book's hash, to compare the
+  attacker's win rate before and after a new book or engine setting.
+
+```bash
+nice -n 15 node --import tsx scripts/caro-hell/hell-attack.ts --games 150 --workers 3
+node --import tsx scripts/caro-hell/hell-attack-report.ts --plies 5
 ```
 
 The plan for further work is in `docs/plans/caro-tengen-roadmap.md`.
